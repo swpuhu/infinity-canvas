@@ -10,6 +10,9 @@
     },
     "dependencies": {
         "canvaskit-wasm": "^0.38.0",
+        "core-decorators": "^0.20.0",
+        "eventemitter3": "^5.0.1",
+        "gl-matrix": "^3.4.3",
         "pinia": "^2.1.0",
         "vue": "^3.3.0"
     },
