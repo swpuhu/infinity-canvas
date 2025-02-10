@@ -53,3 +53,7 @@ export type TransformOptions = {
     rotation?: number;
     anchor?: IPointData;
 };
+
+export namespace EventNames {
+    export const RESIZE = 'resize';
+}

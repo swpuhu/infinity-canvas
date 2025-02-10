@@ -10,7 +10,7 @@ export class SGraphics extends SRenderComponent {
     private _paths: Path[] = [];
     private _pathStyleMap: Map<Path, Paint> = new Map();
 
-    private _shadowPathMap: Map<Path, boolean> = new Map();
+    private _shadowOptionsMap: Map<Path, ShadowOptions> = new Map();
 
     private _currentPath: Path | null = null;
 
@@ -99,21 +99,28 @@ export class SGraphics extends SRenderComponent {
         if (!path) {
             return;
         }
+        // 克隆原始路径作为阴影路径
         const shadowPath = path.clone();
         const shadowPaint = this.getNewPaint();
-        const offsetX = options.offset?.[0] || 0;
-        const offsetY = options.offset?.[1] || 0;
-        const blurRadius = options.blur || 3.4;
+
+        this._shadowOptionsMap.set(shadowPath, options);
+        this._pathStyleMap.set(shadowPath, shadowPaint);
+        const blurRadius = options.blur || 15;
         const color = safeColor(options.color || 0x000000);
-        const imageFilter =
-            CanvasKitModule.CanvasKit.ImageFilter.MakeDropShadow(
-                offsetX,
-                offsetY,
+
+        // 设置阴影效果
+        shadowPaint.setMaskFilter(
+            CanvasKitModule.CanvasKit.MaskFilter.MakeBlur(
+                CanvasKitModule.CanvasKit.BlurStyle.Normal,
                 blurRadius,
-                blurRadius,
-                color,
-                null
-            );
+                true
+            )
+        );
+        shadowPaint.setColor(color);
+
+        // 将阴影路径添加到路径数组的前面，确保先绘制阴影
+        const currentPathIndex = this._paths.indexOf(path);
+        this._paths.splice(currentPathIndex, 0, shadowPath);
     }
 
     public stroke(options?: StrokeOptions): void {
@@ -136,7 +143,6 @@ export class SGraphics extends SRenderComponent {
     }
 
     public draw(canvas: Canvas): void {
-        // 如果有裁剪路径，先保存画布状态并应用裁剪
         if (this._clipPath) {
             canvas.save();
             canvas.clipPath(
@@ -145,17 +151,27 @@ export class SGraphics extends SRenderComponent {
                 true
             );
         }
-        // 绘制所有路径
+
         for (let i = 0; i < this._paths.length; i++) {
             const path = this._paths[i];
-            const shadow = this._shadowPathMap.get(path);
-            if (shadow) {
+            const shadowOptions = this._shadowOptionsMap.get(path);
+            if (shadowOptions) {
+                const shadowPaint = this.getCorrespondPaint(path);
+                // 保存当前画布状态
+                canvas.save();
+                // 对阴影路径应用偏移
+                const offsetX = shadowOptions.offset?.[0] || 0;
+                const offsetY = shadowOptions.offset?.[1] || 0;
+                canvas.translate(offsetX, offsetY);
+                canvas.drawPath(path, shadowPaint);
+                // 恢复画布状态
+                canvas.restore();
+                continue;
             }
             const paint = this.getCorrespondPaint(path);
             canvas.drawPath(path, paint);
         }
 
-        // 如果有裁剪，恢复画布状态
         if (this._clipPath) {
             canvas.restore();
         }

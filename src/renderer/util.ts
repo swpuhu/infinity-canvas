@@ -64,6 +64,9 @@ function createNodeRecursive(config: SNodeConfig): SNode {
         if (config.style?.fill) {
             graphics.fill({ color: config.style.fill });
         }
+        if (config.style?.shadow) {
+            graphics.shadow(config.style.shadow);
+        }
     }
 
     // 处理子元素

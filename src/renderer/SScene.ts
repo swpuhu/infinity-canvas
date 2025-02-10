@@ -10,6 +10,10 @@ export class SScene {
 
     private virtualCanvasRef: IRefSNode;
 
+    private leftSideRef: IRefSNode;
+
+    private rightSideRef: IRefSNode;
+
     private option: SceneOptions;
 
     constructor(option: SceneOptions) {
@@ -24,6 +28,8 @@ export class SScene {
         console.log('virtualCanvasScale', virtualCanvasScale);
 
         this.virtualCanvasRef = refSNode();
+        this.leftSideRef = refSNode();
+        this.rightSideRef = refSNode();
 
         this.rootNode = createNodeFromConfig({
             name: 'root',
@@ -44,17 +50,37 @@ export class SScene {
                         height: this.option.designSize.height,
                     },
                     style: {
-                        fill: 0xff0000,
+                        fill: 0xffffff,
+                        shadow: {
+                            color: 0xaaaaaa,
+                            blur: 20,
+                        },
                     },
                     transform: {
                         scale: virtualCanvasScale,
                     },
                     width: this.option.designSize.width,
                     height: this.option.designSize.height,
+                    children: [
+                        {
+                            type: 'rect',
+                            props: {
+                                width: 200,
+                                height: 200,
+                            },
+                            transform: {
+                                position: new Vec2(960, 0),
+                            },
+                            style: {
+                                fill: 0xffbb00,
+                            },
+                        },
+                    ],
                 },
                 {
                     name: 'left-side',
                     type: 'rect',
+                    ref: this.leftSideRef,
                     props: {
                         width: this.option.sideWidth,
                         height: this.option.canvasSize.height,
@@ -75,6 +101,7 @@ export class SScene {
                 {
                     name: 'right-side',
                     type: 'rect',
+                    ref: this.rightSideRef,
                     props: {
                         width: this.option.sideWidth,
                         height: this.option.canvasSize.height,
@@ -116,5 +143,33 @@ export class SScene {
         const scale =
             (this.availableSize.width - padding) / this.option.designSize.width;
         return new Vec2(scale, scale);
+    }
+
+    public resizeCanvasSize(canvasSize: ISize) {
+        this.availableSize = {
+            width: canvasSize.width - this.option.sideWidth * 2,
+            height: canvasSize.height,
+        };
+
+        const virtualCanvasScale = this.getVirtualCanvasScale();
+        const virtualCanvas = this.virtualCanvasRef.value!;
+
+        const leftSide = this.leftSideRef.value!;
+        const rightSide = this.rightSideRef.value!;
+
+        this.rootNode.setTransform({
+            position: new Vec2(canvasSize.width / 2, canvasSize.height / 2),
+        });
+
+        leftSide.setTransform({
+            position: new Vec2(-canvasSize.width / 2, -canvasSize.height / 2),
+        });
+        rightSide.setTransform({
+            position: new Vec2(canvasSize.width / 2, -canvasSize.height / 2),
+        });
+
+        virtualCanvas.setTransform({
+            scale: virtualCanvasScale,
+        });
     }
 }

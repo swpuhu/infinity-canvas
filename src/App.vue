@@ -14,6 +14,7 @@ import SNode from './renderer/SNode';
 import { SGraphics } from './renderer/SGraphics';
 import { createNodeFromConfig, SNodeConfig } from './renderer/util';
 import { SScene } from './renderer/SScene';
+import { EventNames } from './common/types';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const designSize = { width: 375, height: 667 }; // 设计稿尺寸（示例值）
@@ -33,6 +34,10 @@ onMounted(async () => {
             canvasSize,
             designSize: { width: 1920, height: 1080 },
             sideWidth: 200,
+        });
+
+        renderer.on(EventNames.RESIZE, (width, height) => {
+            scene.resizeCanvasSize({ width, height });
         });
 
         console.log(scene.rootNode);

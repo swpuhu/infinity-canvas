@@ -3,8 +3,10 @@ import type { GrDirectContext, Surface } from 'canvaskit-wasm';
 import SNode from './SNode';
 import { CanvasKitModule } from '@/lib/canvaskit';
 import { angleToRadians } from '@/common/util';
+import EventEmitter from 'eventemitter3';
+import { EventNames } from '@/common/types';
 
-export class Renderer {
+export class Renderer extends EventEmitter {
     private surface: Surface | null = null;
 
     private grContext: GrDirectContext | null = null;
@@ -15,6 +17,7 @@ export class Renderer {
     private _currentRenderNode: SNode | null = null;
 
     constructor(canvas: HTMLCanvasElement) {
+        super();
         this._canvas = canvas;
         const glContextHandle =
             CanvasKitModule.CanvasKit.GetWebGLContext(canvas);
@@ -36,10 +39,9 @@ export class Renderer {
         this.resizeObserver = new ResizeObserver(entries => {
             const entry = entries[0];
             if (entry) {
-                this.resizeSurface(
-                    entry.contentRect.width,
-                    entry.contentRect.height
-                );
+                const { width, height } = entry.contentRect;
+                this.resizeSurface(width, height);
+                this.emit(EventNames.RESIZE, width, height);
             }
         });
         this.resizeObserver.observe(canvas);
