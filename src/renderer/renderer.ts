@@ -12,10 +12,14 @@ export class Renderer {
     private _canvas: HTMLCanvasElement;
     private resizeObserver: ResizeObserver;
 
+    private _currentRenderNode: SNode | null = null;
+
     constructor(canvas: HTMLCanvasElement) {
         this._canvas = canvas;
         const glContextHandle =
             CanvasKitModule.CanvasKit.GetWebGLContext(canvas);
+
+        console.log('width', canvas.width, 'height', canvas.height);
         this.grContext =
             CanvasKitModule.CanvasKit.MakeWebGLContext(glContextHandle);
         if (!this.grContext) {
@@ -29,14 +33,20 @@ export class Renderer {
             CanvasKitModule.CanvasKit.ColorSpace.SRGB
         );
 
-        this.resizeObserver = new ResizeObserver(() => this.resizeSurface());
+        this.resizeObserver = new ResizeObserver(entries => {
+            const entry = entries[0];
+            if (entry) {
+                this.resizeSurface(
+                    entry.contentRect.width,
+                    entry.contentRect.height
+                );
+            }
+        });
         this.resizeObserver.observe(canvas);
     }
 
-    public resizeSurface() {
+    public resizeSurface(width: number, height: number) {
         const canvas = this._canvas;
-        const width = canvas.clientWidth;
-        const height = canvas.clientHeight;
 
         canvas.width = width * devicePixelRatio;
         canvas.height = height * devicePixelRatio;
@@ -58,6 +68,8 @@ export class Renderer {
             console.error('创建Surface失败');
             return;
         }
+
+        this.render();
     }
 
     private visitNode(
@@ -74,8 +86,15 @@ export class Renderer {
         afterVisit && afterVisit(node);
     }
 
-    public render(node: SNode) {
+    public render(node?: SNode) {
         if (!this.surface) {
+            return;
+        }
+        if (node) {
+            this._currentRenderNode = node;
+        }
+
+        if (!this._currentRenderNode) {
             return;
         }
 
@@ -84,7 +103,7 @@ export class Renderer {
         const canvas = this.surface.getCanvas();
         canvas.clear([0, 0, 0, 0]);
         this.visitNode(
-            node,
+            this._currentRenderNode,
             node => {
                 const renderComp = node.getRenderComps();
                 canvas.translate(node.position.x, node.position.y);

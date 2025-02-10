@@ -9,7 +9,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { CanvasKitModule } from '@/lib/canvaskit';
-import type { Canvas } from 'canvaskit-wasm';
 import { Renderer } from './renderer/renderer';
 import SNode from './renderer/SNode';
 import { SGraphics } from './renderer/SGraphics';
@@ -19,12 +18,8 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 onMounted(async () => {
     try {
         await CanvasKitModule.init();
-        const width = canvasRef.value!.width;
-        const height = canvasRef.value!.height;
 
         const renderer = new Renderer(canvasRef.value!);
-        renderer.resizeSurface();
-
         const rootNode = new SNode();
         const secondNode = new SNode();
 
@@ -39,11 +34,11 @@ onMounted(async () => {
         graphics.fill({ color: 0xff0000 });
 
         secondGraphics.rect(0, 0, 100, 100);
-        secondGraphics.fill({ color: 0x00ff00 });
 
         rootNode.addChild(secondNode);
 
         renderer.render(rootNode);
+        // renderer.resizeSurface();
     } catch (error) {
         console.error('应用启动失败:', error);
     }
