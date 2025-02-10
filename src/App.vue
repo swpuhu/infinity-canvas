@@ -12,6 +12,7 @@ import { CanvasKitModule } from '@/lib/canvaskit';
 import { Renderer } from './renderer/renderer';
 import SNode from './renderer/SNode';
 import { SGraphics } from './renderer/SGraphics';
+import { createNodeFromConfig, SNodeConfig } from './renderer/util';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 
@@ -20,25 +21,29 @@ onMounted(async () => {
         await CanvasKitModule.init();
 
         const renderer = new Renderer(canvasRef.value!);
-        const rootNode = new SNode();
-        const secondNode = new SNode();
 
-        const graphics = new SGraphics();
-        const secondGraphics = new SGraphics();
+        // 声明式UI配置
+        const config: SNodeConfig = {
+            type: 'container',
+            children: [
+                {
+                    type: 'rect',
+                    props: { x: 0, y: 0, width: 100, height: 100 },
+                    style: { fill: 0xff0000 },
+                },
+                {
+                    type: 'rect',
+                    props: { x: 50, y: 10, width: 100, height: 100 },
+                    children: [
+                        // 可以继续嵌套子元素
+                    ],
+                },
+            ],
+        };
 
-        rootNode.addRenderComps(graphics);
-        secondNode.addRenderComps(secondGraphics);
-        secondNode.position.set(50, 10);
-
-        graphics.rect(0, 0, 100, 100);
-        graphics.fill({ color: 0xff0000 });
-
-        secondGraphics.rect(0, 0, 100, 100);
-
-        rootNode.addChild(secondNode);
-
+        // 创建根节点并解析配置
+        const rootNode = createNodeFromConfig(config);
         renderer.render(rootNode);
-        // renderer.resizeSurface();
     } catch (error) {
         console.error('应用启动失败:', error);
     }
