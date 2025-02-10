@@ -34,3 +34,22 @@ export type FillOptions = {
     color?: number | number[];
     alpha?: number;
 };
+
+export type ShadowOptions = {
+    color?: number | number[];
+    blur?: number;
+    offset?: [number, number];
+};
+
+export type SceneOptions = {
+    canvasSize: ISize;
+    designSize: ISize;
+    sideWidth: number;
+};
+
+export type TransformOptions = {
+    position?: IPointData;
+    scale?: IPointData;
+    rotation?: number;
+    anchor?: IPointData;
+};

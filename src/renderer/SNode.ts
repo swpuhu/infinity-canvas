@@ -1,7 +1,7 @@
 import { SRenderComponent } from './SRenderComponent';
 
 import { mat3, ReadonlyVec2, vec2 } from 'gl-matrix';
-import { IPoint, IPointData } from '@/common/types';
+import { IPoint, IPointData, TransformOptions } from '@/common/types';
 import { Vec2 } from '@/common/Vec2';
 import { createUUID } from '@/common/uuid';
 import { autobind } from 'core-decorators';
@@ -153,6 +153,11 @@ class SNode extends EventEmitter {
         return this._anchor;
     }
 
+    public set anchor(value: IPoint) {
+        value.updateFunc = this.updateWorldMatrix;
+        this._anchor = value;
+    }
+
     public set scale(value: IPoint) {
         value.updateFunc = this.updateWorldMatrix;
         this._scale = value;
@@ -268,6 +273,35 @@ class SNode extends EventEmitter {
 
     public getWorldMatrix(): mat3 {
         return this._worldMatrix;
+    }
+
+    public setTransform(options: TransformOptions) {
+        this.position =
+            options.position instanceof Vec2
+                ? options.position
+                : new Vec2(options.position?.x || 0, options.position?.y || 0);
+        this.scale =
+            options.scale instanceof Vec2
+                ? options.scale
+                : new Vec2(options.scale?.x || 1, options.scale?.y || 1);
+        this.rotation = options.rotation || 0;
+        this._anchor =
+            options.anchor instanceof Vec2
+                ? options.anchor
+                : new Vec2(options.anchor?.x || 0.5, options.anchor?.y || 0.5);
+    }
+
+    public clone(): SNode {
+        const node = new SNode();
+        node.name = this.name;
+        node.position = this.position.clone();
+        node.scale = this.scale.clone();
+        node.rotation = this.rotation;
+        node._anchor = this._anchor.clone();
+        node.visible = this.visible;
+        node.metadata = this.metadata;
+        node._children = this.children.map(child => child.clone());
+        return node;
     }
 }
 

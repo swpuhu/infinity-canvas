@@ -2,12 +2,15 @@ import type { Canvas, Paint, Path } from 'canvaskit-wasm';
 import { SRenderComponent } from './SRenderComponent';
 import { CanvasKitModule } from '@/lib/canvaskit';
 import { safeColor } from '@/common/util';
-import { FillOptions, StrokeOptions } from '@/common/types';
+import { FillOptions, ShadowOptions, StrokeOptions } from '@/common/types';
+import { Vec2 } from '@/common/Vec2';
 
 export class SGraphics extends SRenderComponent {
     private _clipPath: Path | null = null;
     private _paths: Path[] = [];
     private _pathStyleMap: Map<Path, Paint> = new Map();
+
+    private _shadowPathMap: Map<Path, boolean> = new Map();
 
     private _currentPath: Path | null = null;
 
@@ -91,6 +94,28 @@ export class SGraphics extends SRenderComponent {
         paint.setStyle(CanvasKitModule.CanvasKit.PaintStyle.Fill);
     }
 
+    public shadow(options: ShadowOptions): void {
+        const path = this._currentPath;
+        if (!path) {
+            return;
+        }
+        const shadowPath = path.clone();
+        const shadowPaint = this.getNewPaint();
+        const offsetX = options.offset?.[0] || 0;
+        const offsetY = options.offset?.[1] || 0;
+        const blurRadius = options.blur || 3.4;
+        const color = safeColor(options.color || 0x000000);
+        const imageFilter =
+            CanvasKitModule.CanvasKit.ImageFilter.MakeDropShadow(
+                offsetX,
+                offsetY,
+                blurRadius,
+                blurRadius,
+                color,
+                null
+            );
+    }
+
     public stroke(options?: StrokeOptions): void {
         const paint = this.getCurrentPaint();
 
@@ -120,10 +145,12 @@ export class SGraphics extends SRenderComponent {
                 true
             );
         }
-
         // 绘制所有路径
         for (let i = 0; i < this._paths.length; i++) {
             const path = this._paths[i];
+            const shadow = this._shadowPathMap.get(path);
+            if (shadow) {
+            }
             const paint = this.getCorrespondPaint(path);
             canvas.drawPath(path, paint);
         }
@@ -137,10 +164,13 @@ export class SGraphics extends SRenderComponent {
     public rect(x: number, y: number, width: number, height: number): void {
         this.beginPath();
         const path = this._currentPath!;
-        path.moveTo(x, y);
-        path.lineTo(x + width, y);
-        path.lineTo(x + width, y + height);
-        path.lineTo(x, y + height);
+        const anchor = this.node?.anchor || new Vec2(0, 0);
+        const offsetX = -width * anchor.x;
+        const offsetY = -height * anchor.y;
+        path.moveTo(x + offsetX, y + offsetY);
+        path.lineTo(x + width + offsetX, y + offsetY);
+        path.lineTo(x + width + offsetX, y + height + offsetY);
+        path.lineTo(x + offsetX, y + height + offsetY);
         path.close();
     }
 

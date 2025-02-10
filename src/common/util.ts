@@ -8,13 +8,13 @@ export function radiansToAngle(radians: number) {
     return radians * (180 / Math.PI);
 }
 
-export function safeColor(color: number | number[]) {
+export function safeColor(color: number | number[]): Float32Array {
     if (Array.isArray(color)) {
         if (color.length === 3) {
-            return [color[0], color[1], color[2], 255];
+            return new Float32Array([color[0], color[1], color[2], 255]);
         }
         if (color.length === 4) {
-            return color;
+            return new Float32Array(color);
         }
     } else if (typeof color === 'number') {
         // 如果color在0x000000~0xffffff范围内,则alpha默认为255
@@ -23,9 +23,9 @@ export function safeColor(color: number | number[]) {
         const r = (color >> 16) & 0xff;
         const g = (color >> 8) & 0xff;
         const b = color & 0xff;
-        return [r / 255, g / 255, b / 255, a / 255];
+        return new Float32Array([r / 255, g / 255, b / 255, a / 255]);
     }
-    return [0, 0, 0, 255];
+    return new Float32Array([0, 0, 0, 255]);
 }
 
 export function loadImage(src: string): Promise<HTMLImageElement> {

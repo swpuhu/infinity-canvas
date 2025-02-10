@@ -13,37 +13,33 @@ import { Renderer } from './renderer/renderer';
 import SNode from './renderer/SNode';
 import { SGraphics } from './renderer/SGraphics';
 import { createNodeFromConfig, SNodeConfig } from './renderer/util';
+import { SScene } from './renderer/SScene';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
+const designSize = { width: 375, height: 667 }; // 设计稿尺寸（示例值）
+const sideSize = 200; // 侧边栏宽度
 
 onMounted(async () => {
     try {
         await CanvasKitModule.init();
-
         const renderer = new Renderer(canvasRef.value!);
-
-        // 声明式UI配置
-        const config: SNodeConfig = {
-            type: 'container',
-            children: [
-                {
-                    type: 'rect',
-                    props: { x: 0, y: 0, width: 100, height: 100 },
-                    style: { fill: 0xff0000 },
-                },
-                {
-                    type: 'rect',
-                    props: { x: 50, y: 10, width: 100, height: 100 },
-                    children: [
-                        // 可以继续嵌套子元素
-                    ],
-                },
-            ],
+        const canvasSize = {
+            width: window.innerWidth,
+            height: window.innerHeight,
         };
 
-        // 创建根节点并解析配置
-        const rootNode = createNodeFromConfig(config);
-        renderer.render(rootNode);
+        // 创建基础布局
+        const scene = new SScene({
+            canvasSize,
+            designSize: { width: 1920, height: 1080 },
+            sideWidth: 200,
+        });
+
+        console.log(scene.rootNode);
+
+        // 添加示例元素
+
+        renderer.render(scene.rootNode);
     } catch (error) {
         console.error('应用启动失败:', error);
     }
