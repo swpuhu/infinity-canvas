@@ -56,12 +56,6 @@ class SNode extends EventEmitter {
             this._scale.x,
             this._scale.y,
         ]);
-
-        // 考虑锚点的影响
-        mat3.translate(this._localMatrix, this._localMatrix, [
-            -this._width * this._anchor.x,
-            -this._height * this._anchor.y,
-        ]);
     }
 
     @autobind
@@ -75,24 +69,6 @@ class SNode extends EventEmitter {
             );
         } else {
             mat3.copy(this._worldMatrix, this._localMatrix);
-        }
-        if (this._parent) {
-            mat3.multiply(
-                this._worldMatrix,
-                this._parent._worldMatrix,
-                this._localMatrix
-            );
-        } else {
-            mat3.copy(this._worldMatrix, this._localMatrix);
-        }
-        if (this._parent) {
-            mat3.multiply(
-                this._worldMatrix,
-                this._parent._worldMatrix,
-                this._localMatrix
-            );
-        } else {
-            this._worldMatrix = this._localMatrix;
         }
 
         for (const child of this._children) {
@@ -278,19 +254,21 @@ class SNode extends EventEmitter {
     }
 
     public setTransform(options: TransformOptions) {
-        this.position =
+        this._position =
             options.position instanceof Vec2
                 ? options.position
                 : new Vec2(options.position?.x || 0, options.position?.y || 0);
-        this.scale =
+        this._scale =
             options.scale instanceof Vec2
                 ? options.scale
                 : new Vec2(options.scale?.x || 1, options.scale?.y || 1);
-        this.rotation = options.rotation || 0;
+        this._rotation = options.rotation || 0;
         this._anchor =
             options.anchor instanceof Vec2
                 ? options.anchor
                 : new Vec2(options.anchor?.x || 0.5, options.anchor?.y || 0.5);
+
+        this.updateWorldMatrix();
     }
 
     public clone(): SNode {
@@ -304,6 +282,33 @@ class SNode extends EventEmitter {
         node.metadata = this.metadata;
         node._children = this.children.map(child => child.clone());
         return node;
+    }
+
+    public hitTest(worldX: number, worldY: number): boolean {
+        const [l, b, r, t] = this.getLocalRect();
+        const localPos = this.toLocal({ x: worldX, y: worldY });
+        if (
+            localPos[0] < l ||
+            localPos[0] > r ||
+            localPos[1] < b ||
+            localPos[1] > t
+        ) {
+            return false;
+        }
+        return true;
+    }
+
+    public getNodeByName(name: string): SNode | null {
+        if (this.name === name) {
+            return this;
+        }
+        for (const child of this._children) {
+            const node = child.getNodeByName(name);
+            if (node) {
+                return node;
+            }
+        }
+        return null;
     }
 }
 

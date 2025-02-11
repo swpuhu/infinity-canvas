@@ -1,4 +1,9 @@
-import type { Canvas, GrDirectContext, Surface } from 'canvaskit-wasm';
+import type {
+    Canvas,
+    GrDirectContext,
+    Surface,
+    WebGLContextHandle,
+} from 'canvaskit-wasm';
 
 import SNode from './SNode';
 import { CanvasKitModule } from '@/lib/canvaskit';
@@ -15,16 +20,18 @@ export class Renderer extends EventEmitter {
     private resizeObserver: ResizeObserver;
 
     private _currentRenderNode: SNode | null = null;
+    private _glContextHandle: WebGLContextHandle;
 
     constructor(canvas: HTMLCanvasElement) {
         super();
         this._canvasElement = canvas;
-        const glContextHandle =
+        this._glContextHandle =
             CanvasKitModule.CanvasKit.GetWebGLContext(canvas);
 
         console.log('width', canvas.width, 'height', canvas.height);
-        this.grContext =
-            CanvasKitModule.CanvasKit.MakeWebGLContext(glContextHandle);
+        this.grContext = CanvasKitModule.CanvasKit.MakeWebGLContext(
+            this._glContextHandle
+        );
         if (!this.grContext) {
             throw new Error('Failed to create grContext');
         }
@@ -104,8 +111,6 @@ export class Renderer extends EventEmitter {
             return;
         }
 
-        console.log('render');
-
         const canvas = this.surface.getCanvas();
         canvas.clear([0, 0, 0, 0]);
 
@@ -142,5 +147,12 @@ export class Renderer extends EventEmitter {
             }
         );
         this.surface.flush();
+    }
+
+    public destroy() {
+        this.resizeObserver.disconnect();
+        this.surface?.delete();
+        this.grContext?.delete();
+        CanvasKitModule.CanvasKit.deleteContext(this._glContextHandle);
     }
 }

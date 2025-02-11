@@ -7,47 +7,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { CanvasKitModule } from '@/lib/canvaskit';
-import { Renderer } from './renderer/renderer';
-import SNode from './renderer/SNode';
-import { SGraphics } from './renderer/SGraphics';
-import { createNodeFromConfig, SNodeConfig } from './renderer/util';
-import { SScene } from './renderer/SScene';
-import { EventNames } from './common/types';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { CanvasEditor } from './renderer/Editor';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const designSize = { width: 375, height: 667 }; // 设计稿尺寸（示例值）
 const sideSize = 200; // 侧边栏宽度
 
+let editor: CanvasEditor | null = null;
 onMounted(async () => {
     try {
-        await CanvasKitModule.init();
-        const renderer = new Renderer(canvasRef.value!);
-        const canvasSize = {
-            width: window.innerWidth,
-            height: window.innerHeight,
-        };
-
-        // 创建基础布局
-        const scene = new SScene({
-            canvasSize,
-            designSize: { width: 1920, height: 1080 },
-            sideWidth: 200,
-        });
-
-        renderer.on(EventNames.RESIZE, (width, height) => {
-            scene.resizeCanvasSize({ width, height });
-        });
-
-        console.log(scene.rootNode);
-
-        // 添加示例元素
-
-        renderer.render(scene.rootNode);
+        editor = new CanvasEditor(canvasRef.value!);
+        await editor.init();
     } catch (error) {
         console.error('应用启动失败:', error);
     }
+});
+
+onUnmounted(() => {
+    editor?.destroy();
+    editor = null;
 });
 </script>
 

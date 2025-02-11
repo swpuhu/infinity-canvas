@@ -1,3 +1,5 @@
+import SNode from '@/renderer/SNode';
+
 export interface IPoint extends IPointData {
     clone(): IPoint;
     equals(other: IPoint): boolean;
@@ -57,3 +59,70 @@ export type TransformOptions = {
 export namespace EventNames {
     export const RESIZE = 'resize';
 }
+
+export namespace SNodeEvents {
+    export const MOUSE_DOWN = 'mouseDown';
+    export const MOUSE_MOVE = 'mouseMove';
+    export const MOUSE_UP = 'mouseUp';
+
+    export const POINTER_DOWN = 'pointerDown';
+    export const POINTER_MOVE = 'pointerMove';
+    export const POINTER_UP = 'pointerUp';
+
+    export const KEY_DOWN = 'keyDown';
+    export const KEY_UP = 'keyUp';
+
+    export const TOUCH_START = 'touchStart';
+    export const TOUCH_MOVE = 'touchMove';
+    export const TOUCH_END = 'touchEnd';
+    export const TOUCH_CANCEL = 'touchCancel';
+
+    export const WHEEL = 'wheel';
+
+    type MouseEvent = {};
+    export type PointerEvent = {
+        localPosition: IPoint;
+        worldPosition: IPoint;
+        delta: IPoint;
+        target: SNode | null;
+        propagationStopped: boolean;
+    };
+    type TouchEvent = {};
+    type KeyboardEvent = {};
+    type WheelEvent = {};
+
+    export type EventMap = {
+        [SNodeEvents.MOUSE_DOWN]: MouseEvent;
+        [SNodeEvents.MOUSE_MOVE]: MouseEvent;
+        [SNodeEvents.MOUSE_UP]: MouseEvent;
+        [SNodeEvents.POINTER_DOWN]: PointerEvent;
+        [SNodeEvents.POINTER_MOVE]: PointerEvent;
+        [SNodeEvents.POINTER_UP]: PointerEvent;
+        [SNodeEvents.KEY_DOWN]: KeyboardEvent;
+        [SNodeEvents.KEY_UP]: KeyboardEvent;
+        [SNodeEvents.TOUCH_START]: TouchEvent;
+        [SNodeEvents.TOUCH_MOVE]: TouchEvent;
+        [SNodeEvents.TOUCH_END]: TouchEvent;
+        [SNodeEvents.TOUCH_CANCEL]: TouchEvent;
+        [SNodeEvents.WHEEL]: WheelEvent;
+    };
+
+    export type EventHandler<T extends keyof EventMap> = (
+        event: EventMap[T]
+    ) => void;
+}
+
+export const ALL_EVENT_NAMES: (keyof SNodeEvents.EventMap)[] = [
+    SNodeEvents.MOUSE_DOWN,
+    SNodeEvents.MOUSE_MOVE,
+    SNodeEvents.MOUSE_UP,
+    SNodeEvents.POINTER_DOWN,
+    SNodeEvents.POINTER_MOVE,
+    SNodeEvents.POINTER_UP,
+    SNodeEvents.KEY_DOWN,
+    SNodeEvents.KEY_UP,
+    SNodeEvents.TOUCH_START,
+    SNodeEvents.TOUCH_MOVE,
+    SNodeEvents.TOUCH_END,
+    SNodeEvents.TOUCH_CANCEL,
+];

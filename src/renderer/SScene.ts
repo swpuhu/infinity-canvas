@@ -1,4 +1,4 @@
-import { ISize, SceneOptions } from '@/common/types';
+import { ISize, SceneOptions, SNodeEvents } from '@/common/types';
 import SNode from './SNode';
 import { createNodeFromConfig, IRefSNode, refSNode } from './util';
 import { Vec2 } from '@/common/Vec2';
@@ -31,6 +31,7 @@ export class SScene {
         this.leftSideRef = refSNode();
         this.rightSideRef = refSNode();
 
+        const testBlockRef = refSNode();
         this.rootNode = createNodeFromConfig({
             name: 'root',
             type: 'container',
@@ -54,7 +55,7 @@ export class SScene {
                         fill: 0xffffff,
                         shadow: {
                             color: 0xaaaaaa,
-                            blur: 20,
+                            blur: 10,
                         },
                     },
                     transform: {
@@ -66,10 +67,13 @@ export class SScene {
                         {
                             type: 'rect',
                             name: 'test-block',
+                            ref: testBlockRef,
                             props: {
                                 width: 200,
                                 height: 200,
                             },
+                            width: 200,
+                            height: 200,
                             transform: {
                                 position: new Vec2(960, 0),
                             },
@@ -123,6 +127,10 @@ export class SScene {
                 },
             ],
         });
+    }
+
+    public getCanvasNode(): SNode {
+        return this.virtualCanvasRef.value!;
     }
 
     private getVirtualCanvasScale(): Vec2 {
