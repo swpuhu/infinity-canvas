@@ -49,6 +49,7 @@ export class SScene {
                         width: this.option.designSize.width,
                         height: this.option.designSize.height,
                     },
+                    needClip: true,
                     style: {
                         fill: 0xffffff,
                         shadow: {
@@ -64,6 +65,7 @@ export class SScene {
                     children: [
                         {
                             type: 'rect',
+                            name: 'test-block',
                             props: {
                                 width: 200,
                                 height: 200,

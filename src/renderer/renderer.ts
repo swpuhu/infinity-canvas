@@ -1,4 +1,4 @@
-import type { GrDirectContext, Surface } from 'canvaskit-wasm';
+import type { Canvas, GrDirectContext, Surface } from 'canvaskit-wasm';
 
 import SNode from './SNode';
 import { CanvasKitModule } from '@/lib/canvaskit';
@@ -11,14 +11,14 @@ export class Renderer extends EventEmitter {
 
     private grContext: GrDirectContext | null = null;
 
-    private _canvas: HTMLCanvasElement;
+    private _canvasElement: HTMLCanvasElement;
     private resizeObserver: ResizeObserver;
 
     private _currentRenderNode: SNode | null = null;
 
     constructor(canvas: HTMLCanvasElement) {
         super();
-        this._canvas = canvas;
+        this._canvasElement = canvas;
         const glContextHandle =
             CanvasKitModule.CanvasKit.GetWebGLContext(canvas);
 
@@ -48,7 +48,7 @@ export class Renderer extends EventEmitter {
     }
 
     public resizeSurface(width: number, height: number) {
-        const canvas = this._canvas;
+        const canvas = this._canvasElement;
 
         canvas.width = width * devicePixelRatio;
         canvas.height = height * devicePixelRatio;
@@ -88,6 +88,10 @@ export class Renderer extends EventEmitter {
         afterVisit && afterVisit(node);
     }
 
+    public getCanvas(): Canvas {
+        return this.surface?.getCanvas() as Canvas;
+    }
+
     public render(node?: SNode) {
         if (!this.surface) {
             return;
@@ -104,23 +108,36 @@ export class Renderer extends EventEmitter {
 
         const canvas = this.surface.getCanvas();
         canvas.clear([0, 0, 0, 0]);
+
         this.visitNode(
             this._currentRenderNode,
             node => {
                 const renderComp = node.getRenderComps();
-                canvas.translate(node.position.x, node.position.y);
-                canvas.rotate(angleToRadians(node.rotation), 0, 0);
-                canvas.scale(node.scale.x, node.scale.y);
                 if (renderComp) {
                     renderComp.forEach(comp => {
                         comp.draw(canvas);
                     });
+                    if (node.needClip) {
+                        canvas.clipRect(
+                            [
+                                -node.width * node.anchor.x,
+                                -node.height * node.anchor.y,
+                                node.width * (1 - node.anchor.x),
+                                node.height * (1 - node.anchor.y),
+                            ],
+                            CanvasKitModule.CanvasKit.ClipOp.Intersect,
+                            true
+                        );
+                    }
                 }
             },
-            _node => {
+            node => {
                 canvas.save();
+                canvas.translate(node.position.x, node.position.y);
+                canvas.rotate(angleToRadians(node.rotation), 0, 0);
+                canvas.scale(node.scale.x, node.scale.y);
             },
-            _node => {
+            node => {
                 canvas.restore();
             }
         );

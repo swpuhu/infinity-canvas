@@ -6,7 +6,6 @@ import { FillOptions, ShadowOptions, StrokeOptions } from '@/common/types';
 import { Vec2 } from '@/common/Vec2';
 
 export class SGraphics extends SRenderComponent {
-    private _clipPath: Path | null = null;
     private _paths: Path[] = [];
     private _pathStyleMap: Map<Path, Paint> = new Map();
 
@@ -143,15 +142,6 @@ export class SGraphics extends SRenderComponent {
     }
 
     public draw(canvas: Canvas): void {
-        if (this._clipPath) {
-            canvas.save();
-            canvas.clipPath(
-                this._clipPath,
-                CanvasKitModule.CanvasKit.ClipOp.Intersect,
-                true
-            );
-        }
-
         for (let i = 0; i < this._paths.length; i++) {
             const path = this._paths[i];
             const shadowOptions = this._shadowOptionsMap.get(path);
@@ -170,10 +160,6 @@ export class SGraphics extends SRenderComponent {
             }
             const paint = this.getCorrespondPaint(path);
             canvas.drawPath(path, paint);
-        }
-
-        if (this._clipPath) {
-            canvas.restore();
         }
     }
 
@@ -205,26 +191,10 @@ export class SGraphics extends SRenderComponent {
         return path;
     }
 
-    /**
-     * 设置裁剪遮罩
-     * @param path 用作遮罩的路径
-     */
-    public clip(path: Path): void {
-        this._clipPath = path;
-    }
-
-    /**
-     * 清除裁剪遮罩
-     */
-    public clearClip(): void {
-        this._clipPath = null;
-    }
-
     public clear(): void {
         this._paths.length = 0;
         this._pathStyleMap.clear();
         this._currentPaint = null;
         this._currentPath = null;
-        this._clipPath = null;
     }
 }

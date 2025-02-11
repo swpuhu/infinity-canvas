@@ -23,6 +23,8 @@ class SNode extends EventEmitter {
 
     private _renderComps: SRenderComponent[] = [];
 
+    public needClip: boolean = false;
+
     public uuid = createUUID();
 
     public name = '';

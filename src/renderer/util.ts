@@ -12,6 +12,7 @@ export type SNodeConfig = {
     width?: number;
     height?: number;
     ref?: IRefSNode;
+    needClip?: boolean;
 };
 
 const nodeNameRefMap = new Map<string, SNode>();
@@ -49,6 +50,10 @@ function createNodeRecursive(config: SNodeConfig): SNode {
     }
     if (config.height) {
         node.height = config.height;
+    }
+
+    if (config.needClip) {
+        node.needClip = config.needClip;
     }
 
     // 解析图形属性
