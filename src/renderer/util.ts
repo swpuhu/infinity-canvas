@@ -1,39 +1,23 @@
-import { IPointData, TransformOptions } from '@/common/types';
+import { IPointData, SNodeConfig, TransformOptions } from '@/common/types';
 import { SGraphics } from './SGraphics';
 import SNode from './SNode';
-
-export type SNodeConfig = {
-    type: 'rect' | 'container';
-    transform?: TransformOptions;
-    props?: Record<string, any>;
-    style?: Record<string, any>;
-    children?: SNodeConfig[];
-    name?: string;
-    width?: number;
-    height?: number;
-    ref?: IRefSNode;
-    needClip?: boolean;
-};
+import { SSprite } from './SSprite';
 
 const nodeNameRefMap = new Map<string, SNode>();
 
-export interface IRefSNode {
-    value: SNode | undefined;
-}
-
-export function refSNode(v?: SNode): IRefSNode {
+export function refSNode(v?: SNode): SNodeConfig.IRefSNode {
     const ref = {
         value: v,
     };
     return ref;
 }
 
-export function createNodeFromConfig(config: SNodeConfig): SNode {
+export function createNodeFromConfig(config: SNodeConfig.Config): SNode {
     nodeNameRefMap.clear();
     return createNodeRecursive(config);
 }
 
-function createNodeRecursive(config: SNodeConfig): SNode {
+function createNodeRecursive(config: SNodeConfig.Config): SNode {
     const node = new SNode();
     if (config.ref) {
         config.ref.value = node;
@@ -57,21 +41,31 @@ function createNodeRecursive(config: SNodeConfig): SNode {
     }
 
     // 解析图形属性
-    if (config.type === 'rect') {
+    if (config.type === SNodeConfig.NodeType.RECT) {
+        const rectConfig = config as SNodeConfig.RectConfig;
         const graphics = new SGraphics();
         node.addRenderComps(graphics);
         graphics.rect(
-            config.props?.x || 0,
-            config.props?.y || 0,
-            config.props?.width || 100,
-            config.props?.height || 100
+            rectConfig.props.x || 0,
+            rectConfig.props.y || 0,
+            rectConfig.props.width || 100,
+            rectConfig.props.height || 100
         );
-        if (config.style?.fill) {
-            graphics.fill({ color: config.style.fill });
+        let alpha = 1;
+        if (rectConfig.style?.alpha) {
+            alpha = rectConfig.style.alpha;
         }
-        if (config.style?.shadow) {
-            graphics.shadow(config.style.shadow);
+        if (rectConfig.style?.fill) {
+            graphics.fill({ color: rectConfig.style.fill, alpha });
         }
+        if (rectConfig.style?.shadow) {
+            graphics.shadow(rectConfig.style.shadow);
+        }
+    } else if (config.type === SNodeConfig.NodeType.SPRITE) {
+        const spriteConfig = config as SNodeConfig.SpriteConfig;
+        const sprite = new SSprite();
+        node.addRenderComps(sprite);
+        sprite.setImageByUrl(spriteConfig.props.url || '');
     }
 
     // 处理子元素

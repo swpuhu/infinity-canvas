@@ -1,6 +1,6 @@
-import { ISize, SceneOptions, SNodeEvents } from '@/common/types';
+import { ISize, SceneOptions, SNodeConfig } from '@/common/types';
 import SNode from './SNode';
-import { createNodeFromConfig, IRefSNode, refSNode } from './util';
+import { createNodeFromConfig, refSNode } from './util';
 import { Vec2 } from '@/common/Vec2';
 
 export class SScene {
@@ -8,13 +8,17 @@ export class SScene {
 
     private availableSize: ISize;
 
-    private virtualCanvasRef: IRefSNode;
+    private virtualCanvasRef: SNodeConfig.IRefSNode;
 
-    private leftSideRef: IRefSNode;
+    private leftSideRef: SNodeConfig.IRefSNode;
 
-    private rightSideRef: IRefSNode;
+    private rightSideRef: SNodeConfig.IRefSNode;
 
     private option: SceneOptions;
+
+    get stage(): SNode {
+        return this.virtualCanvasRef.value!;
+    }
 
     constructor(option: SceneOptions) {
         console.log('option', option);
@@ -34,7 +38,7 @@ export class SScene {
         const testBlockRef = refSNode();
         this.rootNode = createNodeFromConfig({
             name: 'root',
-            type: 'container',
+            type: SNodeConfig.NodeType.CONTAINER,
             transform: {
                 position: new Vec2(
                     option.canvasSize.width / 2,
@@ -44,7 +48,7 @@ export class SScene {
             children: [
                 {
                     name: 'virtualCanvas',
-                    type: 'rect',
+                    type: SNodeConfig.NodeType.RECT,
                     ref: this.virtualCanvasRef,
                     props: {
                         width: this.option.designSize.width,
@@ -52,7 +56,7 @@ export class SScene {
                     },
                     needClip: true,
                     style: {
-                        fill: 0xffffff,
+                        fill: 0xcccccc,
                         shadow: {
                             color: 0xaaaaaa,
                             blur: 10,
@@ -65,7 +69,7 @@ export class SScene {
                     height: this.option.designSize.height,
                     children: [
                         {
-                            type: 'rect',
+                            type: SNodeConfig.NodeType.RECT,
                             name: 'test-block',
                             ref: testBlockRef,
                             props: {
@@ -75,7 +79,10 @@ export class SScene {
                             width: 200,
                             height: 200,
                             transform: {
-                                position: new Vec2(960, 0),
+                                position: new Vec2(
+                                    option.designSize.width / 3,
+                                    0
+                                ),
                             },
                             style: {
                                 fill: 0xffbb00,
@@ -85,7 +92,7 @@ export class SScene {
                 },
                 {
                     name: 'left-side',
-                    type: 'rect',
+                    type: SNodeConfig.NodeType.RECT,
                     ref: this.leftSideRef,
                     props: {
                         width: this.option.sideWidth,
@@ -106,7 +113,7 @@ export class SScene {
                 },
                 {
                     name: 'right-side',
-                    type: 'rect',
+                    type: SNodeConfig.NodeType.RECT,
                     ref: this.rightSideRef,
                     props: {
                         width: this.option.sideWidth,

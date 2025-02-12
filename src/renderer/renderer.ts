@@ -7,9 +7,10 @@ import type {
 
 import SNode from './SNode';
 import { CanvasKitModule } from '@/lib/canvaskit';
-import { angleToRadians } from '@/common/util';
+import { angleToRadians, loadImage } from '@/common/util';
 import EventEmitter from 'eventemitter3';
 import { EventNames } from '@/common/types';
+import eventBus from '@/common/eventBus';
 
 export class Renderer extends EventEmitter {
     private surface: Surface | null = null;
@@ -21,6 +22,8 @@ export class Renderer extends EventEmitter {
 
     private _currentRenderNode: SNode | null = null;
     private _glContextHandle: WebGLContextHandle;
+
+    private needRedraw = false;
 
     constructor(canvas: HTMLCanvasElement) {
         super();
@@ -52,7 +55,22 @@ export class Renderer extends EventEmitter {
             }
         });
         this.resizeObserver.observe(canvas);
+        this.startCheckRedraw();
+
+        eventBus.onReDraw(this.reDraw);
     }
+
+    private reDraw = () => {
+        this.needRedraw = true;
+    };
+
+    private startCheckRedraw = () => {
+        if (this.needRedraw) {
+            this.render();
+            this.needRedraw = false;
+        }
+        requestAnimationFrame(this.startCheckRedraw);
+    };
 
     public resizeSurface(width: number, height: number) {
         const canvas = this._canvasElement;
@@ -100,6 +118,7 @@ export class Renderer extends EventEmitter {
     }
 
     public render(node?: SNode) {
+        console.time('render');
         if (!this.surface) {
             return;
         }
@@ -146,7 +165,9 @@ export class Renderer extends EventEmitter {
                 canvas.restore();
             }
         );
+
         this.surface.flush();
+        console.timeEnd('render');
     }
 
     public destroy() {
@@ -154,5 +175,6 @@ export class Renderer extends EventEmitter {
         this.surface?.delete();
         this.grContext?.delete();
         CanvasKitModule.CanvasKit.deleteContext(this._glContextHandle);
+        eventBus.offReDraw(this.reDraw);
     }
 }

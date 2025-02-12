@@ -2,7 +2,9 @@ import { CanvasKitModule } from '@/lib/canvaskit';
 import { CanvasEventSystem } from './EventManager';
 import { Renderer } from './renderer';
 import { SScene } from './SScene';
-import { SNodeEvents } from '@/common/types';
+import { EventNames, SNodeConfig, SNodeEvents } from '@/common/types';
+import { createNodeFromConfig } from './util';
+import { loadImage } from '@/common/util';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
@@ -25,21 +27,35 @@ export class CanvasEditor {
             sideWidth: 200,
         });
 
-        const testBlock = scene.rootNode.getNodeByName('test-block');
-        console.log('testBlock', testBlock);
-        if (testBlock) {
-            this.eventSystem.addEventListener(
-                testBlock,
-                SNodeEvents.POINTER_DOWN,
-                () => {
-                    console.log('testBlock pointerdown');
-                }
-            );
-        }
+        const testPic = createNodeFromConfig({
+            type: SNodeConfig.NodeType.SPRITE,
+            props: {
+                url: '/r2.png',
+            },
+            transform: {
+                scale: { x: 5, y: 5 },
+            },
+        });
 
-        // 添加示例元素
+        scene.stage.addChild(testPic);
 
-        this._renderer?.render(scene.rootNode);
+        this._renderer.on(EventNames.RESIZE, (width, height) => {
+            scene.resizeCanvasSize({ width, height });
+        });
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+
+        this._renderer.render(scene.rootNode);
+
+        this.eventSystem.addEventListener(
+            testPic,
+            SNodeEvents.POINTER_DOWN,
+            (e: SNodeEvents.PointerEvent) => {
+                console.log(e);
+            }
+        );
+
+        // console.log(img.width);
     }
 
     get eventSystem() {
@@ -52,5 +68,6 @@ export class CanvasEditor {
     destroy() {
         this._renderer?.destroy();
         this._eventSystem?.destroy();
+        CanvasKitModule.destroy();
     }
 }

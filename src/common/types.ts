@@ -60,6 +60,67 @@ export namespace EventNames {
     export const RESIZE = 'resize';
 }
 
+export namespace SNodeConfig {
+    export interface IRefSNode {
+        value: SNode | undefined;
+    }
+
+    export enum NodeType {
+        RECT = 'rect',
+        CONTAINER = 'container',
+        SPRITE = 'sprite',
+    }
+
+    export type SGraphicsPropsConfig = {
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+    };
+
+    export type SSpritePropsConfig = {
+        url?: string;
+    };
+
+    export type SGraphicsStyleConfig = {
+        fill?: number | number[];
+        shadow?: ShadowOptions;
+        alpha?: number;
+    };
+
+    export type BaseConfig = {
+        type: NodeType;
+        name?: string;
+        width?: number;
+        height?: number;
+        ref?: IRefSNode;
+        needClip?: boolean;
+        children?: (BaseConfig | RectConfig)[];
+        transform?: TransformOptions;
+    };
+
+    export type ContainerConfig = BaseConfig;
+
+    export type RectConfig = BaseConfig & {
+        type: NodeType.RECT;
+        props: SGraphicsPropsConfig;
+        style: SGraphicsStyleConfig;
+    };
+
+    export type SpriteConfig = BaseConfig & {
+        type: NodeType.SPRITE;
+        props: SSpritePropsConfig;
+    };
+
+    export type NodeTypeMap = {
+        [NodeType.RECT]: RectConfig;
+        [NodeType.CONTAINER]: ContainerConfig;
+        [NodeType.SPRITE]: SpriteConfig;
+    };
+
+    export type Config = NodeTypeMap[keyof NodeTypeMap];
+}
+
 export namespace SNodeEvents {
     export const MOUSE_DOWN = 'mouseDown';
     export const MOUSE_MOVE = 'mouseMove';

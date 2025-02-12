@@ -28,6 +28,12 @@ export function safeColor(color: number | number[]): Float32Array {
     return new Float32Array([0, 0, 0, 255]);
 }
 
+export function loadImageArrayBuffer(src: string): Promise<Uint8Array> {
+    return fetch(src)
+        .then(res => res.arrayBuffer())
+        .then(buffer => new Uint8Array(buffer));
+}
+
 export function loadImage(src: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
         const img = new Image();

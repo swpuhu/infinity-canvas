@@ -10,9 +10,9 @@ import EventEmitter from 'eventemitter3';
 class SNode extends EventEmitter {
     private _children: SNode[] = [];
     private _parent: SNode | null = null;
-    private _position: IPoint = new Vec2(0, 0);
-    private _scale: IPoint = new Vec2(1, 1);
-    private _anchor: IPoint = new Vec2(0.5, 0.5);
+    private _position: IPoint = new Vec2(0, 0, this.updateWorldMatrix);
+    private _scale: IPoint = new Vec2(1, 1, this.updateWorldMatrix);
+    private _anchor: IPoint = new Vec2(0.5, 0.5, this.updateWorldMatrix);
     private _rotation: number = 0;
     private _localMatrix: mat3 = mat3.create();
     private _worldMatrix: mat3 = mat3.create();
@@ -269,19 +269,6 @@ class SNode extends EventEmitter {
                 : new Vec2(options.anchor?.x || 0.5, options.anchor?.y || 0.5);
 
         this.updateWorldMatrix();
-    }
-
-    public clone(): SNode {
-        const node = new SNode();
-        node.name = this.name;
-        node.position = this.position.clone();
-        node.scale = this.scale.clone();
-        node.rotation = this.rotation;
-        node._anchor = this._anchor.clone();
-        node.visible = this.visible;
-        node.metadata = this.metadata;
-        node._children = this.children.map(child => child.clone());
-        return node;
     }
 
     public hitTest(worldX: number, worldY: number): boolean {

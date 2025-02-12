@@ -1,0 +1,78 @@
+import { Canvas, Image } from 'canvaskit-wasm';
+import { SRenderComponent } from './SRenderComponent';
+import { loadImage, loadImageArrayBuffer } from '@/common/util';
+import { CanvasKitModule } from '@/lib/canvaskit';
+import eventBus from '@/common/eventBus';
+
+enum EnumResizeMode {
+    RAW = 'raw',
+    CUSTOM = 'custom',
+}
+
+export class SSprite extends SRenderComponent {
+    public static ResizeMode: {
+        RAW: EnumResizeMode.RAW;
+        CUSTOM: EnumResizeMode.CUSTOM;
+    } = {
+        RAW: EnumResizeMode.RAW,
+        CUSTOM: EnumResizeMode.CUSTOM,
+    };
+    private _img: Image | null = null;
+
+    public resizeMode: EnumResizeMode = SSprite.ResizeMode.RAW;
+    protected onCreated(): void {}
+
+    public async setImageByUrl(src?: string): Promise<void> {
+        if (!src) {
+            return;
+        }
+        const imgBuffer = await loadImageArrayBuffer(src);
+        this.setImage(imgBuffer);
+        eventBus.reDraw();
+    }
+
+    public setImage(imgBuffer: Uint8Array): void {
+        CanvasKitModule.CanvasKit.MakeImageFromCanvasImageSource;
+        this._img = CanvasKitModule.CanvasKit.MakeImageFromEncoded(imgBuffer);
+        console.log(
+            'alphaType Opaque: ',
+            CanvasKitModule.CanvasKit.AlphaType.Opaque
+        );
+        console.log(
+            'alphaType Unpremul: ',
+            CanvasKitModule.CanvasKit.AlphaType.Unpremul
+        );
+        console.log(
+            'alphaType Premul: ',
+            CanvasKitModule.CanvasKit.AlphaType.Premul
+        );
+
+        console.log(this._img?.getImageInfo().alphaType);
+
+        if (!this._img) {
+            throw new Error('Failed to load image');
+        }
+        if (this.resizeMode === SSprite.ResizeMode.RAW) {
+            this.node!.width = this._img.width();
+            this.node!.height = this._img.height();
+        }
+    }
+    public draw(canvas: Canvas): void {
+        if (this._img) {
+            const node = this.node;
+            if (!node) {
+                return;
+            }
+            const spritePaint = CanvasKitModule.getSpritePaint();
+
+            canvas.drawImageOptions(
+                this._img,
+                -node.width * 0.5,
+                -node.height * 0.5,
+                CanvasKitModule.CanvasKit.FilterMode.Linear,
+                CanvasKitModule.CanvasKit.MipmapMode.Linear,
+                spritePaint
+            );
+        }
+    }
+}
