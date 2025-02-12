@@ -4,7 +4,7 @@ export class Vec2 implements IPoint {
     public x: number;
     public y: number;
 
-    constructor(x: number = 0, y: number = 0, public updateFunc?: () => void) {
+    constructor(x: number = 0, y: number = 0, public observeFunc?: () => void) {
         this.x = x;
         this.y = y;
     }
@@ -20,7 +20,7 @@ export class Vec2 implements IPoint {
     set(x: number, y: number): void {
         this.x = x;
         this.y = y;
-        this.updateFunc && this.updateFunc();
+        this.observeFunc && this.observeFunc();
     }
 
     dot(other: Vec2): number {

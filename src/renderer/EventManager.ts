@@ -2,6 +2,27 @@ import { ALL_EVENT_NAMES, SNodeEvents } from '@/common/types';
 import SNode from './SNode';
 import { Vec2 } from '@/common/Vec2';
 import { Renderer } from './renderer';
+import { Point } from 'canvaskit-wasm';
+
+const setPointerEvent = (
+    event: PointerEvent,
+    sEvent: SNodeEvents.PointerEvent,
+    targetNode: SNode
+) => {
+    const offset = new Vec2(event.offsetX, event.offsetY);
+    sEvent.worldPosition.set(offset.x, offset.y);
+    const localPos = targetNode.toLocal(sEvent.worldPosition);
+    sEvent.localPosition.set(localPos[0], localPos[1]);
+    sEvent.target = targetNode;
+    sEvent.propagationStopped = false;
+};
+
+const clearPointerEvent = (sEvent: SNodeEvents.PointerEvent) => {
+    sEvent.target = null;
+    sEvent.propagationStopped = false;
+    sEvent.localPosition.set(0, 0);
+    sEvent.worldPosition.set(0, 0);
+};
 
 export class CanvasEventSystem {
     private canvas: HTMLCanvasElement;
@@ -35,23 +56,43 @@ export class CanvasEventSystem {
             target: null,
             propagationStopped: false,
         };
+
         this.canvas.addEventListener('pointerdown', event => {
             const offset = new Vec2(event.offsetX, event.offsetY);
             const pointerEventNodes =
                 this._nodeListenerMap.get(SNodeEvents.POINTER_DOWN) || [];
 
-            pointerEvent.worldPosition.set(offset.x, offset.y);
             pointerEventNodes.forEach(node => {
                 const isHit = this.hitTest(offset.x, offset.y, node);
                 if (isHit) {
-                    const localPos = node.toLocal(pointerEvent.worldPosition);
-                    pointerEvent.localPosition.set(localPos[0], localPos[1]);
-                    pointerEvent.target = node;
+                    setPointerEvent(event, pointerEvent, node);
                     this.dispatchEvent(node, pointerEvent);
                     node.emit(SNodeEvents.POINTER_DOWN, pointerEvent);
                     this.renderer.render();
                 }
             });
+        });
+
+        this.canvas.addEventListener('pointermove', event => {
+            const offset = new Vec2(event.offsetX, event.offsetY);
+            const pointerEventNodes =
+                this._nodeListenerMap.get(SNodeEvents.POINTER_MOVE) || [];
+
+            pointerEventNodes.forEach(node => {
+                const isHit = this.hitTest(offset.x, offset.y, node);
+                if (isHit) {
+                    setPointerEvent(event, pointerEvent, node);
+                    node.emit(SNodeEvents.POINTER_MOVE, pointerEvent);
+                    this.renderer.render();
+                }
+            });
+        });
+
+        this.canvas.addEventListener('pointerup', event => {
+            if (pointerEvent.target) {
+                setPointerEvent(event, pointerEvent, pointerEvent.target);
+                pointerEvent.target.emit(SNodeEvents.POINTER_UP, pointerEvent);
+            }
         });
     }
 

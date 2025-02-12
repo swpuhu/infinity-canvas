@@ -4,7 +4,7 @@ export interface IPoint extends IPointData {
     clone(): IPoint;
     equals(other: IPoint): boolean;
     set(x: number, y: number): void;
-    updateFunc?: () => void;
+    observeFunc?: () => void;
 }
 
 export interface IPointData {

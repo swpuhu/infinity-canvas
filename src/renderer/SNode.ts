@@ -110,7 +110,7 @@ class SNode extends EventEmitter {
     }
 
     public set position(value: IPoint) {
-        value.updateFunc = this.updateWorldMatrix;
+        value.observeFunc = this.updateWorldMatrix;
         this._position = value;
         this.updateWorldMatrix();
     }
@@ -132,12 +132,12 @@ class SNode extends EventEmitter {
     }
 
     public set anchor(value: IPoint) {
-        value.updateFunc = this.updateWorldMatrix;
+        value.observeFunc = this.updateWorldMatrix;
         this._anchor = value;
     }
 
     public set scale(value: IPoint) {
-        value.updateFunc = this.updateWorldMatrix;
+        value.observeFunc = this.updateWorldMatrix;
         this._scale = value;
         this.updateWorldMatrix();
     }
