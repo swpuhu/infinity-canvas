@@ -1,4 +1,9 @@
-import { EventNames, SNodeConfig, SNodeEvents } from '@/common/types';
+import {
+    EventNames,
+    IPointData,
+    SNodeConfig,
+    SNodeEvents,
+} from '@/common/types';
 import SNode from '../SNode';
 import { createNodeFromConfig, refSNode } from '../util';
 import { Vec2 } from '@/common/Vec2';
@@ -48,8 +53,44 @@ export class ResizeGizmo {
 
     private _createHandler(): void {
         const globalScale = this._scene.getVirtualCanvasScale();
-        const handlerWidth = RESIZE_GIZMO_SIZE / globalScale.x;
-        const handlerHeight = RESIZE_GIZMO_SIZE / globalScale.y;
+        const handlerSize = {
+            width: RESIZE_GIZMO_SIZE / globalScale.x,
+            height: RESIZE_GIZMO_SIZE / globalScale.y,
+        };
+
+        // 通用样式配置
+        const commonStyle = { fill: RESIZE_GIZMO_COLOR };
+        const commonRectConfig = (
+            name: string,
+            ref: SNodeConfig.IRefSNode
+        ) => ({
+            name,
+            type: SNodeConfig.NodeType.RECT,
+            ref,
+            ...handlerSize,
+            style: commonStyle,
+        });
+
+        // 创建控制点
+        const controlPoints = [
+            { name: 'left-bottom', ref: this._lbNodeRef },
+            { name: 'left-top', ref: this._ltNodeRef },
+            { name: 'right-bottom', ref: this._rbNodeRef },
+            { name: 'right-top', ref: this._rtNodeRef },
+        ];
+
+        // 创建连接线
+        const createLine = (
+            name: string,
+            ref: SNodeConfig.IRefSNode,
+            anchor: IPointData
+        ) => ({
+            name,
+            type: SNodeConfig.NodeType.RECT,
+            ref,
+            style: commonStyle,
+            transform: { anchor },
+        });
 
         this._root = createNodeFromConfig({
             name: 'resize-gizmo',
@@ -59,120 +100,36 @@ export class ResizeGizmo {
                     name: 'lines',
                     type: SNodeConfig.NodeType.CONTAINER,
                     children: [
-                        {
-                            name: 'left-line',
-                            type: SNodeConfig.NodeType.RECT,
-                            ref: this._leftLineRef,
-                            transform: {
-                                anchor: {
-                                    x: 0.5,
-                                    y: 0,
-                                },
-                            },
-                            style: {
-                                fill: RESIZE_GIZMO_COLOR,
-                            },
-                        },
-                        {
-                            name: 'right-line',
-                            type: SNodeConfig.NodeType.RECT,
-                            ref: this._rightLineRef,
-                            transform: {
-                                anchor: {
-                                    x: 0.5,
-                                    y: 1,
-                                },
-                            },
-                            style: {
-                                fill: RESIZE_GIZMO_COLOR,
-                            },
-                        },
-                        {
-                            name: 'top-line',
-                            type: SNodeConfig.NodeType.RECT,
-                            ref: this._topLineRef,
-                            transform: {
-                                anchor: {
-                                    x: 1,
-                                    y: 0.5,
-                                },
-                            },
-                            style: {
-                                fill: RESIZE_GIZMO_COLOR,
-                            },
-                        },
-                        {
-                            name: 'bottom-line',
-                            type: SNodeConfig.NodeType.RECT,
-                            ref: this._bottomLineRef,
-                            transform: {
-                                anchor: {
-                                    x: 0,
-                                    y: 0.5,
-                                },
-                            },
-                            style: {
-                                fill: RESIZE_GIZMO_COLOR,
-                            },
-                        },
+                        createLine('left-line', this._leftLineRef, {
+                            x: 0.5,
+                            y: 0,
+                        }),
+                        createLine('right-line', this._rightLineRef, {
+                            x: 0.5,
+                            y: 1,
+                        }),
+                        createLine('top-line', this._topLineRef, {
+                            x: 1,
+                            y: 0.5,
+                        }),
+                        createLine('bottom-line', this._bottomLineRef, {
+                            x: 0,
+                            y: 0.5,
+                        }),
                     ],
                 },
                 {
                     name: 'resize-points',
                     type: SNodeConfig.NodeType.CONTAINER,
-                    children: [
-                        {
-                            name: 'left-bottom',
-                            type: SNodeConfig.NodeType.RECT,
-                            ref: this._lbNodeRef,
-                            width: handlerWidth,
-                            height: handlerHeight,
-                            style: {
-                                fill: RESIZE_GIZMO_COLOR,
-                            },
-                        },
-                        {
-                            name: 'left-top',
-                            type: SNodeConfig.NodeType.RECT,
-                            ref: this._ltNodeRef,
-                            width: handlerWidth,
-                            height: handlerHeight,
-                            style: {
-                                fill: RESIZE_GIZMO_COLOR,
-                            },
-                        },
-                        {
-                            name: 'right-bottom',
-                            type: SNodeConfig.NodeType.RECT,
-                            ref: this._rbNodeRef,
-                            width: handlerWidth,
-                            height: handlerHeight,
-                            style: {
-                                fill: RESIZE_GIZMO_COLOR,
-                            },
-                        },
-                        {
-                            name: 'right-top',
-                            type: SNodeConfig.NodeType.RECT,
-                            ref: this._rtNodeRef,
-                            width: handlerWidth,
-                            height: handlerHeight,
-                            style: {
-                                fill: RESIZE_GIZMO_COLOR,
-                            },
-                        },
-                    ],
+                    children: controlPoints.map(p =>
+                        commonRectConfig(p.name, p.ref)
+                    ),
                 },
             ],
         });
 
-        this.resizeHandlerNodes = [
-            this._lbNodeRef.value!,
-            this._ltNodeRef.value!,
-            this._rbNodeRef.value!,
-            this._rtNodeRef.value!,
-        ];
-
+        // 收集引用节点
+        this.resizeHandlerNodes = controlPoints.map(p => p.ref.value!);
         this._lineNodes = [
             this._leftLineRef.value!,
             this._rightLineRef.value!,
