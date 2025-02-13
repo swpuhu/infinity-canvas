@@ -144,7 +144,7 @@ export namespace SNodeEvents {
 
     type Event = {
         target: SNode | null;
-        swallow: boolean;
+        stopPropagation: boolean;
     };
 
     type MouseEvent = {};

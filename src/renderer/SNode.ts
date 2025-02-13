@@ -312,6 +312,14 @@ class SNode extends EventEmitter {
     }
 
     public hitTest(worldX: number, worldY: number): boolean {
+        if (!this.visible) {
+            return false;
+        }
+
+        if (this.width === 0 || this.height === 0) {
+            return false;
+        }
+
         const [l, b, r, t] = this.getLocalRect();
         const localPos = this.toLocal({ x: worldX, y: worldY });
         if (

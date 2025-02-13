@@ -19,7 +19,6 @@ const clearPointerEvent = (sEvent: SNodeEvents.PointerEvent) => {
     sEvent.target = null;
     sEvent.localPosition.set(0, 0);
     sEvent.worldPosition.set(0, 0);
-    sEvent.swallow = false;
 };
 
 const createPointerEvent = (): SNodeEvents.PointerEvent => {
@@ -28,7 +27,7 @@ const createPointerEvent = (): SNodeEvents.PointerEvent => {
         worldPosition: new Vec2(0, 0),
         delta: new Vec2(0, 0),
         target: null,
-        swallow: false,
+        stopPropagation: false,
     };
 };
 

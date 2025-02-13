@@ -32,6 +32,10 @@ export class ResizeGizmo {
     private _topLineRef: SNodeConfig.IRefSNode = refSNode();
     private _bottomLineRef: SNodeConfig.IRefSNode = refSNode();
 
+    private _resizeStartPos: Vec2 = new Vec2(0, 0);
+
+    private _currentNode: SNode | null = null;
+
     private resizeHandlerNodes: SNode[] = [];
 
     private _lineNodes: SNode[] = [];
@@ -159,11 +163,7 @@ export class ResizeGizmo {
     }
 
     private _onResizePointerDown = (event: SNodeEvents.PointerEvent): void => {
-        const node = event.target;
-        if (!node) {
-            return;
-        }
-        console.log('onResizePointerDown', node.name);
+        // console.log('onResizePointerDown', node.name);
     };
 
     private _onResizePointerMove = (event: SNodeEvents.PointerEvent): void => {
@@ -181,10 +181,13 @@ export class ResizeGizmo {
         }
     };
 
-    public attachToNode(node: SNode): void {
+    public mountToNode(node: SNode): void {
         if (!this._root) {
             return;
         }
+        this._currentNode = node;
+        this._root.visible = true;
+
         const nodeMat = node.getWorldMatrix();
         this._root.width = node.width;
         this._root.height = node.height;
@@ -227,5 +230,10 @@ export class ResizeGizmo {
 
         // this._root.rotation = node.rotation;
         // this._root.position.set(node.position.x, node.position.y);
+    }
+
+    public unMount(): void {
+        this._currentNode = null;
+        this._root!.visible = false;
     }
 }

@@ -138,6 +138,9 @@ export class Renderer extends EventEmitter {
         this.visitNode(
             this._currentRenderNode,
             node => {
+                if (!node.visible) {
+                    return;
+                }
                 const renderComp = node.getRenderComps();
                 if (renderComp) {
                     renderComp.forEach(comp => {
