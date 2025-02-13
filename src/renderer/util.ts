@@ -54,6 +54,9 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
         if (rectConfig.style?.fill) {
             rect.fill({ color: rectConfig.style.fill, alpha });
         }
+        if (rectConfig.style?.stroke) {
+            rect.stroke({ color: rectConfig.style.stroke, alpha });
+        }
         if (rectConfig.style?.shadow) {
             rect.shadow(rectConfig.style.shadow);
         }

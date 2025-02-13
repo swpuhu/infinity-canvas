@@ -1,9 +1,10 @@
-import { ISize, SceneOptions, SNodeConfig } from '@/common/types';
+import { EventNames, ISize, SceneOptions, SNodeConfig } from '@/common/types';
 import SNode from './SNode';
 import { createNodeFromConfig, refSNode } from './util';
 import { Vec2 } from '@/common/Vec2';
+import EventEmitter from 'eventemitter3';
 
-export class SScene {
+export class SScene extends EventEmitter {
     public rootNode: SNode;
 
     private availableSize: ISize;
@@ -29,6 +30,7 @@ export class SScene {
     }
 
     constructor(option: SceneOptions) {
+        super();
         console.log('option', option);
         this.option = option;
         this.availableSize = {
@@ -157,7 +159,7 @@ export class SScene {
         return this.virtualCanvasRef.value!;
     }
 
-    private getVirtualCanvasScale(): Vec2 {
+    public getVirtualCanvasScale(): Vec2 {
         // the aspect = width / height
         // virtual canvas size equal to design size
         // if the aspect of virtual canvas is less than the aspect of available area,
@@ -205,5 +207,7 @@ export class SScene {
         canvasContainer.setTransform({
             scale: virtualCanvasScale,
         });
+
+        this.emit(EventNames.RESIZE, virtualCanvasScale);
     }
 }

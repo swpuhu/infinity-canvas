@@ -84,6 +84,7 @@ export namespace SNodeConfig {
 
     export type SGraphicsStyleConfig = {
         fill?: number | number[];
+        stroke?: number | number[];
         shadow?: ShadowOptions;
         alpha?: number;
     };

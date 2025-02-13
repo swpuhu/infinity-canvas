@@ -40,13 +40,13 @@ export class CanvasEditor {
 
         scene.stage.addChild(testPic);
 
+        const resizeGizmo = new ResizeGizmo(scene);
+
         this._renderer.on(EventNames.RESIZE, (width, height) => {
             scene.resizeCanvasSize({ width, height });
         });
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-
-        new ResizeGizmo(scene);
 
         this._renderer.render(scene.rootNode);
 
@@ -55,6 +55,8 @@ export class CanvasEditor {
             SNodeEvents.POINTER_DOWN,
             (e: SNodeEvents.PointerEvent) => {
                 console.log(e);
+                testPic.rotation = 30;
+                resizeGizmo.attachToNode(testPic);
             }
         );
 

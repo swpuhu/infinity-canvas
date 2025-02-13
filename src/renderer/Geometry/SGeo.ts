@@ -5,11 +5,10 @@ import { FillOptions, ShadowOptions, StrokeOptions } from '@/common/types';
 import { safeColor } from '@/common/util';
 
 export class SGeo extends SRenderComponent {
-    protected paint!: Paint;
+    protected fillPaint!: Paint;
+    protected strokePaint!: Paint;
     protected shadowPaint!: Paint;
-    protected onCreated(): void {
-        this.paint = new CanvasKitModule.CanvasKit.Paint();
-    }
+    protected onCreated(): void {}
 
     private _getShadowPaint(): Paint {
         if (!this.shadowPaint) {
@@ -18,11 +17,36 @@ export class SGeo extends SRenderComponent {
         return this.shadowPaint;
     }
 
+    private _getFillPaint(): Paint {
+        if (!this.fillPaint) {
+            this.fillPaint = new CanvasKitModule.CanvasKit.Paint();
+            this.fillPaint.setStyle(CanvasKitModule.CanvasKit.PaintStyle.Fill);
+            this.fillPaint.setAntiAlias(true);
+        }
+        return this.fillPaint;
+    }
+
+    private _getStrokePaint(): Paint {
+        if (!this.strokePaint) {
+            this.strokePaint = new CanvasKitModule.CanvasKit.Paint();
+            this.strokePaint.setStyle(
+                CanvasKitModule.CanvasKit.PaintStyle.Stroke
+            );
+            this.strokePaint.setAntiAlias(true);
+        }
+        return this.strokePaint;
+    }
+
     public draw(_canvas: Canvas): void {
         if (this.shadowPaint) {
             this.drawShadow(_canvas, this.shadowPaint);
         }
-        this.drawShape(_canvas, this.paint);
+        if (this.fillPaint) {
+            this.drawShape(_canvas, this.fillPaint);
+        }
+        if (this.strokePaint) {
+            this.drawShape(_canvas, this.strokePaint);
+        }
     }
 
     public drawShape(_canvas: Canvas, _paint: Paint): void {}
@@ -30,7 +54,7 @@ export class SGeo extends SRenderComponent {
     public drawShadow(_canvas: Canvas, _paint: Paint): void {}
 
     public fill(options?: FillOptions): void {
-        const paint = this.paint;
+        const paint = this._getFillPaint();
         if (options?.color) {
             const color = safeColor(options.color);
             paint.setColor(color);
@@ -42,7 +66,7 @@ export class SGeo extends SRenderComponent {
     }
 
     public stroke(options?: StrokeOptions): void {
-        const paint = this.paint;
+        const paint = this._getStrokePaint();
         if (options?.color) {
             const color = safeColor(options.color);
             paint.setColor(color);
@@ -65,8 +89,11 @@ export class SGeo extends SRenderComponent {
     }
 
     public destroy(): void {
-        if (this.paint) {
-            this.paint.delete();
+        if (this.fillPaint) {
+            this.fillPaint.delete();
+        }
+        if (this.strokePaint) {
+            this.strokePaint.delete();
         }
         if (this.shadowPaint) {
             this.shadowPaint.delete();

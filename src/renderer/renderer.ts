@@ -51,7 +51,9 @@ export class Renderer extends EventEmitter {
             if (entry) {
                 const { width, height } = entry.contentRect;
                 this.resizeSurface(width, height);
-                this.emit(EventNames.RESIZE, width, height);
+                setTimeout(() => {
+                    this.emit(EventNames.RESIZE, width, height);
+                }, 100);
             }
         });
         this.resizeObserver.observe(canvas);
@@ -158,7 +160,7 @@ export class Renderer extends EventEmitter {
             node => {
                 canvas.save();
                 canvas.translate(node.position.x, node.position.y);
-                canvas.rotate(angleToRadians(node.rotation), 0, 0);
+                canvas.rotate(node.rotation, 0, 0);
                 canvas.scale(node.scale.x, node.scale.y);
             },
             node => {

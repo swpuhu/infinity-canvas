@@ -6,6 +6,7 @@ import { Vec2 } from '@/common/Vec2';
 import { createUUID } from '@/common/uuid';
 import { autobind } from 'core-decorators';
 import EventEmitter from 'eventemitter3';
+import { angleToRadians } from '@/common/util';
 
 class SNode extends EventEmitter {
     private _children: SNode[] = [];
@@ -50,7 +51,11 @@ class SNode extends EventEmitter {
         ]);
 
         // 应用旋转
-        mat3.rotate(this._localMatrix, this._localMatrix, this._rotation);
+        mat3.rotate(
+            this._localMatrix,
+            this._localMatrix,
+            angleToRadians(this._rotation)
+        );
         // 应用缩放
         mat3.scale(this._localMatrix, this._localMatrix, [
             this._scale.x,
@@ -191,6 +196,15 @@ class SNode extends EventEmitter {
             this._width * (1 - this.anchor.x),
             this._height * (1 - this.anchor.y),
         ];
+    }
+
+    public getWorldPoints(): ReadonlyVec2[] {
+        const [l, b, r, t] = this.getLocalRect();
+        const wLB = this.toGlobal([l, b]);
+        const wLT = this.toGlobal([l, t]);
+        const wRB = this.toGlobal([r, b]);
+        const wRT = this.toGlobal([r, t]);
+        return [wLB, wLT, wRB, wRT];
     }
 
     public getWorldRect(): number[] {

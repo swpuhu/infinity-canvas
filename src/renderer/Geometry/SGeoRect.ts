@@ -3,13 +3,13 @@ import { getRectByNode } from '../util';
 import { SGeo } from './SGeo';
 
 export class SGeoRect extends SGeo {
-    public drawShape(_canvas: Canvas, _paint: Paint): void {
+    public drawShape(canvas: Canvas, paint: Paint): void {
         const node = this.node!;
-        _canvas.drawRect(getRectByNode(node), _paint);
+        canvas.drawRect(getRectByNode(node), paint);
     }
 
-    public drawShadow(_canvas: Canvas, _paint: Paint): void {
+    public drawShadow(canvas: Canvas, paint: Paint): void {
         const node = this.node!;
-        _canvas.drawRect(getRectByNode(node), _paint);
+        canvas.drawRect(getRectByNode(node), paint);
     }
 }
