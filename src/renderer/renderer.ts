@@ -131,7 +131,7 @@ export class Renderer extends EventEmitter {
         }
 
         const canvas = this.surface.getCanvas();
-        canvas.clear([0, 0, 0, 0]);
+        canvas.clear([1, 1, 1, 1]);
 
         this.visitNode(
             this._currentRenderNode,

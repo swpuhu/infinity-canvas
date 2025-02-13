@@ -8,4 +8,6 @@ export abstract class SRenderComponent {
     protected abstract onCreated(): void;
 
     public abstract draw(canvas: Canvas): void;
+
+    public destroy(): void {}
 }

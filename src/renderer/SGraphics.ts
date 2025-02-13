@@ -193,9 +193,19 @@ export class SGraphics extends SRenderComponent {
     }
 
     public clear(): void {
+        this._paints.length = 0;
         this._paths.length = 0;
         this._pathStyleMap.clear();
         this._currentPaint = null;
         this._currentPath = null;
+    }
+
+    public destroy(): void {
+        this._paints.forEach(paint => {
+            paint.delete();
+        });
+        this._paths.forEach(path => {
+            path.delete();
+        });
     }
 }

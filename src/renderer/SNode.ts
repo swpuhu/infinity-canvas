@@ -247,8 +247,6 @@ class SNode extends EventEmitter {
         this._children = [];
     }
 
-    public destroy(): void {}
-
     public getWorldMatrix(): mat3 {
         return this._worldMatrix;
     }
@@ -296,6 +294,12 @@ class SNode extends EventEmitter {
             }
         }
         return null;
+    }
+
+    public destroy(): void {
+        this._renderComps.forEach(renderComp => {
+            renderComp.destroy();
+        });
     }
 }
 

@@ -26,6 +26,10 @@ export class SSprite extends SRenderComponent {
         if (!src) {
             return;
         }
+        if (this._img) {
+            this._img.delete();
+            this._img = null;
+        }
         const imgBuffer = await loadImageArrayBuffer(src);
         this.setImage(imgBuffer);
         eventBus.reDraw();
@@ -34,21 +38,6 @@ export class SSprite extends SRenderComponent {
     public setImage(imgBuffer: Uint8Array): void {
         CanvasKitModule.CanvasKit.MakeImageFromCanvasImageSource;
         this._img = CanvasKitModule.CanvasKit.MakeImageFromEncoded(imgBuffer);
-        console.log(
-            'alphaType Opaque: ',
-            CanvasKitModule.CanvasKit.AlphaType.Opaque
-        );
-        console.log(
-            'alphaType Unpremul: ',
-            CanvasKitModule.CanvasKit.AlphaType.Unpremul
-        );
-        console.log(
-            'alphaType Premul: ',
-            CanvasKitModule.CanvasKit.AlphaType.Premul
-        );
-
-        console.log(this._img?.getImageInfo().alphaType);
-
         if (!this._img) {
             throw new Error('Failed to load image');
         }
@@ -73,6 +62,12 @@ export class SSprite extends SRenderComponent {
                 CanvasKitModule.CanvasKit.MipmapMode.Linear,
                 spritePaint
             );
+        }
+    }
+
+    public destroy(): void {
+        if (this._img) {
+            this._img.delete();
         }
     }
 }

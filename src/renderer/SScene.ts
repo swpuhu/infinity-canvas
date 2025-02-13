@@ -56,7 +56,7 @@ export class SScene {
                     },
                     needClip: true,
                     style: {
-                        fill: 0xcccccc,
+                        fill: 0xffffff,
                         shadow: {
                             color: 0xaaaaaa,
                             blur: 10,
