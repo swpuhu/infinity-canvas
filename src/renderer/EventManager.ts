@@ -1,8 +1,7 @@
 import { ALL_EVENT_NAMES, SNodeEvents } from '@/common/types';
 import SNode from './SNode';
 import { Vec2 } from '@/common/Vec2';
-import { Renderer } from './renderer';
-import { Point } from 'canvaskit-wasm';
+import eventBus from '@/common/eventBus';
 
 const setPointerEvent = (
     event: PointerEvent,
@@ -14,14 +13,23 @@ const setPointerEvent = (
     const localPos = targetNode.toLocal(sEvent.worldPosition);
     sEvent.localPosition.set(localPos[0], localPos[1]);
     sEvent.target = targetNode;
-    sEvent.propagationStopped = false;
 };
 
 const clearPointerEvent = (sEvent: SNodeEvents.PointerEvent) => {
     sEvent.target = null;
-    sEvent.propagationStopped = false;
     sEvent.localPosition.set(0, 0);
     sEvent.worldPosition.set(0, 0);
+    sEvent.swallow = false;
+};
+
+const createPointerEvent = (): SNodeEvents.PointerEvent => {
+    return {
+        localPosition: new Vec2(0, 0),
+        worldPosition: new Vec2(0, 0),
+        delta: new Vec2(0, 0),
+        target: null,
+        swallow: false,
+    };
 };
 
 export class CanvasEventSystem {
@@ -29,7 +37,7 @@ export class CanvasEventSystem {
     private _nodeListenerMap: Map<keyof SNodeEvents.EventMap, SNode[]> =
         new Map();
 
-    constructor(canvas: HTMLCanvasElement, private renderer: Renderer) {
+    constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this._initNodeListenerMap();
 
@@ -49,50 +57,47 @@ export class CanvasEventSystem {
     }
 
     private _handlePointerEvents() {
-        let pointerEvent: SNodeEvents.PointerEvent = {
-            localPosition: new Vec2(0, 0),
-            worldPosition: new Vec2(0, 0),
-            delta: new Vec2(0, 0),
-            target: null,
-            propagationStopped: false,
-        };
-
+        const nodeEventMap = new Map<SNode, SNodeEvents.PointerEvent>();
         this.canvas.addEventListener('pointerdown', event => {
+            nodeEventMap.clear();
             const offset = new Vec2(event.offsetX, event.offsetY);
             const pointerEventNodes =
                 this._nodeListenerMap.get(SNodeEvents.POINTER_DOWN) || [];
 
-            pointerEventNodes.forEach(node => {
+            for (const node of pointerEventNodes) {
                 const isHit = this.hitTest(offset.x, offset.y, node);
+
                 if (isHit) {
-                    setPointerEvent(event, pointerEvent, node);
-                    this.dispatchEvent(node, pointerEvent);
-                    node.emit(SNodeEvents.POINTER_DOWN, pointerEvent);
-                    this.renderer.render();
+                    const newPointerEvent = createPointerEvent();
+                    nodeEventMap.set(node, newPointerEvent);
+                    setPointerEvent(event, newPointerEvent, node);
+                    this.dispatchEvent(node, newPointerEvent);
+                    node.emit(SNodeEvents.POINTER_DOWN, newPointerEvent);
+                    eventBus.reDraw();
                 }
-            });
+            }
         });
 
         this.canvas.addEventListener('pointermove', event => {
-            const offset = new Vec2(event.offsetX, event.offsetY);
-            const pointerEventNodes =
-                this._nodeListenerMap.get(SNodeEvents.POINTER_MOVE) || [];
-
-            pointerEventNodes.forEach(node => {
-                const isHit = this.hitTest(offset.x, offset.y, node);
-                if (isHit) {
-                    setPointerEvent(event, pointerEvent, node);
+            for (const [node, pointerEvent] of nodeEventMap.entries()) {
+                if (pointerEvent.target) {
+                    setPointerEvent(event, pointerEvent, pointerEvent.target);
+                    this.dispatchEvent(node, pointerEvent);
                     node.emit(SNodeEvents.POINTER_MOVE, pointerEvent);
-                    this.renderer.render();
                 }
-            });
+            }
         });
 
         this.canvas.addEventListener('pointerup', event => {
-            if (pointerEvent.target) {
-                setPointerEvent(event, pointerEvent, pointerEvent.target);
-                pointerEvent.target.emit(SNodeEvents.POINTER_UP, pointerEvent);
+            for (const [node, pointerEvent] of nodeEventMap.entries()) {
+                if (pointerEvent.target) {
+                    setPointerEvent(event, pointerEvent, pointerEvent.target);
+                    this.dispatchEvent(node, pointerEvent);
+                    node.emit(SNodeEvents.POINTER_UP, pointerEvent);
+                    clearPointerEvent(pointerEvent);
+                }
             }
+            nodeEventMap.clear();
         });
     }
 

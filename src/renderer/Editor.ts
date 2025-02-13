@@ -10,12 +10,22 @@ import { ResizeGizmo } from './components/ResizeGizmo';
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
     private _eventSystem: CanvasEventSystem | null = null;
+
+    private _scene: SScene | null = null;
+
     constructor(private canvas: HTMLCanvasElement) {}
+
+    get scene(): SScene {
+        if (!this._scene) {
+            throw new Error('scene is not initialized');
+        }
+        return this._scene;
+    }
 
     async init() {
         await CanvasKitModule.init();
         this._renderer = new Renderer(this.canvas);
-        this._eventSystem = new CanvasEventSystem(this.canvas, this._renderer);
+        this._eventSystem = new CanvasEventSystem(this.canvas);
         const canvasSize = {
             width: window.innerWidth,
             height: window.innerHeight,
@@ -27,6 +37,8 @@ export class CanvasEditor {
             designSize: { width: 1920, height: 1080 },
             sideWidth: 200,
         });
+
+        this._scene = scene;
 
         const testPic = createNodeFromConfig({
             type: SNodeConfig.NodeType.SPRITE,
@@ -40,7 +52,7 @@ export class CanvasEditor {
 
         scene.stage.addChild(testPic);
 
-        const resizeGizmo = new ResizeGizmo(scene);
+        const resizeGizmo = new ResizeGizmo(this);
 
         this._renderer.on(EventNames.RESIZE, (width, height) => {
             scene.resizeCanvasSize({ width, height });

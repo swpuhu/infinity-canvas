@@ -284,10 +284,10 @@ class SNode extends EventEmitter {
         const [l, b, r, t] = this.getLocalRect();
         const localPos = this.toLocal({ x: worldX, y: worldY });
         if (
-            localPos[0] < l ||
-            localPos[0] > r ||
-            localPos[1] < b ||
-            localPos[1] > t
+            localPos[0] <= l ||
+            localPos[0] >= r ||
+            localPos[1] <= b ||
+            localPos[1] >= t
         ) {
             return false;
         }

@@ -129,6 +129,7 @@ export namespace SNodeEvents {
 
     export const POINTER_DOWN = 'pointerDown';
     export const POINTER_MOVE = 'pointerMove';
+    export const POINTER_DOWN_MOVE = 'pointerDownMove';
     export const POINTER_UP = 'pointerUp';
 
     export const KEY_DOWN = 'keyDown';
@@ -141,14 +142,17 @@ export namespace SNodeEvents {
 
     export const WHEEL = 'wheel';
 
+    type Event = {
+        target: SNode | null;
+        swallow: boolean;
+    };
+
     type MouseEvent = {};
     export type PointerEvent = {
         localPosition: IPoint;
         worldPosition: IPoint;
         delta: IPoint;
-        target: SNode | null;
-        propagationStopped: boolean;
-    };
+    } & Event;
     type TouchEvent = {};
     type KeyboardEvent = {};
     type WheelEvent = {};

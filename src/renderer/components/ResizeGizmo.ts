@@ -1,16 +1,16 @@
-import { EventNames, SNodeConfig } from '@/common/types';
+import { EventNames, SNodeConfig, SNodeEvents } from '@/common/types';
 import SNode from '../SNode';
-import { SScene } from '../SScene';
-import { SSprite } from '../SSprite';
 import { createNodeFromConfig, refSNode } from '../util';
 import { Vec2 } from '@/common/Vec2';
+import { CanvasEditor } from '../Editor';
+import { SScene } from '../SScene';
 
-const RESIZE_GIZMO_SIZE = 10;
+const RESIZE_GIZMO_SIZE = 50;
 const RESIZE_GIZMO_COLOR = 0x00bcfb;
 
 export class ResizeGizmo {
     private _scene: SScene;
-
+    private _editor: CanvasEditor;
     private _root: SNode | null = null;
 
     private _lbNodeRef: SNodeConfig.IRefSNode = refSNode();
@@ -18,11 +18,15 @@ export class ResizeGizmo {
     private _rbNodeRef: SNodeConfig.IRefSNode = refSNode();
     private _rtNodeRef: SNodeConfig.IRefSNode = refSNode();
 
-    constructor(scene: SScene) {
-        this._scene = scene;
+    private resizeHandlerNodes: SNode[] = [];
+
+    constructor(editor: CanvasEditor) {
+        this._editor = editor;
+        this._scene = editor.scene;
         this._createHandler();
-        scene.topLayer.addChild(this._root!);
-        scene.on(EventNames.RESIZE, this._onResize);
+        this._scene.topLayer.addChild(this._root!);
+        this._bindEvents();
+        this._scene.on(EventNames.RESIZE, this._onResize);
     }
 
     private _onResize = (virtualCanvasScale: Vec2): void => {
@@ -82,7 +86,57 @@ export class ResizeGizmo {
                 },
             ],
         });
+
+        this.resizeHandlerNodes = [
+            this._lbNodeRef.value!,
+            this._ltNodeRef.value!,
+            this._rbNodeRef.value!,
+            this._rtNodeRef.value!,
+        ];
     }
+
+    private _bindEvents(): void {
+        this.resizeHandlerNodes.forEach(node => {
+            this._editor.eventSystem.addEventListener(
+                node,
+                SNodeEvents.POINTER_DOWN,
+                this._onResizePointerDown
+            );
+            this._editor.eventSystem.addEventListener(
+                node,
+                SNodeEvents.POINTER_MOVE,
+                this._onResizePointerMove
+            );
+            this._editor.eventSystem.addEventListener(
+                node,
+                SNodeEvents.POINTER_UP,
+                this._onResizePointerUp
+            );
+        });
+    }
+
+    private _onResizePointerDown = (event: SNodeEvents.PointerEvent): void => {
+        const node = event.target;
+        if (!node) {
+            return;
+        }
+        console.log('onResizePointerDown', node.name);
+    };
+
+    private _onResizePointerMove = (event: SNodeEvents.PointerEvent): void => {
+        console.log(
+            'onResizePointerDownMove',
+            event.localPosition.x,
+            event.localPosition.y
+        );
+    };
+
+    private _onResizePointerUp = (event: SNodeEvents.PointerEvent): void => {
+        const node = event.target;
+        if (!node) {
+            return;
+        }
+    };
 
     public attachToNode(node: SNode): void {
         if (!this._root) {

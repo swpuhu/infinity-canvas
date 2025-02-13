@@ -51,6 +51,8 @@ export class SScene extends EventEmitter {
         this.rootNode = createNodeFromConfig({
             name: 'root',
             type: SNodeConfig.NodeType.CONTAINER,
+            width: option.canvasSize.width,
+            height: option.canvasSize.height,
             transform: {
                 position: new Vec2(
                     option.canvasSize.width / 2,
