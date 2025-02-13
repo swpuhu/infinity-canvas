@@ -16,6 +16,7 @@ const RESIZE_GIZMO_SIZE = 10;
 const RESIZE_GIZMO_COLOR = 0x00bcfb;
 
 const GIZMO_LINE_WIDTH = 1;
+const GIZMO_LINE_COLOR = 0xcccccc;
 
 export class ResizeGizmo {
     private _scene: SScene;
@@ -49,10 +50,22 @@ export class ResizeGizmo {
         this._scene.on(EventNames.RESIZE, this._onResize);
     }
 
-    private _onResize = (virtualCanvasScale: Vec2): void => {
-        const lbNode = this._lbNodeRef.value!;
-        lbNode.width = RESIZE_GIZMO_SIZE / virtualCanvasScale.x;
-        lbNode.height = RESIZE_GIZMO_SIZE / virtualCanvasScale.y;
+    private _onResize = (): void => {
+        const { scale } = decomposeMatrix(
+            this._lbNodeRef.value!.getWorldMatrix()
+        );
+        const handlerWidth = RESIZE_GIZMO_SIZE / scale.x;
+        const handlerHeight = RESIZE_GIZMO_SIZE / scale.y;
+        const lineWidth = GIZMO_LINE_WIDTH / scale.x;
+
+        this.resizeHandlerNodes.forEach(node => {
+            node.width = handlerWidth;
+            node.height = handlerHeight;
+        });
+        this._leftLineRef.value!.width = lineWidth;
+        this._rightLineRef.value!.width = lineWidth;
+        this._topLineRef.value!.height = lineWidth;
+        this._bottomLineRef.value!.height = lineWidth;
     };
 
     private _createHandler(): void {
@@ -63,7 +76,8 @@ export class ResizeGizmo {
         };
 
         // 通用样式配置
-        const commonStyle = { fill: RESIZE_GIZMO_COLOR };
+        const blockStyle = { fill: RESIZE_GIZMO_COLOR };
+        const lineStyle = { fill: GIZMO_LINE_COLOR };
         const commonRectConfig = (
             name: string,
             ref: SNodeConfig.IRefSNode
@@ -72,7 +86,7 @@ export class ResizeGizmo {
             type: SNodeConfig.NodeType.RECT,
             ref,
             ...handlerSize,
-            style: commonStyle,
+            style: blockStyle,
         });
 
         // 创建控制点
@@ -92,7 +106,7 @@ export class ResizeGizmo {
             name,
             type: SNodeConfig.NodeType.RECT,
             ref,
-            style: commonStyle,
+            style: lineStyle,
             transform: { anchor },
         });
 
@@ -208,23 +222,24 @@ export class ResizeGizmo {
         const handlerWidth = RESIZE_GIZMO_SIZE / scale.x;
         const handlerHeight = RESIZE_GIZMO_SIZE / scale.y;
 
+        const lineWidth = GIZMO_LINE_WIDTH / scale.x;
         this.resizeHandlerNodes.forEach(node => {
             node.width = handlerWidth;
             node.height = handlerHeight;
         });
-        this._leftLineRef.value!.width = GIZMO_LINE_WIDTH;
+        this._leftLineRef.value!.width = lineWidth;
         this._leftLineRef.value!.height = t - b;
         this._leftLineRef.value!.position.set(l, b);
 
-        this._bottomLineRef.value!.height = GIZMO_LINE_WIDTH;
+        this._bottomLineRef.value!.height = lineWidth;
         this._bottomLineRef.value!.width = r - l;
         this._bottomLineRef.value!.position.set(l, b);
 
-        this._rightLineRef.value!.width = GIZMO_LINE_WIDTH;
+        this._rightLineRef.value!.width = lineWidth;
         this._rightLineRef.value!.height = t - b;
         this._rightLineRef.value!.position.set(r, t);
 
-        this._topLineRef.value!.height = GIZMO_LINE_WIDTH;
+        this._topLineRef.value!.height = lineWidth;
         this._topLineRef.value!.width = r - l;
         this._topLineRef.value!.position.set(r, t);
 
