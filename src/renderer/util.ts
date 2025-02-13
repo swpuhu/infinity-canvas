@@ -2,6 +2,8 @@ import { IPointData, SNodeConfig, TransformOptions } from '@/common/types';
 import { SGraphics } from './SGraphics';
 import SNode from './SNode';
 import { SSprite } from './SSprite';
+import { InputRect } from 'canvaskit-wasm';
+import { SGeoRect } from './Geometry/SGeoRect';
 
 const nodeNameRefMap = new Map<string, SNode>();
 
@@ -43,28 +45,22 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
     // 解析图形属性
     if (config.type === SNodeConfig.NodeType.RECT) {
         const rectConfig = config as SNodeConfig.RectConfig;
-        const graphics = new SGraphics();
-        node.addRenderComps(graphics);
-        graphics.rect(
-            rectConfig.props.x || 0,
-            rectConfig.props.y || 0,
-            rectConfig.props.width || 100,
-            rectConfig.props.height || 100
-        );
+        const rect = node.addRenderComp(SGeoRect);
+
         let alpha = 1;
         if (rectConfig.style?.alpha) {
             alpha = rectConfig.style.alpha;
         }
         if (rectConfig.style?.fill) {
-            graphics.fill({ color: rectConfig.style.fill, alpha });
+            rect.fill({ color: rectConfig.style.fill, alpha });
         }
         if (rectConfig.style?.shadow) {
-            graphics.shadow(rectConfig.style.shadow);
+            rect.shadow(rectConfig.style.shadow);
         }
     } else if (config.type === SNodeConfig.NodeType.SPRITE) {
         const spriteConfig = config as SNodeConfig.SpriteConfig;
-        const sprite = new SSprite();
-        node.addRenderComps(sprite);
+        const sprite = node.addRenderComp(SSprite);
+
         sprite.setImageByUrl(spriteConfig.props.url || '');
     }
 
@@ -75,4 +71,13 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
     });
 
     return node;
+}
+
+export function getRectByNode(node: SNode): InputRect {
+    return [
+        -node.width * node.anchor.x,
+        -node.height * node.anchor.y,
+        node.width * (1 - node.anchor.x),
+        node.height * (1 - node.anchor.y),
+    ];
 }

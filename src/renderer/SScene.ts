@@ -14,10 +14,18 @@ export class SScene {
 
     private rightSideRef: SNodeConfig.IRefSNode;
 
+    private topLayerRef: SNodeConfig.IRefSNode;
+
+    private canvasContainerRef: SNodeConfig.IRefSNode;
+
     private option: SceneOptions;
 
     get stage(): SNode {
         return this.virtualCanvasRef.value!;
+    }
+
+    get topLayer(): SNode {
+        return this.topLayerRef.value!;
     }
 
     constructor(option: SceneOptions) {
@@ -34,6 +42,8 @@ export class SScene {
         this.virtualCanvasRef = refSNode();
         this.leftSideRef = refSNode();
         this.rightSideRef = refSNode();
+        this.topLayerRef = refSNode();
+        this.canvasContainerRef = refSNode();
 
         const testBlockRef = refSNode();
         this.rootNode = createNodeFromConfig({
@@ -47,45 +57,60 @@ export class SScene {
             },
             children: [
                 {
-                    name: 'virtualCanvas',
-                    type: SNodeConfig.NodeType.RECT,
-                    ref: this.virtualCanvasRef,
-                    props: {
-                        width: this.option.designSize.width,
-                        height: this.option.designSize.height,
-                    },
-                    needClip: true,
-                    style: {
-                        fill: 0xffffff,
-                        shadow: {
-                            color: 0xaaaaaa,
-                            blur: 10,
-                        },
-                    },
+                    name: 'canvas-container',
+                    type: SNodeConfig.NodeType.CONTAINER,
                     transform: {
                         scale: virtualCanvasScale,
                     },
-                    width: this.option.designSize.width,
-                    height: this.option.designSize.height,
+                    ref: this.canvasContainerRef,
                     children: [
                         {
+                            name: 'virtualCanvas',
                             type: SNodeConfig.NodeType.RECT,
-                            name: 'test-block',
-                            ref: testBlockRef,
+                            ref: this.virtualCanvasRef,
                             props: {
-                                width: 200,
-                                height: 200,
+                                width: this.option.designSize.width,
+                                height: this.option.designSize.height,
                             },
-                            width: 200,
-                            height: 200,
-                            transform: {
-                                position: new Vec2(
-                                    option.designSize.width / 3,
-                                    0
-                                ),
-                            },
+                            needClip: true,
                             style: {
-                                fill: 0xffbb00,
+                                fill: 0xffffff,
+                                shadow: {
+                                    color: 0xaaaaaa,
+                                    blur: 10,
+                                },
+                            },
+                            width: this.option.designSize.width,
+                            height: this.option.designSize.height,
+                            children: [
+                                {
+                                    type: SNodeConfig.NodeType.RECT,
+                                    name: 'test-block',
+                                    ref: testBlockRef,
+                                    props: {
+                                        width: 200,
+                                        height: 200,
+                                    },
+                                    width: 200,
+                                    height: 200,
+                                    transform: {
+                                        position: new Vec2(
+                                            option.designSize.width / 3,
+                                            0
+                                        ),
+                                    },
+                                    style: {
+                                        fill: 0xffbb00,
+                                    },
+                                },
+                            ],
+                        },
+                        {
+                            name: 'top-layer',
+                            type: SNodeConfig.NodeType.CONTAINER,
+                            ref: this.topLayerRef,
+                            transform: {
+                                position: new Vec2(0, 0),
                             },
                         },
                     ],
@@ -94,10 +119,8 @@ export class SScene {
                     name: 'left-side',
                     type: SNodeConfig.NodeType.RECT,
                     ref: this.leftSideRef,
-                    props: {
-                        width: this.option.sideWidth,
-                        height: this.option.canvasSize.height,
-                    },
+                    width: this.option.sideWidth,
+                    height: this.option.canvasSize.height,
                     style: {
                         fill: 0xcccccc,
                     },
@@ -108,17 +131,13 @@ export class SScene {
                         ),
                         anchor: new Vec2(0, 0),
                     },
-                    width: this.option.sideWidth,
-                    height: this.option.canvasSize.height,
                 },
                 {
                     name: 'right-side',
                     type: SNodeConfig.NodeType.RECT,
                     ref: this.rightSideRef,
-                    props: {
-                        width: this.option.sideWidth,
-                        height: this.option.canvasSize.height,
-                    },
+                    width: this.option.sideWidth,
+                    height: this.option.canvasSize.height,
                     style: {
                         fill: 0xcccccc,
                     },
@@ -129,8 +148,6 @@ export class SScene {
                         ),
                         anchor: new Vec2(1, 0),
                     },
-                    width: this.option.sideWidth,
-                    height: this.option.canvasSize.height,
                 },
             ],
         });
@@ -169,7 +186,7 @@ export class SScene {
         };
 
         const virtualCanvasScale = this.getVirtualCanvasScale();
-        const virtualCanvas = this.virtualCanvasRef.value!;
+        const canvasContainer = this.canvasContainerRef.value!;
 
         const leftSide = this.leftSideRef.value!;
         const rightSide = this.rightSideRef.value!;
@@ -185,7 +202,7 @@ export class SScene {
             position: new Vec2(canvasSize.width / 2, -canvasSize.height / 2),
         });
 
-        virtualCanvas.setTransform({
+        canvasContainer.setTransform({
             scale: virtualCanvasScale,
         });
     }

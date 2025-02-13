@@ -232,14 +232,12 @@ class SNode extends EventEmitter {
         return this._renderComps;
     }
 
-    public addRenderComps(...renderComps: SRenderComponent[]): void {
-        renderComps.forEach(renderComp => {
-            renderComp.node = this;
-            const index = this._renderComps.indexOf(renderComp);
-            if (index < 0) {
-                this._renderComps.push(renderComp);
-            }
-        });
+    public addRenderComp<T extends SRenderComponent>(CompCtr: new () => T): T {
+        const instance = new CompCtr();
+        instance.node = this;
+        instance.init();
+        this._renderComps.push(instance);
+        return instance;
     }
 
     public removeChildren(): void {
@@ -252,19 +250,18 @@ class SNode extends EventEmitter {
     }
 
     public setTransform(options: TransformOptions) {
-        this._position =
-            options.position instanceof Vec2
-                ? options.position
-                : new Vec2(options.position?.x || 0, options.position?.y || 0);
-        this._scale =
-            options.scale instanceof Vec2
-                ? options.scale
-                : new Vec2(options.scale?.x || 1, options.scale?.y || 1);
-        this._rotation = options.rotation || 0;
-        this._anchor =
-            options.anchor instanceof Vec2
-                ? options.anchor
-                : new Vec2(options.anchor?.x || 0.5, options.anchor?.y || 0.5);
+        if (options.position) {
+            this._position = new Vec2(options.position.x, options.position.y);
+        }
+        if (options.scale) {
+            this._scale = new Vec2(options.scale.x, options.scale.y);
+        }
+        if (options.rotation) {
+            this._rotation = options.rotation;
+        }
+        if (options.anchor) {
+            this._anchor = new Vec2(options.anchor.x, options.anchor.y);
+        }
 
         this.updateWorldMatrix();
     }

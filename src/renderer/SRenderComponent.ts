@@ -5,6 +5,10 @@ import type SNode from './SNode';
 export abstract class SRenderComponent {
     public node: SNode | undefined;
 
+    public init(): void {
+        this.onCreated();
+    }
+
     protected abstract onCreated(): void;
 
     public abstract draw(canvas: Canvas): void;

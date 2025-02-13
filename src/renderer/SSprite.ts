@@ -54,10 +54,15 @@ export class SSprite extends SRenderComponent {
             }
             const spritePaint = CanvasKitModule.getSpritePaint();
 
-            canvas.drawImageOptions(
+            canvas.drawImageRectOptions(
                 this._img,
-                -node.width * 0.5,
-                -node.height * 0.5,
+                [0, 0, this._img.width(), this._img.height()],
+                [
+                    -node.width * node.anchor.x,
+                    -node.height * node.anchor.y,
+                    node.width * (1 - node.anchor.x),
+                    node.height * (1 - node.anchor.y),
+                ],
                 CanvasKitModule.CanvasKit.FilterMode.Linear,
                 CanvasKitModule.CanvasKit.MipmapMode.Linear,
                 spritePaint

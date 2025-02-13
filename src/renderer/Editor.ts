@@ -5,6 +5,7 @@ import { SScene } from './SScene';
 import { EventNames, SNodeConfig, SNodeEvents } from '@/common/types';
 import { createNodeFromConfig } from './util';
 import { loadImage } from '@/common/util';
+import { ResizeGizmo } from './components/ResizeGizmo';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
@@ -44,6 +45,8 @@ export class CanvasEditor {
         });
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+
+        new ResizeGizmo(scene);
 
         this._renderer.render(scene.rootNode);
 
