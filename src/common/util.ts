@@ -1,4 +1,5 @@
 import type SNode from '@/renderer/SNode';
+import { mat3 } from 'gl-matrix';
 
 export function angleToRadians(angle: number) {
     return angle * (Math.PI / 180);
@@ -60,4 +61,39 @@ export function findChildByUuid(container: SNode, uuid: string): SNode | null {
     }
 
     return null;
+}
+
+export function decomposeMatrix(matrix: mat3): {
+    position: { x: number; y: number };
+    scale: { x: number; y: number };
+    rotation: number;
+} {
+    // 从matrix中获取变换值
+    const a = matrix[0];
+    const b = matrix[1];
+    const c = matrix[3];
+    const d = matrix[4];
+    const tx = matrix[6];
+    const ty = matrix[7];
+
+    // 提取位移
+    const position = {
+        x: tx,
+        y: ty,
+    };
+
+    // 提取缩放
+    const scale = {
+        x: Math.sqrt(a * a + b * b),
+        y: Math.sqrt(c * c + d * d),
+    };
+
+    // 提取旋转（弧度）
+    const rotation = Math.atan2(b, a);
+
+    return {
+        position,
+        scale,
+        rotation,
+    };
 }

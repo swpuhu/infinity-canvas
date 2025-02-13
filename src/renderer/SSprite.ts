@@ -44,6 +44,7 @@ export class SSprite extends SRenderComponent {
         if (this.resizeMode === SSprite.ResizeMode.RAW) {
             this.node!.width = this._img.width();
             this.node!.height = this._img.height();
+            console.log(this.node!.width, this.node!.height);
         }
     }
     public draw(canvas: Canvas): void {

@@ -6,7 +6,7 @@ import { Vec2 } from '@/common/Vec2';
 import { createUUID } from '@/common/uuid';
 import { autobind } from 'core-decorators';
 import EventEmitter from 'eventemitter3';
-import { angleToRadians } from '@/common/util';
+import { angleToRadians, decomposeMatrix } from '@/common/util';
 
 class SNode extends EventEmitter {
     private _children: SNode[] = [];
@@ -263,6 +263,37 @@ class SNode extends EventEmitter {
         return this._worldMatrix;
     }
 
+    public getWorldMatrixInverse(): mat3 {
+        this._worldMatrixInv = mat3.invert(
+            this._worldMatrixInv,
+            this._worldMatrix
+        );
+        return this._worldMatrixInv;
+    }
+
+    public getLocalMatrix(): mat3 {
+        return this._localMatrix;
+    }
+
+    public setLocalMatrix(matrix: mat3) {
+        mat3.copy(this._localMatrix, matrix);
+        this.updateWorldMatrix();
+    }
+
+    public setWorldMatrix(worldMat: mat3) {
+        if (this.parent) {
+            const inv = this.parent.getWorldMatrixInverse();
+            const newLocalMat = mat3.mul(mat3.create(), inv, worldMat);
+            this.setLocalMatrix(newLocalMat);
+            const result = decomposeMatrix(newLocalMat);
+
+            this._position.set(result.position.x, result.position.y);
+            this._scale.set(result.scale.x, result.scale.y);
+            this._rotation = result.rotation * (180 / Math.PI);
+        } else {
+            this.setLocalMatrix(worldMat);
+        }
+    }
     public setTransform(options: TransformOptions) {
         if (options.position) {
             this._position = new Vec2(options.position.x, options.position.y);
