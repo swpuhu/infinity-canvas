@@ -190,17 +190,18 @@ export class ResizeGizmo {
     }
 
     private _onResizePointerDown = (event: SNodeEvents.PointerEvent): void => {
+        event.stopPropagation();
         // console.log('onResizePointerDown', node.name);
         if (!this._root) {
             return;
         }
 
         if (event.target === this._lbNodeRef.value) {
+            console.log('change anchor to 1, 1');
             changeAnchorButStay(this._root, {
                 x: 1,
                 y: 1,
             });
-            this.updateHandlerNodes();
         } else if (event.target === this._ltNodeRef.value) {
             changeAnchorButStay(this._root, {
                 x: 0,
@@ -210,13 +211,17 @@ export class ResizeGizmo {
         const localPos = this._root.toLocal(event.worldPosition);
         this._resizeStartNodeSize.set(this._root.width, this._root.height);
         this._resizeStartPos.set(localPos[0], localPos[1]);
+        console.log('localPos', localPos);
     };
 
     private _onResizePointerMove = (event: SNodeEvents.PointerEvent): void => {
+        event.stopPropagation();
         if (!this._root) {
             return;
         }
         const moveLocalPos = this._root?.toLocal(event.worldPosition);
+        console.log('startPos', this._resizeStartPos);
+        console.log('moveLocalPos', this._root.position);
         const diff = new Vec2(
             moveLocalPos[0] - this._resizeStartPos.x,
             moveLocalPos[1] - this._resizeStartPos.y
@@ -226,6 +231,7 @@ export class ResizeGizmo {
             diff.y = -diff.y;
         } else if (event.target === this._ltNodeRef.value) {
             diff.x = -diff.x;
+            console.log('lt', diff);
         }
 
         this._root.width = this._resizeStartNodeSize.x + diff.x;

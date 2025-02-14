@@ -27,7 +27,10 @@ const createPointerEvent = (): SNodeEvents.PointerEvent => {
         worldPosition: new Vec2(0, 0),
         delta: new Vec2(0, 0),
         target: null,
-        stopPropagation: false,
+        stopPropagation: function () {
+            return (this._stopPropagation = true);
+        },
+        _stopPropagation: false,
     };
 };
 
@@ -68,6 +71,10 @@ class Listener<T extends keyof SNodeEvents.EventMap> {
         return this._dispatched;
     }
 
+    get event() {
+        return this._event;
+    }
+
     dispatchEvent(nativeEvent: PointerEvent) {
         if (this._dispatched) {
             return;
@@ -84,6 +91,7 @@ class Listener<T extends keyof SNodeEvents.EventMap> {
 
     public reset() {
         this._dispatched = false;
+        this._event._stopPropagation = false;
     }
 }
 
@@ -168,6 +176,9 @@ export class CanvasEventSystem {
     ) {
         let parent = listener.node.parent;
         while (parent) {
+            if (listener.event._stopPropagation) {
+                break;
+            }
             if (parent.hitTest(nativeEvent.offsetX, nativeEvent.offsetY)) {
                 const parentListener = this._listeners.find(
                     l => l.node === parent
@@ -178,7 +189,6 @@ export class CanvasEventSystem {
             }
             parent = parent.parent;
         }
-        this._resetListeners();
     }
 
     private _dispatchEvent(
@@ -186,7 +196,11 @@ export class CanvasEventSystem {
         nativeEvent: PointerEvent
     ) {
         listener.dispatchEvent(nativeEvent);
-        this._bubbleEvent(nativeEvent, listener);
+        if (!listener.event._stopPropagation) {
+            this._bubbleEvent(nativeEvent, listener);
+        }
+
+        this._resetListeners();
 
         eventBus.reDraw();
     }

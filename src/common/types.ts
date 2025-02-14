@@ -144,18 +144,19 @@ export namespace SNodeEvents {
 
     type Event = {
         target: SNode | null;
-        stopPropagation: boolean;
+        stopPropagation: () => void;
+        _stopPropagation: boolean;
     };
 
-    type MouseEvent = {};
+    type MouseEvent = {} & Event;
     export type PointerEvent = {
         localPosition: IPoint;
         worldPosition: IPoint;
         delta: IPoint;
     } & Event;
-    type TouchEvent = {};
-    type KeyboardEvent = {};
-    type WheelEvent = {};
+    type TouchEvent = {} & Event;
+    type KeyboardEvent = {} & Event;
+    type WheelEvent = {} & Event;
 
     export type EventMap = {
         [SNodeEvents.MOUSE_DOWN]: MouseEvent;

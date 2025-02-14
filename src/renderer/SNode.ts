@@ -16,7 +16,15 @@ import { angleToRadians, decomposeMatrix } from '@/common/util';
 class SNode extends EventEmitter {
     private _children: SNode[] = [];
     private _parent: SNode | null = null;
-    private _position: IPoint = new Vec2(0, 0, this.updateWorldMatrix);
+    private _position: IPoint = new Vec2(0, 0, () => {
+        // console.log(
+        //     this.name,
+        //     'position-changed',
+        //     this.position.x,
+        //     this.position.y
+        // );
+        this.updateWorldMatrix();
+    });
     private _scale: IPoint = new Vec2(1, 1, this.updateWorldMatrix);
     private _anchor: IPoint = new Vec2(0.5, 0.5, this.updateWorldMatrix);
     private _rotation: number = 0;
@@ -121,12 +129,6 @@ class SNode extends EventEmitter {
             pointData,
             this._worldMatrixInv
         );
-    }
-
-    public set position(value: IPoint) {
-        value.observeFunc = this.updateWorldMatrix;
-        this._position = value;
-        this.updateWorldMatrix();
     }
 
     public get position(): Readonly<IPoint> {
@@ -306,16 +308,16 @@ class SNode extends EventEmitter {
     }
     public setTransform(options: TransformOptions) {
         if (options.position) {
-            this._position = new Vec2(options.position.x, options.position.y);
+            this._position.set(options.position.x, options.position.y);
         }
         if (options.scale) {
-            this._scale = new Vec2(options.scale.x, options.scale.y);
+            this._scale.set(options.scale.x, options.scale.y);
         }
         if (options.rotation) {
             this._rotation = options.rotation;
         }
         if (options.anchor) {
-            this._anchor = new Vec2(options.anchor.x, options.anchor.y);
+            this._anchor.set(options.anchor.x, options.anchor.y);
         }
 
         this.updateWorldMatrix();

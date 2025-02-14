@@ -64,6 +64,12 @@ export class CanvasEditor {
 
         this._renderer.render(scene.rootNode);
 
+        // testPic.on(SNodeEvents.POINTER_DOWN, (e: SNodeEvents.PointerEvent) => {
+        //     console.log(e);
+        //     testPic.rotation = 30;
+        //     resizeGizmo.mountToNode(testPic);
+        // });
+
         this.eventSystem.addEventListener(
             testPic,
             SNodeEvents.POINTER_DOWN,

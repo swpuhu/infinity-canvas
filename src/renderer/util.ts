@@ -102,16 +102,17 @@ export function alignToNode(srcNode: SNode, targetNode: SNode) {
     srcNode.setWorldMatrix(targetNodeMat);
 }
 
+const tempVec2 = vec2.create();
 export function changeAnchorButStay(node: SNode, anchor: IPointData) {
     const currentAnchor = node.anchor;
     const diffAnchorX = anchor.x - currentAnchor.x;
     const diffAnchorY = anchor.y - currentAnchor.y;
 
     const diffInParent = vec2.transformMat3(
-        vec2.create(),
+        tempVec2,
         [node.width * diffAnchorX, node.height * diffAnchorY],
         node.getLocalMatrix()
     );
-    node.anchor.set(anchor.x, anchor.y);
     node.position.set(diffInParent[0], diffInParent[1]);
+    node.anchor.set(anchor.x, anchor.y);
 }
