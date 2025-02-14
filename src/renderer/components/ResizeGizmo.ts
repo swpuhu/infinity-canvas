@@ -5,7 +5,12 @@ import {
     SNodeEvents,
 } from '@/common/types';
 import SNode from '../SNode';
-import { createNodeFromConfig, refSNode } from '../util';
+import {
+    alignToNode,
+    changeAnchorButStay,
+    createNodeFromConfig,
+    refSNode,
+} from '../util';
 import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '../Editor';
 import { SScene } from '../SScene';
@@ -36,6 +41,8 @@ export class ResizeGizmo {
     private _resizeStartPos: Vec2 = new Vec2(0, 0);
 
     private _currentNode: SNode | null = null;
+
+    private _resizeStartNodeSize: Vec2 = new Vec2(0, 0);
 
     private resizeHandlerNodes: SNode[] = [];
 
@@ -113,6 +120,12 @@ export class ResizeGizmo {
         this._root = createNodeFromConfig({
             name: 'resize-gizmo',
             type: SNodeConfig.NodeType.CONTAINER,
+            transform: {
+                anchor: {
+                    x: 0,
+                    y: 0,
+                },
+            },
             children: [
                 {
                     name: 'lines',
@@ -178,14 +191,48 @@ export class ResizeGizmo {
 
     private _onResizePointerDown = (event: SNodeEvents.PointerEvent): void => {
         // console.log('onResizePointerDown', node.name);
+        if (!this._root) {
+            return;
+        }
+
+        if (event.target === this._lbNodeRef.value) {
+            changeAnchorButStay(this._root, {
+                x: 1,
+                y: 1,
+            });
+            this.updateHandlerNodes();
+        } else if (event.target === this._ltNodeRef.value) {
+            changeAnchorButStay(this._root, {
+                x: 0,
+                y: 1,
+            });
+        }
+        const localPos = this._root.toLocal(event.worldPosition);
+        this._resizeStartNodeSize.set(this._root.width, this._root.height);
+        this._resizeStartPos.set(localPos[0], localPos[1]);
     };
 
     private _onResizePointerMove = (event: SNodeEvents.PointerEvent): void => {
-        console.log(
-            'onResizePointerDownMove',
-            event.localPosition.x,
-            event.localPosition.y
+        if (!this._root) {
+            return;
+        }
+        const moveLocalPos = this._root?.toLocal(event.worldPosition);
+        const diff = new Vec2(
+            moveLocalPos[0] - this._resizeStartPos.x,
+            moveLocalPos[1] - this._resizeStartPos.y
         );
+        if (event.target === this._lbNodeRef.value) {
+            diff.x = -diff.x;
+            diff.y = -diff.y;
+        } else if (event.target === this._ltNodeRef.value) {
+            diff.x = -diff.x;
+        }
+
+        this._root.width = this._resizeStartNodeSize.x + diff.x;
+        this._root.height = this._resizeStartNodeSize.y + diff.y;
+
+        alignToNode(this._currentNode!, this._root);
+        this.updateHandlerNodes();
     };
 
     private _onResizePointerUp = (event: SNodeEvents.PointerEvent): void => {
@@ -195,19 +242,10 @@ export class ResizeGizmo {
         }
     };
 
-    public mountToNode(node: SNode): void {
+    public updateHandlerNodes(): void {
         if (!this._root) {
             return;
         }
-        this._currentNode = node;
-        this._root.visible = true;
-
-        const nodeMat = node.getWorldMatrix();
-        this._root.width = node.width;
-        this._root.height = node.height;
-
-        this._root.setWorldMatrix(nodeMat);
-
         const [l, b, r, t] = this._root.getLocalRect();
         // console.log(l, b, r, t);
 
@@ -242,9 +280,16 @@ export class ResizeGizmo {
         this._topLineRef.value!.height = lineWidth;
         this._topLineRef.value!.width = r - l;
         this._topLineRef.value!.position.set(r, t);
+    }
 
-        // this._root.rotation = node.rotation;
-        // this._root.position.set(node.position.x, node.position.y);
+    public mountToNode(targetNode: SNode): void {
+        if (!this._root) {
+            return;
+        }
+        this._currentNode = targetNode;
+        this._root.visible = true;
+        alignToNode(this._root, targetNode);
+        this.updateHandlerNodes();
     }
 
     public unMount(): void {

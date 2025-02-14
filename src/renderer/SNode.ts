@@ -1,7 +1,12 @@
 import { SRenderComponent } from './SRenderComponent';
 
 import { mat3, ReadonlyVec2, vec2 } from 'gl-matrix';
-import { IPoint, IPointData, TransformOptions } from '@/common/types';
+import {
+    IPoint,
+    IPointData,
+    SNodeEvents,
+    TransformOptions,
+} from '@/common/types';
 import { Vec2 } from '@/common/Vec2';
 import { createUUID } from '@/common/uuid';
 import { autobind } from 'core-decorators';
@@ -34,7 +39,11 @@ class SNode extends EventEmitter {
 
     private _renderComp: SRenderComponent | null = null;
 
+    public _eventPhase: keyof SNodeEvents.EventMap | '' = '';
+
     public metadata: Record<string, any> = Object.create(null);
+
+    private _flag: number = 0;
 
     init() {
         this.updateLocalMatrix();
@@ -290,6 +299,7 @@ class SNode extends EventEmitter {
             this._position.set(result.position.x, result.position.y);
             this._scale.set(result.scale.x, result.scale.y);
             this._rotation = result.rotation * (180 / Math.PI);
+            this.updateWorldMatrix();
         } else {
             this.setLocalMatrix(worldMat);
         }

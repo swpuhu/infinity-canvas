@@ -1,9 +1,16 @@
-import { IPointData, SNodeConfig, TransformOptions } from '@/common/types';
+import {
+    IPoint,
+    IPointData,
+    SNodeConfig,
+    TransformOptions,
+} from '@/common/types';
 import { SGraphics } from './SGraphics';
 import SNode from './SNode';
 import { SSprite } from './SSprite';
 import { InputRect } from 'canvaskit-wasm';
 import { SGeoRect } from './Geometry/SGeoRect';
+import { Vec2 } from '@/common/Vec2';
+import { vec2 } from 'gl-matrix';
 
 const nodeNameRefMap = new Map<string, SNode>();
 
@@ -83,4 +90,28 @@ export function getRectByNode(node: SNode): InputRect {
         node.width * (1 - node.anchor.x),
         node.height * (1 - node.anchor.y),
     ];
+}
+
+export function alignToNode(srcNode: SNode, targetNode: SNode) {
+    srcNode.width = targetNode.width;
+    srcNode.height = targetNode.height;
+
+    srcNode.anchor.set(targetNode.anchor.x, targetNode.anchor.y);
+
+    const targetNodeMat = targetNode.getWorldMatrix();
+    srcNode.setWorldMatrix(targetNodeMat);
+}
+
+export function changeAnchorButStay(node: SNode, anchor: IPointData) {
+    const currentAnchor = node.anchor;
+    const diffAnchorX = anchor.x - currentAnchor.x;
+    const diffAnchorY = anchor.y - currentAnchor.y;
+
+    const diffInParent = vec2.transformMat3(
+        vec2.create(),
+        [node.width * diffAnchorX, node.height * diffAnchorY],
+        node.getLocalMatrix()
+    );
+    node.anchor.set(anchor.x, anchor.y);
+    node.position.set(diffInParent[0], diffInParent[1]);
 }

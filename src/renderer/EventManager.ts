@@ -31,72 +31,125 @@ const createPointerEvent = (): SNodeEvents.PointerEvent => {
     };
 };
 
+class Listener<T extends keyof SNodeEvents.EventMap> {
+    private _node: SNode;
+    private _type: T;
+    private _handler: SNodeEvents.EventHandler<T>;
+    private _dispatched = false;
+
+    private _event: SNodeEvents.EventMap[T];
+
+    constructor(
+        node: SNode,
+        type: T,
+        handler: SNodeEvents.EventHandler<T>,
+        eventCreator: () => SNodeEvents.EventMap[T]
+    ) {
+        this._node = node;
+        this._type = type;
+        this._handler = handler;
+        this._node.on(type, handler);
+        this._event = eventCreator();
+    }
+
+    get node() {
+        return this._node;
+    }
+
+    get type() {
+        return this._type;
+    }
+
+    get handler() {
+        return this._handler;
+    }
+
+    get dispatched() {
+        return this._dispatched;
+    }
+
+    dispatchEvent(nativeEvent: PointerEvent) {
+        if (this._dispatched) {
+            return;
+        }
+        setPointerEvent(
+            nativeEvent,
+            this._event as SNodeEvents.PointerEvent,
+            this._node
+        );
+        this._node._eventPhase = this._type;
+        this._node.emit(this._type, this._event);
+        this._dispatched = true;
+    }
+
+    public reset() {
+        this._dispatched = false;
+    }
+}
+
 export class CanvasEventSystem {
     private canvas: HTMLCanvasElement;
-    private _nodeListenerMap: Map<keyof SNodeEvents.EventMap, SNode[]> =
-        new Map();
+
+    private _listeners: Listener<keyof SNodeEvents.EventMap>[] = [];
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
-        this._initNodeListenerMap();
 
         this._delegateDOMEvents();
-    }
-
-    private _initNodeListenerMap() {
-        this._nodeListenerMap = new Map();
-        const events = ALL_EVENT_NAMES;
-        events.forEach(event => {
-            this._nodeListenerMap.set(event, []);
-        });
     }
 
     private _delegateDOMEvents() {
         this._handlePointerEvents();
     }
 
+    private _resetListeners() {
+        for (const listener of this._listeners) {
+            listener.reset();
+        }
+    }
+
     private _handlePointerEvents() {
         const nodeEventMap = new Map<SNode, SNodeEvents.PointerEvent>();
         this.canvas.addEventListener('pointerdown', event => {
-            nodeEventMap.clear();
-            const offset = new Vec2(event.offsetX, event.offsetY);
-            const pointerEventNodes =
-                this._nodeListenerMap.get(SNodeEvents.POINTER_DOWN) || [];
-
-            for (const node of pointerEventNodes) {
-                const isHit = this.hitTest(offset.x, offset.y, node);
-
-                if (isHit) {
-                    const newPointerEvent = createPointerEvent();
-                    nodeEventMap.set(node, newPointerEvent);
-                    setPointerEvent(event, newPointerEvent, node);
-                    this.dispatchEvent(node, newPointerEvent);
-                    node.emit(SNodeEvents.POINTER_DOWN, newPointerEvent);
-                    eventBus.reDraw();
+            for (const listener of this._listeners) {
+                const type = listener.type;
+                if (type !== SNodeEvents.POINTER_DOWN) {
+                    continue;
+                }
+                if (listener.node.hitTest(event.offsetX, event.offsetY)) {
+                    this._dispatchEvent(listener, event);
                 }
             }
         });
 
         this.canvas.addEventListener('pointermove', event => {
-            for (const [node, pointerEvent] of nodeEventMap.entries()) {
-                if (pointerEvent.target) {
-                    setPointerEvent(event, pointerEvent, pointerEvent.target);
-                    this.dispatchEvent(node, pointerEvent);
-                    node.emit(SNodeEvents.POINTER_MOVE, pointerEvent);
+            for (const listener of this._listeners) {
+                const type = listener.type;
+                if (type !== SNodeEvents.POINTER_MOVE) {
+                    continue;
+                }
+                if (
+                    listener.node._eventPhase === SNodeEvents.POINTER_DOWN ||
+                    listener.node._eventPhase === SNodeEvents.POINTER_MOVE
+                ) {
+                    this._dispatchEvent(listener, event);
                 }
             }
         });
 
         this.canvas.addEventListener('pointerup', event => {
-            for (const [node, pointerEvent] of nodeEventMap.entries()) {
-                if (pointerEvent.target) {
-                    setPointerEvent(event, pointerEvent, pointerEvent.target);
-                    this.dispatchEvent(node, pointerEvent);
-                    node.emit(SNodeEvents.POINTER_UP, pointerEvent);
-                    clearPointerEvent(pointerEvent);
+            for (const listener of this._listeners) {
+                const type = listener.type;
+                if (type !== SNodeEvents.POINTER_UP) {
+                    continue;
+                }
+                if (
+                    listener.node._eventPhase === SNodeEvents.POINTER_DOWN ||
+                    listener.node._eventPhase === SNodeEvents.POINTER_MOVE
+                ) {
+                    this._dispatchEvent(listener, event);
                 }
             }
-            nodeEventMap.clear();
         });
     }
 
@@ -109,32 +162,46 @@ export class CanvasEventSystem {
         return true;
     }
 
-    // 事件派发（冒泡阶段）
-    dispatchEvent(node: SNode, event: SNodeEvents.PointerEvent) {
-        // 构建冒泡路径（从当前节点到根节点）
-        const path: SNode[] = [];
-        let current: SNode | null = node;
-        while (current) {
-            path.push(current);
-            current = current.parent;
+    private _bubbleEvent(
+        nativeEvent: PointerEvent,
+        listener: Listener<keyof SNodeEvents.EventMap>
+    ) {
+        let parent = listener.node.parent;
+        while (parent) {
+            if (parent.hitTest(nativeEvent.offsetX, nativeEvent.offsetY)) {
+                const parentListener = this._listeners.find(
+                    l => l.node === parent
+                );
+                if (parentListener) {
+                    parentListener.dispatchEvent(nativeEvent);
+                }
+            }
+            parent = parent.parent;
         }
+        this._resetListeners();
+    }
 
-        // 捕获阶段（暂未实现，可按需扩展）
-        // path.reverse().forEach(node => { ... });
+    private _dispatchEvent(
+        listener: Listener<keyof SNodeEvents.EventMap>,
+        nativeEvent: PointerEvent
+    ) {
+        listener.dispatchEvent(nativeEvent);
+        this._bubbleEvent(nativeEvent, listener);
+
+        eventBus.reDraw();
     }
 
     // 添加事件监听器
-    addEventListener<K extends keyof SNodeEvents.EventMap>(
+    addEventListener<T extends keyof SNodeEvents.EventMap>(
         sNode: SNode,
-        type: K,
-        handler: SNodeEvents.EventHandler<K>
+        type: T,
+        handler: SNodeEvents.EventHandler<T>
     ) {
-        const eventTypeNodes = this._nodeListenerMap.get(type);
-        if (!eventTypeNodes) {
-            throw new Error(`Event type ${type} not found`);
-        }
-        eventTypeNodes.push(sNode);
-        sNode.on(type, handler);
+        // 暂时就支持pointerEvent
+        const listener = new Listener(sNode, type, handler, createPointerEvent);
+        this._listeners.push(
+            listener as any as Listener<keyof SNodeEvents.EventMap>
+        );
     }
 
     // 移除事件监听器
@@ -143,25 +210,10 @@ export class CanvasEventSystem {
         type: K,
         handler: SNodeEvents.EventHandler<K>
     ) {
-        const eventTypeNodes = this._nodeListenerMap.get(type);
-        if (!eventTypeNodes) {
-            throw new Error(`Event type ${type} not found`);
-        }
-        const index = eventTypeNodes.indexOf(sNode);
-        if (index !== -1) {
-            const node = eventTypeNodes[index];
-            node.off(type, handler);
-            eventTypeNodes.splice(index, 1);
-        }
+        this._listeners = this._listeners.filter(
+            l => l.node !== sNode || l.type !== type || l.handler !== handler
+        );
     }
 
-    destroy() {
-        for (const [key, value] of this._nodeListenerMap.entries()) {
-            value.forEach(node => {
-                node.off(key);
-            });
-        }
-
-        this._nodeListenerMap.clear();
-    }
+    destroy() {}
 }

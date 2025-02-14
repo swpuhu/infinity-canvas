@@ -47,7 +47,8 @@ export class CanvasEditor {
                 url: '/r2.png',
             },
             transform: {
-                scale: { x: 5, y: 5 },
+                scale: { x: 3, y: 3 },
+                anchor: { x: 0, y: 0 },
             },
         });
 
