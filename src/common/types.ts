@@ -3,7 +3,7 @@ import SNode from '@/renderer/SNode';
 export interface IPoint extends IPointData {
     clone(): IPoint;
     equals(other: IPoint): boolean;
-    set(x: number, y: number): void;
+    set(x: number, y: number, update?: boolean): void;
     observeFunc?: () => void;
 }
 

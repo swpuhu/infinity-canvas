@@ -298,8 +298,8 @@ class SNode extends EventEmitter {
             this.setLocalMatrix(newLocalMat);
             const result = decomposeMatrix(newLocalMat);
 
-            this._position.set(result.position.x, result.position.y);
-            this._scale.set(result.scale.x, result.scale.y);
+            this._position.set(result.position.x, result.position.y, false);
+            this._scale.set(result.scale.x, result.scale.y, false);
             this._rotation = result.rotation * (180 / Math.PI);
             this.updateWorldMatrix();
         } else {

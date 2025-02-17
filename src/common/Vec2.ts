@@ -17,10 +17,10 @@ export class Vec2 implements IPoint {
         return this.x === other.x && this.y === other.y;
     }
 
-    set(x: number, y: number): void {
+    set(x: number, y: number, update = true): void {
         this.x = x;
         this.y = y;
-        this.observeFunc && this.observeFunc();
+        update && this.observeFunc && this.observeFunc();
     }
 
     dot(other: Vec2): number {
