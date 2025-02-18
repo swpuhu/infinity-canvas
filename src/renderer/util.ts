@@ -1,10 +1,4 @@
-import {
-    IPoint,
-    IPointData,
-    SNodeConfig,
-    TransformOptions,
-} from '@/common/types';
-import { SGraphics } from './SGraphics';
+import { IPointData, SNodeConfig } from '@/common/types';
 import SNode from './SNode';
 import { SSprite } from './SSprite';
 import { InputRect } from 'canvaskit-wasm';

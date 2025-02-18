@@ -24,6 +24,7 @@ export class CanvasEditor {
 
     async init() {
         await CanvasKitModule.init();
+        this._eventSystem = CanvasEventSystem.initialize(this.canvas);
         this._renderer = new Renderer(this.canvas);
         const canvasSize = {
             width: window.innerWidth,
@@ -36,8 +37,6 @@ export class CanvasEditor {
             designSize: { width: 1920, height: 1080 },
             sideWidth: 200,
         });
-
-        this._eventSystem = new CanvasEventSystem(this.canvas);
 
         this._scene = scene;
 
@@ -70,17 +69,6 @@ export class CanvasEditor {
         //     testPic.rotation = 30;
         //     resizeGizmo.mountToNode(testPic);
         // });
-
-        this.eventSystem.addEventListener(
-            testPic,
-            SNodeEvents.POINTER_DOWN,
-            (e: SNodeEvents.IPointerEvent) => {
-                e.stopPropagation();
-                console.log(e.target?.name, e.currentTarget?.name);
-                testPic.rotation = 30;
-                resizeGizmo.mountToNode(testPic);
-            }
-        );
 
         // console.log(img.width);
     }

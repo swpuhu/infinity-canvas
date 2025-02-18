@@ -132,3 +132,13 @@ export function compareNodeDepth(nodeA: SNode, nodeB: SNode) {
 
     return 0; // 完全相同的位置
 }
+
+export function visitNodeRecursive(
+    node: SNode,
+    callback: (node: SNode) => void
+) {
+    callback(node);
+    for (const child of node.children) {
+        visitNodeRecursive(child, callback);
+    }
+}

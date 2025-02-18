@@ -96,7 +96,23 @@ export class CanvasEventSystem {
 
     private _pressed = false;
 
-    constructor(canvas: HTMLCanvasElement) {
+    static initialize(canvas: HTMLCanvasElement): CanvasEventSystem {
+        if (this._instance) {
+            throw new Error('CanvasEventSystem is already initialized');
+        }
+        this._instance = new CanvasEventSystem(canvas);
+        return this._instance;
+    }
+
+    static _instance: CanvasEventSystem | null = null;
+    static get instance(): CanvasEventSystem {
+        if (!this._instance) {
+            throw new Error('CanvasEventSystem is not initialized');
+        }
+        return this._instance;
+    }
+
+    private constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
 
         this._delegateDOMEvents();
@@ -217,11 +233,17 @@ export class CanvasEventSystem {
         handler: SNodeEvents.EventHandler<T>
     ) {
         // 暂时就支持pointerEvent
-        this._listenersMap.set(type, [
-            ...(this._listenersMap.get(type) || []),
-            new SListener(sNode, type, handler),
-        ]);
+        const originalListeners = this._listenersMap.get(type);
+        if (!originalListeners) {
+            this._listenersMap.set(type, [new SListener(sNode, type, handler)]);
+        } else {
+            originalListeners.push(new SListener(sNode, type, handler));
+        }
+
         sNode.on(type, handler);
+        if (type === SNodeEvents.POINTER_MOVE) {
+            console.log(originalListeners);
+        }
         this._sortListeners();
     }
 
@@ -241,6 +263,8 @@ export class CanvasEventSystem {
         if (index !== -1) {
             listeners.splice(index, 1);
         }
+        sNode.off(type, handler);
+        console.log(listeners);
         this._sortListeners();
     }
 
@@ -254,5 +278,7 @@ export class CanvasEventSystem {
         });
     }
 
-    destroy() {}
+    destroy() {
+        CanvasEventSystem._instance = null;
+    }
 }

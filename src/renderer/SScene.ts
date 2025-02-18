@@ -29,6 +29,10 @@ export class SScene extends EventEmitter {
         return this.topLayerRef.value!;
     }
 
+    get canvasLayer(): SNode {
+        return this.virtualCanvasRef.value!;
+    }
+
     constructor(option: SceneOptions) {
         super();
         console.log('option', option);

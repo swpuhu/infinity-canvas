@@ -120,7 +120,7 @@ export class Renderer extends EventEmitter {
     }
 
     public render(node?: SNode) {
-        console.time('render');
+        // console.time('render');
         if (!this.surface) {
             return;
         }
@@ -139,7 +139,7 @@ export class Renderer extends EventEmitter {
             this._currentRenderNode,
             node => {
                 if (!node.activeInHierarchy) {
-                    console.log('node not active', node.name);
+                    // console.log('node not active', node.name);
                     return;
                 }
                 const renderComp = node.getRenderComps();
@@ -173,7 +173,7 @@ export class Renderer extends EventEmitter {
         );
 
         this.surface.flush();
-        console.timeEnd('render');
+        // console.timeEnd('render');
     }
 
     public destroy() {
