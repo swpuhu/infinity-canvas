@@ -19,7 +19,6 @@ export class SGraphics extends SRenderComponent {
 
     private getNewPaint(): Paint {
         const paint = new CanvasKitModule.CanvasKit.Paint();
-        // paint.setBlendMode(CanvasKitModule.CanvasKit.BlendMode.SrcOver);
         this._paints.push(paint);
         return paint;
     }

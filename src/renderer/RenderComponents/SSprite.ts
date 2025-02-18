@@ -3,8 +3,6 @@ import { SRenderComponent } from './SRenderComponent';
 import { loadImage, loadImageArrayBuffer } from '@/common/util';
 import { CanvasKitModule } from '@/lib/canvaskit';
 import eventBus from '@/common/eventBus';
-import { CanvasEventSystem } from './SEventManager';
-import { SNodeEvents } from '@/common/types';
 
 enum EnumResizeMode {
     RAW = 'raw',

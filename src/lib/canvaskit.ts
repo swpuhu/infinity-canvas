@@ -1,10 +1,12 @@
-import { CanvasKit, Paint } from 'canvaskit-wasm';
+import { CanvasKit, FontMgr, Paint } from 'canvaskit-wasm';
 import CanvasKitInit from 'canvaskit-wasm';
 
 export class CanvasKitModule {
     static _canvasKitInstance: CanvasKit | null = null;
 
     static _spritePaint: Paint | null = null;
+
+    static _fontMgr: FontMgr | null = null;
 
     static get CanvasKit() {
         if (!this._canvasKitInstance) {
@@ -20,12 +22,23 @@ export class CanvasKitModule {
         }
     }
 
+    static async loadFont() {
+        const fontData = await fetch('Yuanti.ttf').then(response =>
+            response.arrayBuffer()
+        );
+        const fontMgr = CanvasKitModule.CanvasKit.FontMgr.FromData(fontData);
+        this._fontMgr = fontMgr;
+    }
+
     static async init() {
         this._canvasKitInstance = await CanvasKitInit({
             locateFile: file => {
                 return '/node_modules/canvaskit-wasm/bin/' + file;
             },
         });
+
+        await this.loadFont();
+        console.log(this._fontMgr?.getFamilyName(0));
     }
 
     static getSpritePaint(): Paint {

@@ -6,6 +6,8 @@ import { EventNames, SNodeConfig, SNodeEvents } from '@/common/types';
 import { createNodeFromConfig } from './util';
 import { loadImage } from '@/common/util';
 import { ResizeGizmo } from './components/ResizeGizmo';
+import SNode from './SNode';
+import { SParagraph } from './RenderComponents/SParagraph';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
@@ -53,6 +55,16 @@ export class CanvasEditor {
         });
 
         scene.stage.addChild(testPic);
+
+        const text = new SNode();
+        text.anchor.set(0, 0);
+        text.width = 500;
+        text.position.set(0, 0);
+
+        const para = text.addRenderComp(SParagraph);
+        para.text = '锋锐无匹！\n注定是一把无鞘之剑！';
+
+        scene.stage.addChild(text);
 
         const resizeGizmo = new ResizeGizmo(this);
 
