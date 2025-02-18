@@ -28,6 +28,9 @@ export function createNodeFromConfig(config: SNodeConfig.Config): SNode {
 
 function createNodeRecursive(config: SNodeConfig.Config): SNode {
     const node = new SNode();
+    if (config.active !== undefined) {
+        node.active = config.active;
+    }
     if (config.ref) {
         config.ref.value = node;
     }

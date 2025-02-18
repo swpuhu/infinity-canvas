@@ -43,8 +43,6 @@ class SNode extends EventEmitter {
 
     public name = '';
 
-    public visible = true;
-
     private _renderComp: SRenderComponent | null = null;
 
     public _eventPhase: keyof SNodeEvents.EventMap | '' = '';
@@ -53,8 +51,33 @@ class SNode extends EventEmitter {
 
     private _flag: number = 0;
 
-    init() {
-        this.updateLocalMatrix();
+    private _activeInHierarchy: boolean = true;
+
+    private _active = true;
+
+    get active() {
+        return this._active;
+    }
+
+    set active(value: boolean) {
+        this._active = value;
+    }
+
+    get activeInHierarchy(): boolean {
+        if (!this._active) {
+            return false;
+        }
+        if (this._parent) {
+            return this._parent.activeInHierarchy;
+        }
+        return true;
+    }
+
+    private _hierarchyChange(active: boolean) {
+        this._activeInHierarchy = active;
+        for (const child of this._children) {
+            child._hierarchyChange(active);
+        }
     }
 
     private updateLocalMatrix() {
@@ -231,6 +254,7 @@ class SNode extends EventEmitter {
         child.forEach(c => {
             c._parent = this;
             c.updateWorldMatrix();
+            c.emit(SNodeEvents.HIERARCHY_CHANGE);
         });
     }
 
@@ -323,8 +347,8 @@ class SNode extends EventEmitter {
         this.updateWorldMatrix();
     }
 
-    public hitTest(worldX: number, worldY: number): boolean {
-        if (!this.visible) {
+    public hitTest(worldPos: ReadonlyVec2): boolean {
+        if (!this._active) {
             return false;
         }
 
@@ -333,7 +357,7 @@ class SNode extends EventEmitter {
         }
 
         const [l, b, r, t] = this.getLocalRect();
-        const localPos = this.toLocal({ x: worldX, y: worldY });
+        const localPos = this.toLocal(worldPos);
         if (
             localPos[0] <= l ||
             localPos[0] >= r ||

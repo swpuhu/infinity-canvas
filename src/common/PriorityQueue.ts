@@ -38,6 +38,14 @@ export class PriorityQueue<T> {
         this.heap = [];
     }
 
+    remove(value: T): void {
+        const index = this.heap.indexOf(value);
+        if (index !== -1) {
+            this.heap.splice(index, 1);
+            this.bubbleUp(index);
+        }
+    }
+
     private bubbleUp(index: number): void {
         while (index > 0) {
             const parentIndex = this.parentIndex(index);

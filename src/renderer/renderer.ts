@@ -138,7 +138,8 @@ export class Renderer extends EventEmitter {
         this.visitNode(
             this._currentRenderNode,
             node => {
-                if (!node.visible) {
+                if (!node.activeInHierarchy) {
+                    console.log('node not active', node.name);
                     return;
                 }
                 const renderComp = node.getRenderComps();

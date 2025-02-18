@@ -1,5 +1,5 @@
 import { CanvasKitModule } from '@/lib/canvaskit';
-import { CanvasEventSystem } from './EventManager';
+import { CanvasEventSystem } from './SEventManager';
 import { Renderer } from './renderer';
 import { SScene } from './SScene';
 import { EventNames, SNodeConfig, SNodeEvents } from '@/common/types';
@@ -43,6 +43,7 @@ export class CanvasEditor {
 
         const testPic = createNodeFromConfig({
             type: SNodeConfig.NodeType.SPRITE,
+            name: 'testPic',
             props: {
                 url: '/r2.png',
             },
@@ -73,8 +74,9 @@ export class CanvasEditor {
         this.eventSystem.addEventListener(
             testPic,
             SNodeEvents.POINTER_DOWN,
-            (e: SNodeEvents.PointerEvent) => {
-                console.log(e);
+            (e: SNodeEvents.IPointerEvent) => {
+                e.stopPropagation();
+                console.log(e.target?.name, e.currentTarget?.name);
                 testPic.rotation = 30;
                 resizeGizmo.mountToNode(testPic);
             }

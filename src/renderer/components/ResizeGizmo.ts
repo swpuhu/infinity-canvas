@@ -48,6 +48,10 @@ export class ResizeGizmo {
 
     private _lineNodes: SNode[] = [];
 
+    private _isResizing = false;
+
+    private _currentHandleNode: SNode | null = null;
+
     constructor(editor: CanvasEditor) {
         this._editor = editor;
         this._scene = editor.scene;
@@ -55,6 +59,14 @@ export class ResizeGizmo {
         this._scene.topLayer.addChild(this._root!);
         this._bindEvents();
         this._scene.on(EventNames.RESIZE, this._onResize);
+
+        this._editor.eventSystem.addEventListener(
+            this._scene.rootNode,
+            SNodeEvents.POINTER_DOWN,
+            () => {
+                this.unMount();
+            }
+        );
     }
 
     private _onResize = (): void => {
@@ -126,6 +138,7 @@ export class ResizeGizmo {
                     y: 0,
                 },
             },
+            active: false,
             children: [
                 {
                     name: 'lines',
@@ -176,28 +189,21 @@ export class ResizeGizmo {
                 SNodeEvents.POINTER_DOWN,
                 this._onResizePointerDown
             );
-            this._editor.eventSystem.addEventListener(
-                node,
-                SNodeEvents.POINTER_MOVE,
-                this._onResizePointerMove
-            );
-            this._editor.eventSystem.addEventListener(
-                node,
-                SNodeEvents.POINTER_UP,
-                this._onResizePointerUp
-            );
         });
     }
 
-    private _onResizePointerDown = (event: SNodeEvents.PointerEvent): void => {
+    private _onResizePointerDown = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
-        // console.log('onResizePointerDown', node.name);
+        console.log(
+            'onResizePointerDown',
+            event.target?.name,
+            event.currentTarget?.name
+        );
         if (!this._root) {
             return;
         }
 
         if (event.target === this._lbNodeRef.value) {
-            console.log('change anchor to 1, 1');
             changeAnchorButStay(this._root, {
                 x: 1,
                 y: 1,
@@ -208,28 +214,46 @@ export class ResizeGizmo {
                 y: 1,
             });
         }
-        const localPos = this._root.toLocal(event.worldPosition);
+
+        this._currentHandleNode = event.target;
+
+        const localPos = this._root.toLocal(event.getWorldPosition());
         this._resizeStartNodeSize.set(this._root.width, this._root.height);
         this._resizeStartPos.set(localPos[0], localPos[1]);
-        console.log('localPos', localPos);
+
+        this._isResizing = true;
+        this.updateHandlerNodes();
+
+        this._editor.eventSystem.addEventListener(
+            this._scene.rootNode,
+            SNodeEvents.POINTER_MOVE,
+            this._onResizePointerMove
+        );
+        this._editor.eventSystem.addEventListener(
+            this._scene.rootNode,
+            SNodeEvents.POINTER_UP,
+            this._onResizePointerUp
+        );
     };
 
-    private _onResizePointerMove = (event: SNodeEvents.PointerEvent): void => {
+    private _onResizePointerMove = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
-        if (!this._root) {
+        console.log('onResizePointerMove', event.target?.name);
+        if (!this._root || !this._currentNode || !this._isResizing) {
             return;
         }
-        const moveLocalPos = this._root?.toLocal(event.worldPosition);
+        console.log('onResizePointerMove', event.target?.name);
+        const moveLocalPos = this._root?.toLocal(event.getWorldPosition());
         console.log('startPos', this._resizeStartPos);
         console.log('moveLocalPos', this._root.position);
         const diff = new Vec2(
             moveLocalPos[0] - this._resizeStartPos.x,
             moveLocalPos[1] - this._resizeStartPos.y
         );
-        if (event.target === this._lbNodeRef.value) {
+        if (this._currentHandleNode === this._lbNodeRef.value) {
             diff.x = -diff.x;
             diff.y = -diff.y;
-        } else if (event.target === this._ltNodeRef.value) {
+        } else if (this._currentHandleNode === this._ltNodeRef.value) {
             diff.x = -diff.x;
             console.log('lt', diff);
         }
@@ -241,11 +265,24 @@ export class ResizeGizmo {
         this.updateHandlerNodes();
     };
 
-    private _onResizePointerUp = (event: SNodeEvents.PointerEvent): void => {
+    private _onResizePointerUp = (event: SNodeEvents.IPointerEvent): void => {
         const node = event.target;
         if (!node) {
             return;
         }
+        this._isResizing = false;
+
+        this._editor.eventSystem.removeEventListener(
+            this._scene.rootNode,
+            SNodeEvents.POINTER_MOVE,
+            this._onResizePointerMove
+        );
+        this._editor.eventSystem.removeEventListener(
+            this._scene.rootNode,
+            SNodeEvents.POINTER_UP,
+            this._onResizePointerUp
+        );
+        this._currentHandleNode = null;
     };
 
     public updateHandlerNodes(): void {
@@ -293,13 +330,14 @@ export class ResizeGizmo {
             return;
         }
         this._currentNode = targetNode;
-        this._root.visible = true;
+        this._root.active = true;
         alignToNode(this._root, targetNode);
         this.updateHandlerNodes();
     }
 
     public unMount(): void {
         this._currentNode = null;
-        this._root!.visible = false;
+        this._root!.active = false;
+        this.updateHandlerNodes();
     }
 }

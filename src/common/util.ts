@@ -97,3 +97,38 @@ export function decomposeMatrix(matrix: mat3): {
         rotation,
     };
 }
+
+export function compareNodeDepth(nodeA: SNode, nodeB: SNode) {
+    // 计算节点a的深度和路径
+    let depthA = 0;
+    const pathA: number[] = [];
+    while (nodeA.parent) {
+        pathA.unshift(nodeA.parent.children.indexOf(nodeA));
+        depthA++;
+        nodeA = nodeA.parent;
+    }
+
+    // 计算节点b的深度和路径
+    let depthB = 0;
+    const pathB: number[] = [];
+    while (nodeB.parent) {
+        pathB.unshift(nodeB.parent.children.indexOf(nodeB));
+        depthB++;
+        nodeB = nodeB.parent;
+    }
+
+    // 首先比较深度
+    if (depthA !== depthB) {
+        return depthB - depthA; // 深度大的排在前面
+    }
+
+    // 如果深度相同，比较在同层级中的顺序
+    // 从根节点开始比较每一层的索引
+    for (let i = 0; i < pathA.length; i++) {
+        if (pathA[i] !== pathB[i]) {
+            return pathB[i] - pathA[i]; // 索引大的排在前面
+        }
+    }
+
+    return 0; // 完全相同的位置
+}

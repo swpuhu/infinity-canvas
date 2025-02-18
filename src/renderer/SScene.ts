@@ -198,6 +198,8 @@ export class SScene extends EventEmitter {
         this.rootNode.setTransform({
             position: new Vec2(canvasSize.width / 2, canvasSize.height / 2),
         });
+        this.rootNode.width = canvasSize.width;
+        this.rootNode.height = canvasSize.height;
 
         leftSide.setTransform({
             position: new Vec2(-canvasSize.width / 2, -canvasSize.height / 2),

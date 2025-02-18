@@ -1,4 +1,6 @@
+import { SEvent, SPointerEvent } from '@/renderer/SEventManager';
 import SNode from '@/renderer/SNode';
+import { ReadonlyVec2 } from 'gl-matrix';
 
 export interface IPoint extends IPointData {
     clone(): IPoint;
@@ -98,6 +100,7 @@ export namespace SNodeConfig {
         needClip?: boolean;
         children?: (BaseConfig | RectConfig)[];
         transform?: TransformOptions;
+        active?: boolean;
     };
 
     export type ContainerConfig = BaseConfig;
@@ -123,48 +126,48 @@ export namespace SNodeConfig {
 }
 
 export namespace SNodeEvents {
-    export const MOUSE_DOWN = 'mouseDown';
-    export const MOUSE_MOVE = 'mouseMove';
-    export const MOUSE_UP = 'mouseUp';
+    export const MOUSE_DOWN = 'mousedown';
+    export const MOUSE_MOVE = 'mousemove';
+    export const MOUSE_UP = 'mouseup';
 
-    export const POINTER_DOWN = 'pointerDown';
-    export const POINTER_MOVE = 'pointerMove';
-    export const POINTER_DOWN_MOVE = 'pointerDownMove';
-    export const POINTER_UP = 'pointerUp';
+    export const POINTER_DOWN = 'pointerdown';
+    export const POINTER_MOVE = 'pointermove';
+    export const POINTER_UP = 'pointerup';
 
-    export const KEY_DOWN = 'keyDown';
-    export const KEY_UP = 'keyUp';
+    export const KEY_DOWN = 'keydown';
+    export const KEY_UP = 'keyup';
 
-    export const TOUCH_START = 'touchStart';
-    export const TOUCH_MOVE = 'touchMove';
-    export const TOUCH_END = 'touchEnd';
-    export const TOUCH_CANCEL = 'touchCancel';
+    export const TOUCH_START = 'touchstart';
+    export const TOUCH_MOVE = 'touchmove';
+    export const TOUCH_END = 'touchend';
+    export const TOUCH_CANCEL = 'touchcancel';
 
     export const WHEEL = 'wheel';
 
-    type Event = {
+    export const HIERARCHY_CHANGE = 'hierarchyChange';
+
+    export type IEvent = {
         target: SNode | null;
         stopPropagation: () => void;
-        _stopPropagation: boolean;
+        currentTarget: SNode | null;
     };
 
-    type MouseEvent = {} & Event;
-    export type PointerEvent = {
-        localPosition: IPoint;
-        worldPosition: IPoint;
-        delta: IPoint;
-    } & Event;
-    type TouchEvent = {} & Event;
-    type KeyboardEvent = {} & Event;
-    type WheelEvent = {} & Event;
+    type MouseEvent = {} & IEvent;
+    export type IPointerEvent = IEvent & {
+        getLocalPosition: (node: SNode) => ReadonlyVec2;
+        getWorldPosition: () => ReadonlyVec2;
+    };
+    type TouchEvent = {} & IEvent;
+    type KeyboardEvent = {} & IEvent;
+    type WheelEvent = {} & IEvent;
 
     export type EventMap = {
         [SNodeEvents.MOUSE_DOWN]: MouseEvent;
         [SNodeEvents.MOUSE_MOVE]: MouseEvent;
         [SNodeEvents.MOUSE_UP]: MouseEvent;
-        [SNodeEvents.POINTER_DOWN]: PointerEvent;
-        [SNodeEvents.POINTER_MOVE]: PointerEvent;
-        [SNodeEvents.POINTER_UP]: PointerEvent;
+        [SNodeEvents.POINTER_DOWN]: IPointerEvent;
+        [SNodeEvents.POINTER_MOVE]: IPointerEvent;
+        [SNodeEvents.POINTER_UP]: IPointerEvent;
         [SNodeEvents.KEY_DOWN]: KeyboardEvent;
         [SNodeEvents.KEY_UP]: KeyboardEvent;
         [SNodeEvents.TOUCH_START]: TouchEvent;
