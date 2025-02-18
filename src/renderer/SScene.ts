@@ -109,6 +109,10 @@ export class SScene extends EventEmitter {
                                     },
                                     style: {
                                         fill: 0xffbb00,
+                                        shadow: {
+                                            color: 0xffbc00,
+                                            blur: 10,
+                                        },
                                     },
                                 },
                             ],

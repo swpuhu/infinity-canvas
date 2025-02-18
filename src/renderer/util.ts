@@ -1,6 +1,6 @@
 import { IPointData, SNodeConfig } from '@/common/types';
 import SNode from './SNode';
-import { SSprite } from './SSprite';
+import { SSprite } from './RenderComponents/SSprite';
 import { InputRect } from 'canvaskit-wasm';
 import { SGeoRect } from './Geometry/SGeoRect';
 import { Vec2 } from '@/common/Vec2';

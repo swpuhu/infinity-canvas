@@ -1,5 +1,5 @@
 import { Canvas, Paint } from 'canvaskit-wasm';
-import { SRenderComponent } from '../SRenderComponent';
+import { SRenderComponent } from '../RenderComponents/SRenderComponent';
 import { CanvasKitModule } from '@/lib/canvaskit';
 import { FillOptions, ShadowOptions, StrokeOptions } from '@/common/types';
 import { safeColor } from '@/common/util';

@@ -1,4 +1,4 @@
-import { SRenderComponent } from './SRenderComponent';
+import { SRenderComponent } from './RenderComponents/SRenderComponent';
 
 import { mat3, ReadonlyVec2, vec2 } from 'gl-matrix';
 import {

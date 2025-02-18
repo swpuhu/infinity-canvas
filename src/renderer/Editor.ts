@@ -34,7 +34,7 @@ export class CanvasEditor {
         // 创建基础布局
         const scene = new SScene({
             canvasSize,
-            designSize: { width: 1920, height: 1080 },
+            designSize: { width: 1080, height: 1920 },
             sideWidth: 200,
         });
 
