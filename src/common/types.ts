@@ -145,6 +145,7 @@ export namespace SNodeEvents {
     export const WHEEL = 'wheel';
 
     export const HIERARCHY_CHANGE = 'hierarchyChange';
+    export const SIZE_CHANGE = 'sizeChange';
 
     export type IEvent = {
         target: SNode | null;
@@ -196,3 +197,9 @@ export const ALL_EVENT_NAMES: (keyof SNodeEvents.EventMap)[] = [
     SNodeEvents.TOUCH_END,
     SNodeEvents.TOUCH_CANCEL,
 ];
+
+export enum EnumAspectKeepMode {
+    NONE = 'none',
+    WIDTH = 'width',
+    HEIGHT = 'height',
+}

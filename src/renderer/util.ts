@@ -90,9 +90,7 @@ export function getRectByNode(node: SNode): InputRect {
 }
 
 export function alignToNode(srcNode: SNode, targetNode: SNode) {
-    srcNode.width = targetNode.width;
-    srcNode.height = targetNode.height;
-
+    srcNode.setSize(targetNode.width, targetNode.height);
     srcNode.anchor.set(targetNode.anchor.x, targetNode.anchor.y);
 
     const targetNodeMat = targetNode.getWorldMatrix();

@@ -2,6 +2,8 @@ import { SRenderComponent } from './RenderComponents/SRenderComponent';
 
 import { mat3, ReadonlyVec2, vec2 } from 'gl-matrix';
 import {
+    EnumAspectKeepMode,
+    EventNames,
     IPoint,
     IPointData,
     SNodeEvents,
@@ -54,6 +56,8 @@ class SNode extends EventEmitter {
     private _activeInHierarchy: boolean = true;
 
     private _active = true;
+
+    public aspectKeepMode = EnumAspectKeepMode.NONE;
 
     get active() {
         return this._active;
@@ -221,6 +225,7 @@ class SNode extends EventEmitter {
     public setSize(width: number, height: number) {
         this._width = width;
         this._height = height;
+        this.emit(SNodeEvents.SIZE_CHANGE);
     }
 
     public getLocalRect(): number[] {

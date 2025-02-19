@@ -1,4 +1,5 @@
 import {
+    EnumAspectKeepMode,
     EventNames,
     IPointData,
     SNodeConfig,
@@ -58,6 +59,8 @@ export class ResizeGizmo {
     private _currentHandleNode: SNode | null = null;
 
     private _currentNodeOriginPos: Vec2 = new Vec2(0, 0);
+
+    private _originAspect: number = 1;
 
     constructor(editor: CanvasEditor) {
         this._editor = editor;
@@ -219,12 +222,6 @@ export class ResizeGizmo {
                 this._onResizePointerDown
             );
         });
-
-        CanvasEventSystem.instance.addEventListener(
-            this._root!,
-            SNodeEvents.POINTER_DOWN,
-            this._onDragPointerDown
-        );
     }
 
     private _onDragPointerDown = (event: SNodeEvents.IPointerEvent): void => {
@@ -305,7 +302,7 @@ export class ResizeGizmo {
 
     private _onResizePointerDown = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
-        if (!this._root) {
+        if (!this._root || !this._currentNode) {
             return;
         }
 
@@ -338,6 +335,7 @@ export class ResizeGizmo {
         this._resizeStartPos.set(localPos[0], localPos[1]);
 
         this._isResizing = true;
+        this._originAspect = this._currentNode.width / this._currentNode.height;
         this.updateHandlerNodes();
         this._enableResize();
     };
@@ -379,6 +377,13 @@ export class ResizeGizmo {
             moveLocalPos[0] - this._resizeStartPos.x,
             moveLocalPos[1] - this._resizeStartPos.y
         );
+        if (this._currentNode.aspectKeepMode === EnumAspectKeepMode.WIDTH) {
+            diff.y = diff.x / this._originAspect;
+        } else if (
+            this._currentNode.aspectKeepMode === EnumAspectKeepMode.HEIGHT
+        ) {
+            diff.x = diff.y * this._originAspect;
+        }
         if (this._currentHandleNode === this._lbNodeRef.value) {
             diff.x = -diff.x;
             diff.y = -diff.y;

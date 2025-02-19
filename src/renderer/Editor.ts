@@ -62,7 +62,7 @@ export class CanvasEditor {
         text.position.set(0, 0);
 
         const para = text.addRenderComp(SParagraph);
-        para.text = '锋锐无匹！\n注定是一把无鞘之剑！';
+        para.text = '千年暗室\n一灯即明';
 
         scene.stage.addChild(text);
 
