@@ -78,7 +78,7 @@ export class SParagraph extends SRenderComponent {
         const newFontSize =
             this.node.height / this._heightMultiplier / currentLines.length;
 
-        this.setFontSize(newFontSize);
+        this.setFontSize(Math.floor(newFontSize));
     };
 
     protected onCreated(): void {

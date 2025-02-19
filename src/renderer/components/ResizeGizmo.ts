@@ -75,15 +75,18 @@ export class ResizeGizmo {
             SNodeEvents.POINTER_DOWN,
             (event: SNodeEvents.IPointerEvent) => {
                 const allNodes = this._collectAllNodes();
+                console.log(allNodes);
                 let hasHit = false;
-                allNodes.forEach(node => {
+                for (let i = 0; i < allNodes.length; i++) {
+                    const node = allNodes[i];
                     const hit = node.hitTest(event.getWorldPosition());
                     if (hit) {
                         this.mountToNode(node);
                         this._onDragPointerDown(event);
                         hasHit = true;
+                        break;
                     }
-                });
+                }
                 if (!hasHit) {
                     this.unMount();
                 }
@@ -95,7 +98,7 @@ export class ResizeGizmo {
         const nodes: SNode[] = [];
         visitNodeRecursive(this._scene.canvasLayer, node => {
             if (node !== this._scene.canvasLayer) {
-                nodes.push(node);
+                nodes.unshift(node);
             }
         });
         return nodes;

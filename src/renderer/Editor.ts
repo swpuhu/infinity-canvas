@@ -8,6 +8,7 @@ import { loadImage } from '@/common/util';
 import { ResizeGizmo } from './components/ResizeGizmo';
 import SNode from './SNode';
 import { SParagraph } from './RenderComponents/SParagraph';
+import eventBus from '@/common/eventBus';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
@@ -49,7 +50,7 @@ export class CanvasEditor {
                 url: '/r2.png',
             },
             transform: {
-                scale: { x: 1, y: 1 },
+                scale: { x: 3, y: 3 },
                 anchor: { x: 0, y: 0 },
             },
         });
@@ -62,11 +63,12 @@ export class CanvasEditor {
         text.position.set(0, 0);
 
         const para = text.addRenderComp(SParagraph);
-        para.text = '千年暗室\n一灯即明';
+        para.text = '遇事不决\n可问春风';
         // para.setFontSize(100);
 
         setTimeout(() => {
-            para.node?.setSize(200, 267);
+            // para.node?.setSize(200, 267);
+            // eventBus.reDraw();
         }, 1000);
 
         scene.stage.addChild(text);

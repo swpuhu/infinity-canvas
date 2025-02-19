@@ -77,8 +77,8 @@ export class Renderer extends EventEmitter {
     public resizeSurface(width: number, height: number) {
         const canvas = this._canvasElement;
 
-        canvas.width = width * devicePixelRatio;
-        canvas.height = height * devicePixelRatio;
+        canvas.width = width * 1;
+        canvas.height = height * 1;
 
         if (this.surface) {
             this.surface.delete();
