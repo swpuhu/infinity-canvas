@@ -377,13 +377,6 @@ export class ResizeGizmo {
             moveLocalPos[0] - this._resizeStartPos.x,
             moveLocalPos[1] - this._resizeStartPos.y
         );
-        if (this._currentNode.aspectKeepMode === EnumAspectKeepMode.WIDTH) {
-            diff.y = diff.x / this._originAspect;
-        } else if (
-            this._currentNode.aspectKeepMode === EnumAspectKeepMode.HEIGHT
-        ) {
-            diff.x = diff.y * this._originAspect;
-        }
         if (this._currentHandleNode === this._lbNodeRef.value) {
             diff.x = -diff.x;
             diff.y = -diff.y;
@@ -392,8 +385,17 @@ export class ResizeGizmo {
         } else if (this._currentHandleNode === this._rbNodeRef.value) {
             diff.y = -diff.y;
         }
-        this._root.width = this._resizeStartNodeSize.x + diff.x;
-        this._root.height = this._resizeStartNodeSize.y + diff.y;
+        let nextWidth = this._resizeStartNodeSize.x + diff.x;
+        let nextHeight = this._resizeStartNodeSize.y + diff.y;
+        if (this._currentNode.aspectKeepMode === EnumAspectKeepMode.WIDTH) {
+            nextHeight = nextWidth / this._originAspect;
+        } else if (
+            this._currentNode.aspectKeepMode === EnumAspectKeepMode.HEIGHT
+        ) {
+            nextWidth = nextHeight * this._originAspect;
+        }
+        this._root.width = nextWidth;
+        this._root.height = nextHeight;
 
         alignToNode(this._currentNode!, this._root);
         this.updateHandlerNodes();

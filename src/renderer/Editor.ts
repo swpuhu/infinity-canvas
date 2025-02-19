@@ -49,7 +49,7 @@ export class CanvasEditor {
                 url: '/r2.png',
             },
             transform: {
-                scale: { x: 3, y: 3 },
+                scale: { x: 1, y: 1 },
                 anchor: { x: 0, y: 0 },
             },
         });
@@ -63,6 +63,11 @@ export class CanvasEditor {
 
         const para = text.addRenderComp(SParagraph);
         para.text = '千年暗室\n一灯即明';
+        // para.setFontSize(100);
+
+        setTimeout(() => {
+            para.node?.setSize(200, 267);
+        }, 1000);
 
         scene.stage.addChild(text);
 
