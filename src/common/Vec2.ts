@@ -30,4 +30,8 @@ export class Vec2 implements IPoint {
     cross(other: Vec2): number {
         return this.x * other.y - this.y * other.x;
     }
+
+    mag(): number {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
 }

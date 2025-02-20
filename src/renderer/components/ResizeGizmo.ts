@@ -47,8 +47,6 @@ export class ResizeGizmo {
     protected _topLineRef: SNodeConfig.IRefSNode = refSNode();
     protected _bottomLineRef: SNodeConfig.IRefSNode = refSNode();
 
-    protected _cursorRef: SNodeConfig.IRefSNode = refSNode();
-
     protected _resizeStartPos: Vec2 = new Vec2(0, 0);
 
     protected _currentNode: SNode | null = null;
@@ -71,11 +69,18 @@ export class ResizeGizmo {
 
     protected _originAspect: number = 1;
 
+    private _originAnchor: IPointData = {
+        x: 0,
+        y: 0,
+    };
+
     private _hideTextArea: HTMLTextAreaElement | null = null;
 
     private _currentText: SParagraph | null = null;
 
     private _cursorDiv: HTMLElement | null = null;
+
+    private _currentMode: 'edit' | 'resize' | 'drag' | 'none' = 'none';
 
     constructor(editor: CanvasEditor) {
         this._editor = editor;
@@ -130,11 +135,16 @@ export class ResizeGizmo {
 
     private _onHideTextAreaSelectionChange = (event: Event): void => {
         if (this._currentText) {
-            const cursorIndex = this._hideTextArea!.selectionStart;
-            const cursorEndIndex = this._hideTextArea!.selectionEnd;
-            this._setCursorDivPositionByIndex(cursorIndex);
+            const startIndex = this._hideTextArea!.selectionStart;
+            const endIndex = this._hideTextArea!.selectionEnd;
+            if (startIndex === endIndex) {
+                this._setCursorDivPositionByIndex(startIndex);
+            }
+            console.log('selection change', startIndex, endIndex);
         }
     };
+
+    private selectText(startIndex: number, endIndex: number): void {}
 
     private _onHideTextAreaInput = (event: Event): void => {
         const e = event as InputEvent | CompositionEvent;
@@ -151,6 +161,25 @@ export class ResizeGizmo {
             this._scene.canvasLayer,
             SNodeEvents.POINTER_DOWN,
             (event: SNodeEvents.IPointerEvent) => {
+                if (this._currentMode === 'edit' && this._currentText) {
+                    const localPos = event.getLocalPosition(
+                        this._currentText.node!
+                    );
+                    const cursorIndex = this._currentText.getCursorIndex(
+                        localPos[0],
+                        localPos[1]
+                    );
+                    const worldPos =
+                        this._setCursorDivPositionByIndex(cursorIndex);
+                    if (worldPos) {
+                        this._focusTextArea(
+                            this._currentText,
+                            worldPos,
+                            cursorIndex,
+                            cursorIndex
+                        );
+                    }
+                }
                 const allNodes = this._collectAllNodes();
                 let hasHit = false;
                 for (let i = 0; i < allNodes.length; i++) {
@@ -207,11 +236,31 @@ export class ResizeGizmo {
         return nodes;
     }
 
+    private _focusTextArea(
+        textComp: SParagraph,
+        worldPos: ReadonlyVec2,
+        startIndex: number,
+        endIndex: number
+    ): void {
+        this._hideTextArea!.classList.remove('hide');
+        this._hideTextArea!.textContent = textComp.text;
+
+        if (worldPos) {
+            this._hideTextArea!.style.left = worldPos[0] + 50 + 'px';
+            this._hideTextArea!.style.top = worldPos[1] + 'px';
+        }
+        setTimeout(() => {
+            this._hideTextArea!.focus();
+            this._hideTextArea!.setSelectionRange(startIndex, endIndex);
+        }, 100);
+    }
+
     private _enterEditMode(
         node: SNode,
         event: SNodeEvents.IPointerEvent
     ): void {
         const textComp = node.getComponent(SParagraph);
+        this._currentMode = 'edit';
         if (textComp) {
             const eventLocalPos = event.getLocalPosition(node);
             const cursorIndex = textComp.getCursorIndex(
@@ -220,22 +269,25 @@ export class ResizeGizmo {
             );
             this._currentText = textComp;
             const worldPos = this._setCursorDivPositionByIndex(cursorIndex);
-
-            this._hideTextArea!.classList.remove('hide');
-            this._hideTextArea!.textContent = textComp.text;
-            this._hideTextArea!.focus();
-            this._hideTextArea!.setSelectionRange(cursorIndex, cursorIndex);
             if (worldPos) {
-                this._hideTextArea!.style.left = worldPos[0] + 'px';
-                this._hideTextArea!.style.top = worldPos[1] + 'px';
+                this._focusTextArea(
+                    textComp,
+                    worldPos,
+                    cursorIndex,
+                    cursorIndex
+                );
             }
         }
     }
 
     private _exitEditMode(): void {
-        this._currentText = null;
+        if (this._currentMode !== 'edit') {
+            return;
+        }
+        this._currentMode = 'none';
         this._hideTextArea!.classList.add('hide');
         this._cursorDiv!.classList.add('hide');
+        this._currentText = null;
     }
 
     protected _onResize = (): void => {
@@ -338,20 +390,6 @@ export class ResizeGizmo {
                         commonRectConfig(p.name, p.ref)
                     ),
                 },
-                {
-                    name: 'cursor',
-                    type: SNodeConfig.NodeType.RECT,
-                    ref: this._cursorRef,
-                    width: 2,
-                    height: 50,
-                    style: { fill: 0x00bcfb },
-                    transform: {
-                        anchor: {
-                            x: 0.5,
-                            y: 0,
-                        },
-                    },
-                },
             ],
         });
 
@@ -380,7 +418,13 @@ export class ResizeGizmo {
         if (!this._root || !this._currentNode) {
             return;
         }
-
+        if (
+            this._currentMode === 'edit' &&
+            event.currentTarget === this._currentText!.node
+        ) {
+            this._enterEditMode(this._currentNode, event);
+            return;
+        }
         this._isDragging = true;
         const localPos = this._currentNode.parent!.toLocal(
             event.getWorldPosition()
@@ -438,6 +482,9 @@ export class ResizeGizmo {
             this._currentNodeOriginPos.x + diff.x,
             this._currentNodeOriginPos.y + diff.y
         );
+        if (diff.mag() > 5) {
+            this._exitEditMode();
+        }
         // alignToNode(this._currentNode!, this._root!);
         alignToNode(this._root!, this._currentNode!);
     };
@@ -456,6 +503,9 @@ export class ResizeGizmo {
         if (!this._root || !this._currentNode) {
             return;
         }
+        this._exitEditMode();
+
+        this._originAnchor = this._currentNode.anchor.clone();
 
         if (event.target === this._lbNodeRef.value) {
             changeAnchorButStay(this._root, {
@@ -557,6 +607,7 @@ export class ResizeGizmo {
         if (!node) {
             return;
         }
+        changeAnchorButStay(this._currentNode!, this._originAnchor);
         this._isResizing = false;
         this._disableResize();
         this._currentHandleNode = null;
