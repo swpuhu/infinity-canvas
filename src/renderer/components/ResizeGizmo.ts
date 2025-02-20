@@ -581,9 +581,12 @@ export class ResizeGizmo {
             this._root.position.x,
             this._root.position.y
         );
-
-        const localPos = this._root.parent!.toLocal(event.getWorldPosition());
-        this._resizeStartNodeSize.set(this._root.width, this._root.height);
+        const hostNode =
+            this._currentMode === ResizeGizmoMode.ROTATE
+                ? this._root.parent
+                : this._root;
+        const localPos = hostNode!.toLocal(event.getWorldPosition());
+        this._resizeStartNodeSize.set(hostNode!.width, hostNode!.height);
         this._resizeStartPos.set(localPos[0], localPos[1]);
 
         this.updateHandlerNodes();
@@ -621,9 +624,11 @@ export class ResizeGizmo {
         if (!this._root || !this._currentNode || !this._isResizing) {
             return;
         }
-        const moveLocalPos = this._root!.parent!.toLocal(
-            event.getWorldPosition()
-        );
+        const hostNode =
+            this._currentMode === ResizeGizmoMode.ROTATE
+                ? this._root.parent
+                : this._root;
+        const moveLocalPos = hostNode!.toLocal(event.getWorldPosition());
         if (this._currentMode === ResizeGizmoMode.ROTATE) {
             const startVec = this._resizeStartPos.sub(
                 this._resizeStartRootNodePos

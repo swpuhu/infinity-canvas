@@ -118,11 +118,19 @@ export class CanvasEventSystem {
     private constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
 
+        this._preventDefaultBehavior();
         this._delegateDOMEvents();
         this._listenersMap.set(SNodeEvents.POINTER_DOWN, []);
         this._listenersMap.set(SNodeEvents.POINTER_MOVE, []);
         this._listenersMap.set(SNodeEvents.POINTER_UP, []);
         this._listenersMap.set(SNodeEvents.DB_CLICK, []);
+    }
+
+    private _preventDefaultBehavior(): void {
+        this.canvas.addEventListener('contextmenu', event => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
     }
 
     private _delegateDOMEvents() {
