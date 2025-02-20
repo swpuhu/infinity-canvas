@@ -113,19 +113,15 @@ export class SParagraph extends SRenderComponent {
         this.node.renderType = EnumRenderComponentType.TEXT;
     }
 
-    public getCursorPosInTextLocal(
-        dx: number,
-        dy: number
-    ): {
+    public getCursorInfoByIndex(cursorIndex: number): {
         pos: ReadonlyVec2;
         size: number;
+        startIndex: number;
+        endIndex: number;
     } | null {
         if (!this._paragraph) {
             return null;
         }
-        const info = this._paragraph.getGlyphPositionAtCoordinate(dx, dy);
-        const cursorIndex = info.pos;
-
         const lineMetrics = this._paragraph.getLineMetrics();
         if (!lineMetrics.length) {
             return null;
@@ -156,13 +152,25 @@ export class SParagraph extends SRenderComponent {
             return {
                 pos: [rects[0].rect[2], rects[0].rect[1]],
                 size: rects[0].rect[3] - rects[0].rect[1],
+                startIndex: cursorIndex,
+                endIndex: cursorIndex,
             };
         }
 
         return {
             pos: [rects[0].rect[0], rects[0].rect[1]],
             size: rects[0].rect[3] - rects[0].rect[1],
+            startIndex: cursorIndex,
+            endIndex: cursorIndex,
         };
+    }
+
+    public getCursorIndex(dx: number, dy: number): number {
+        if (!this._paragraph) {
+            return -1;
+        }
+        const info = this._paragraph.getGlyphPositionAtCoordinate(dx, dy);
+        return info.pos;
     }
 
     public draw(canvas: Canvas): void {

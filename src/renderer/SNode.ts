@@ -139,6 +139,11 @@ class SNode extends EventEmitter {
         return vec2.transformMat3(vec2.create(), pointData, this._worldMatrix);
     }
 
+    public getGlobalScale(): IPointData {
+        const result = decomposeMatrix(this._worldMatrix);
+        return result.scale;
+    }
+
     public toLocal(point: IPointData | ReadonlyVec2): ReadonlyVec2 {
         let pointData: ReadonlyVec2;
         if (point instanceof Array || point instanceof Float32Array) {

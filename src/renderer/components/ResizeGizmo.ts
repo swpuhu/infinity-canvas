@@ -15,7 +15,7 @@ import {
 import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '../Editor';
 import { SScene } from '../SScene';
-import { mat3, mat4 } from 'gl-matrix';
+import { mat3, mat4, ReadonlyVec2 } from 'gl-matrix';
 import {
     decomposeMatrix,
     isSprite,
@@ -24,6 +24,7 @@ import {
 } from '@/common/util';
 import { CanvasEventSystem, SPointerEvent } from '../SEventManager';
 import { SParagraph } from '../RenderComponents/SParagraph';
+import eventBus from '@/common/eventBus';
 
 const RESIZE_GIZMO_SIZE = 10;
 const RESIZE_GIZMO_COLOR = 0x00bcfb;
@@ -70,6 +71,12 @@ export class ResizeGizmo {
 
     protected _originAspect: number = 1;
 
+    private _hideTextArea: HTMLTextAreaElement | null = null;
+
+    private _currentText: SParagraph | null = null;
+
+    private _cursorDiv: HTMLElement | null = null;
+
     constructor(editor: CanvasEditor) {
         this._editor = editor;
         this._scene = editor.scene;
@@ -78,7 +85,66 @@ export class ResizeGizmo {
         this._bindEvents();
         this._scene.on(EventNames.RESIZE, this._onResize);
         this.addPointerEvent();
+        this._initHideTextArea();
     }
+    private _initHideTextArea(): void {
+        this._hideTextArea = document.createElement('textarea');
+        this._hideTextArea.classList.add('text-area', 'hide');
+
+        this._cursorDiv = document.createElement('div');
+        this._cursorDiv.classList.add('cursor', 'hide');
+
+        document.body.appendChild(this._hideTextArea);
+        document.body.appendChild(this._cursorDiv);
+        this._hideTextArea.addEventListener(
+            'compositionupdate',
+            this._onHideTextAreaInput
+        );
+        this._hideTextArea.addEventListener('input', this._onHideTextAreaInput);
+
+        this._hideTextArea.addEventListener(
+            'selectionchange',
+            this._onHideTextAreaSelectionChange
+        );
+    }
+
+    private _setCursorDivPositionByIndex(
+        cursorIndex: number
+    ): ReadonlyVec2 | null {
+        if (!this._currentText) {
+            return null;
+        }
+        const cursorInfo = this._currentText.getCursorInfoByIndex(cursorIndex);
+        if (cursorInfo) {
+            const worldPos = this._currentText.node!.toGlobal(cursorInfo.pos);
+            this._cursorDiv!.classList.remove('hide');
+            this._cursorDiv!.style.left = worldPos[0] + 'px';
+            this._cursorDiv!.style.top = worldPos[1] + 'px';
+            const globalScale = this._currentText.node!.getGlobalScale();
+            this._cursorDiv!.style.height =
+                cursorInfo.size * globalScale.y + 'px';
+            return worldPos;
+        }
+        return null;
+    }
+
+    private _onHideTextAreaSelectionChange = (event: Event): void => {
+        if (this._currentText) {
+            const cursorIndex = this._hideTextArea!.selectionStart;
+            const cursorEndIndex = this._hideTextArea!.selectionEnd;
+            this._setCursorDivPositionByIndex(cursorIndex);
+        }
+    };
+
+    private _onHideTextAreaInput = (event: Event): void => {
+        const e = event as InputEvent | CompositionEvent;
+        if (this._currentText) {
+            this._currentText.text = this._hideTextArea!.value;
+            alignToNode(this._root!, this._currentText.node!);
+            this.updateHandlerNodes();
+            eventBus.reDraw();
+        }
+    };
 
     protected addPointerEvent(): void {
         this._editor.eventSystem.addEventListener(
@@ -147,21 +213,29 @@ export class ResizeGizmo {
     ): void {
         const textComp = node.getComponent(SParagraph);
         if (textComp) {
-            const eventLocalPos = node.toLocal(event.getWorldPosition());
-            const cursorInfo = textComp.getCursorPosInTextLocal(
+            const eventLocalPos = event.getLocalPosition(node);
+            const cursorIndex = textComp.getCursorIndex(
                 eventLocalPos[0],
                 eventLocalPos[1]
             );
-            if (!cursorInfo) {
-                return;
+            this._currentText = textComp;
+            const worldPos = this._setCursorDivPositionByIndex(cursorIndex);
+
+            this._hideTextArea!.classList.remove('hide');
+            this._hideTextArea!.textContent = textComp.text;
+            this._hideTextArea!.focus();
+            this._hideTextArea!.setSelectionRange(cursorIndex, cursorIndex);
+            if (worldPos) {
+                this._hideTextArea!.style.left = worldPos[0] + 'px';
+                this._hideTextArea!.style.top = worldPos[1] + 'px';
             }
-            const { pos, size } = cursorInfo;
-            const worldPos = node.toGlobal(pos);
-            const cursorNode = this._cursorRef.value!;
-            const cursorPos = cursorNode.parent!.toLocal(worldPos);
-            cursorNode.position.set(cursorPos[0], cursorPos[1]);
-            cursorNode.height = size;
         }
+    }
+
+    private _exitEditMode(): void {
+        this._currentText = null;
+        this._hideTextArea!.classList.add('hide');
+        this._cursorDiv!.classList.add('hide');
     }
 
     protected _onResize = (): void => {
@@ -541,6 +615,7 @@ export class ResizeGizmo {
     public unMount(): void {
         this._currentNode = null;
         this._root!.active = false;
+        this._exitEditMode();
         this.updateHandlerNodes();
     }
 }

@@ -11,8 +11,6 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { CanvasEditor } from './renderer/Editor';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
-const designSize = { width: 375, height: 667 }; // 设计稿尺寸（示例值）
-const sideSize = 200; // 侧边栏宽度
 
 let editor: CanvasEditor | null = null;
 onMounted(async () => {
