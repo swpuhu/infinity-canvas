@@ -3,6 +3,7 @@ import { SRenderComponent } from './SRenderComponent';
 import { loadImage, loadImageArrayBuffer } from '@/common/util';
 import { CanvasKitModule } from '@/lib/canvaskit';
 import eventBus from '@/common/eventBus';
+import { EnumRenderComponentType } from '@/common/types';
 
 enum EnumResizeMode {
     RAW = 'raw',
@@ -20,7 +21,9 @@ export class SSprite extends SRenderComponent {
     private _img: Image | null = null;
 
     public resizeMode: EnumResizeMode = SSprite.ResizeMode.RAW;
-    protected onCreated(): void {}
+    protected onCreated(): void {
+        this.node!.renderType = EnumRenderComponentType.SPRITE;
+    }
 
     public async setImageByUrl(src?: string): Promise<void> {
         if (!src) {

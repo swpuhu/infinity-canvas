@@ -3,10 +3,17 @@ import {
     Paragraph,
     ParagraphBuilder,
     ParagraphStyle,
+    Rect,
 } from 'canvaskit-wasm';
 import { SRenderComponent } from './SRenderComponent';
 import { CanvasKitModule } from '@/lib/canvaskit';
-import { EnumAspectKeepMode, SNodeEvents } from '@/common/types';
+import {
+    EnumAspectKeepMode,
+    EnumRenderComponentType,
+    SNodeEvents,
+} from '@/common/types';
+import { Vec2 } from '@/common/Vec2';
+import { ReadonlyVec2 } from 'gl-matrix';
 
 export class SParagraph extends SRenderComponent {
     private _text: string = '';
@@ -103,7 +110,61 @@ export class SParagraph extends SRenderComponent {
         }
         this.node.aspectKeepMode = EnumAspectKeepMode.HEIGHT;
         this.node.on(SNodeEvents.SIZE_CHANGE, this._nodeSizeChanged);
+        this.node.renderType = EnumRenderComponentType.TEXT;
     }
+
+    public getCursorPosInTextLocal(
+        dx: number,
+        dy: number
+    ): {
+        pos: ReadonlyVec2;
+        size: number;
+    } | null {
+        if (!this._paragraph) {
+            return null;
+        }
+        const info = this._paragraph.getGlyphPositionAtCoordinate(dx, dy);
+        const cursorIndex = info.pos;
+
+        const lineMetrics = this._paragraph.getLineMetrics();
+        if (!lineMetrics.length) {
+            return null;
+        }
+        const isLastChar =
+            cursorIndex === lineMetrics[lineMetrics.length - 1].endIndex;
+
+        let currentLine = lineMetrics[0];
+        for (let i = 1; i < lineMetrics.length; i++) {
+            if (
+                cursorIndex >= lineMetrics[i].startIndex &&
+                cursorIndex <= lineMetrics[i].endIndex
+            ) {
+                currentLine = lineMetrics[i];
+                break;
+            }
+        }
+
+        const rects = this._paragraph.getRectsForRange(
+            isLastChar ? cursorIndex - 1 : cursorIndex,
+            isLastChar ? cursorIndex : cursorIndex + 1,
+            CanvasKitModule.CanvasKit.RectHeightStyle.Tight,
+            CanvasKitModule.CanvasKit.RectWidthStyle.Tight
+        );
+
+        console.log(rects);
+        if (isLastChar) {
+            return {
+                pos: [rects[0].rect[2], rects[0].rect[1]],
+                size: rects[0].rect[3] - rects[0].rect[1],
+            };
+        }
+
+        return {
+            pos: [rects[0].rect[0], rects[0].rect[1]],
+            size: rects[0].rect[3] - rects[0].rect[1],
+        };
+    }
+
     public draw(canvas: Canvas): void {
         if (!this._paragraph) {
             return;

@@ -16,8 +16,14 @@ import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '../Editor';
 import { SScene } from '../SScene';
 import { mat3, mat4 } from 'gl-matrix';
-import { decomposeMatrix, visitNodeRecursive } from '@/common/util';
-import { CanvasEventSystem } from '../SEventManager';
+import {
+    decomposeMatrix,
+    isSprite,
+    isText,
+    visitNodeRecursive,
+} from '@/common/util';
+import { CanvasEventSystem, SPointerEvent } from '../SEventManager';
+import { SParagraph } from '../RenderComponents/SParagraph';
 
 const RESIZE_GIZMO_SIZE = 10;
 const RESIZE_GIZMO_COLOR = 0x00bcfb;
@@ -26,41 +32,43 @@ const GIZMO_LINE_WIDTH = 1;
 const GIZMO_LINE_COLOR = 0xcccccc;
 
 export class ResizeGizmo {
-    private _scene: SScene;
-    private _editor: CanvasEditor;
-    private _root: SNode | null = null;
+    protected _scene: SScene;
+    protected _editor: CanvasEditor;
+    protected _root: SNode | null = null;
 
-    private _lbNodeRef: SNodeConfig.IRefSNode = refSNode();
-    private _ltNodeRef: SNodeConfig.IRefSNode = refSNode();
-    private _rbNodeRef: SNodeConfig.IRefSNode = refSNode();
-    private _rtNodeRef: SNodeConfig.IRefSNode = refSNode();
+    protected _lbNodeRef: SNodeConfig.IRefSNode = refSNode();
+    protected _ltNodeRef: SNodeConfig.IRefSNode = refSNode();
+    protected _rbNodeRef: SNodeConfig.IRefSNode = refSNode();
+    protected _rtNodeRef: SNodeConfig.IRefSNode = refSNode();
 
-    private _leftLineRef: SNodeConfig.IRefSNode = refSNode();
-    private _rightLineRef: SNodeConfig.IRefSNode = refSNode();
-    private _topLineRef: SNodeConfig.IRefSNode = refSNode();
-    private _bottomLineRef: SNodeConfig.IRefSNode = refSNode();
+    protected _leftLineRef: SNodeConfig.IRefSNode = refSNode();
+    protected _rightLineRef: SNodeConfig.IRefSNode = refSNode();
+    protected _topLineRef: SNodeConfig.IRefSNode = refSNode();
+    protected _bottomLineRef: SNodeConfig.IRefSNode = refSNode();
 
-    private _resizeStartPos: Vec2 = new Vec2(0, 0);
+    protected _cursorRef: SNodeConfig.IRefSNode = refSNode();
 
-    private _currentNode: SNode | null = null;
+    protected _resizeStartPos: Vec2 = new Vec2(0, 0);
 
-    private _resizeStartNodeSize: Vec2 = new Vec2(0, 0);
+    protected _currentNode: SNode | null = null;
 
-    private _dragStartPos: Vec2 = new Vec2(0, 0);
+    protected _resizeStartNodeSize: Vec2 = new Vec2(0, 0);
 
-    private resizeHandlerNodes: SNode[] = [];
+    protected _dragStartPos: Vec2 = new Vec2(0, 0);
 
-    private _lineNodes: SNode[] = [];
+    protected resizeHandlerNodes: SNode[] = [];
 
-    private _isResizing = false;
+    protected _lineNodes: SNode[] = [];
 
-    private _isDragging = false;
+    protected _isResizing = false;
 
-    private _currentHandleNode: SNode | null = null;
+    protected _isDragging = false;
 
-    private _currentNodeOriginPos: Vec2 = new Vec2(0, 0);
+    protected _currentHandleNode: SNode | null = null;
 
-    private _originAspect: number = 1;
+    protected _currentNodeOriginPos: Vec2 = new Vec2(0, 0);
+
+    protected _originAspect: number = 1;
 
     constructor(editor: CanvasEditor) {
         this._editor = editor;
@@ -69,13 +77,15 @@ export class ResizeGizmo {
         this._scene.topLayer.addChild(this._root!);
         this._bindEvents();
         this._scene.on(EventNames.RESIZE, this._onResize);
+        this.addPointerEvent();
+    }
 
+    protected addPointerEvent(): void {
         this._editor.eventSystem.addEventListener(
             this._scene.canvasLayer,
             SNodeEvents.POINTER_DOWN,
             (event: SNodeEvents.IPointerEvent) => {
                 const allNodes = this._collectAllNodes();
-                console.log(allNodes);
                 let hasHit = false;
                 for (let i = 0; i < allNodes.length; i++) {
                     const node = allNodes[i];
@@ -92,9 +102,26 @@ export class ResizeGizmo {
                 }
             }
         );
+        this._editor.eventSystem.addEventListener(
+            this._scene.canvasLayer,
+            SNodeEvents.DB_CLICK,
+            (event: SNodeEvents.IPointerEvent) => {
+                const textNodes = this._collectTextNodes();
+                let hasHit = false;
+                for (let i = 0; i < textNodes.length; i++) {
+                    const node = textNodes[i];
+                    const hit = node.hitTest(event.getWorldPosition());
+                    if (hit) {
+                        this._enterEditMode(node, event);
+                        hasHit = true;
+                        break;
+                    }
+                }
+            }
+        );
     }
 
-    private _collectAllNodes(): SNode[] {
+    protected _collectAllNodes(): SNode[] {
         const nodes: SNode[] = [];
         visitNodeRecursive(this._scene.canvasLayer, node => {
             if (node !== this._scene.canvasLayer) {
@@ -104,7 +131,40 @@ export class ResizeGizmo {
         return nodes;
     }
 
-    private _onResize = (): void => {
+    private _collectTextNodes(): SNode[] {
+        const nodes: SNode[] = [];
+        visitNodeRecursive(this._scene.canvasLayer, node => {
+            if (node !== this._scene.canvasLayer && isText(node)) {
+                nodes.unshift(node);
+            }
+        });
+        return nodes;
+    }
+
+    private _enterEditMode(
+        node: SNode,
+        event: SNodeEvents.IPointerEvent
+    ): void {
+        const textComp = node.getComponent(SParagraph);
+        if (textComp) {
+            const eventLocalPos = node.toLocal(event.getWorldPosition());
+            const cursorInfo = textComp.getCursorPosInTextLocal(
+                eventLocalPos[0],
+                eventLocalPos[1]
+            );
+            if (!cursorInfo) {
+                return;
+            }
+            const { pos, size } = cursorInfo;
+            const worldPos = node.toGlobal(pos);
+            const cursorNode = this._cursorRef.value!;
+            const cursorPos = cursorNode.parent!.toLocal(worldPos);
+            cursorNode.position.set(cursorPos[0], cursorPos[1]);
+            cursorNode.height = size;
+        }
+    }
+
+    protected _onResize = (): void => {
         const { scale } = decomposeMatrix(
             this._lbNodeRef.value!.getWorldMatrix()
         );
@@ -122,7 +182,7 @@ export class ResizeGizmo {
         this._bottomLineRef.value!.height = lineWidth;
     };
 
-    private _createHandler(): void {
+    protected _createHandler(): void {
         const globalScale = this._scene.getVirtualCanvasScale();
         const handlerSize = {
             width: RESIZE_GIZMO_SIZE / globalScale.x,
@@ -204,6 +264,20 @@ export class ResizeGizmo {
                         commonRectConfig(p.name, p.ref)
                     ),
                 },
+                {
+                    name: 'cursor',
+                    type: SNodeConfig.NodeType.RECT,
+                    ref: this._cursorRef,
+                    width: 2,
+                    height: 50,
+                    style: { fill: 0x00bcfb },
+                    transform: {
+                        anchor: {
+                            x: 0.5,
+                            y: 0,
+                        },
+                    },
+                },
             ],
         });
 
@@ -227,7 +301,7 @@ export class ResizeGizmo {
         });
     }
 
-    private _onDragPointerDown = (event: SNodeEvents.IPointerEvent): void => {
+    protected _onDragPointerDown = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
         if (!this._root || !this._currentNode) {
             return;
@@ -247,7 +321,7 @@ export class ResizeGizmo {
         this._enableDrag();
     };
 
-    private _enableDrag(): void {
+    protected _enableDrag(): void {
         CanvasEventSystem.instance.addEventListener(
             this._scene.rootNode,
             SNodeEvents.POINTER_MOVE,
@@ -260,7 +334,7 @@ export class ResizeGizmo {
         );
     }
 
-    private _disableDrag(): void {
+    protected _disableDrag(): void {
         CanvasEventSystem.instance.removeEventListener(
             this._scene.rootNode,
             SNodeEvents.POINTER_MOVE,
@@ -273,7 +347,7 @@ export class ResizeGizmo {
         );
     }
 
-    private _onDragPointerMove = (event: SNodeEvents.IPointerEvent): void => {
+    protected _onDragPointerMove = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
         if (!this._currentNode || !this._isDragging) {
             return;

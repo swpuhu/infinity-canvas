@@ -49,7 +49,7 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
     // 解析图形属性
     if (config.type === SNodeConfig.NodeType.RECT) {
         const rectConfig = config as SNodeConfig.RectConfig;
-        const rect = node.addRenderComp(SGeoRect);
+        const rect = node.addComponent(SGeoRect);
 
         let alpha = 1;
         if (rectConfig.style?.alpha) {
@@ -66,7 +66,7 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
         }
     } else if (config.type === SNodeConfig.NodeType.SPRITE) {
         const spriteConfig = config as SNodeConfig.SpriteConfig;
-        const sprite = node.addRenderComp(SSprite);
+        const sprite = node.addComponent(SSprite);
 
         sprite.setImageByUrl(spriteConfig.props.url || '');
     }

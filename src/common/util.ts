@@ -1,5 +1,6 @@
 import type SNode from '@/renderer/SNode';
 import { mat3 } from 'gl-matrix';
+import { EnumRenderComponentType } from './types';
 
 export function angleToRadians(angle: number) {
     return angle * (Math.PI / 180);
@@ -141,4 +142,12 @@ export function visitNodeRecursive(
     for (const child of node.children) {
         visitNodeRecursive(child, callback);
     }
+}
+
+export function isSprite(node: SNode): boolean {
+    return node.renderType === EnumRenderComponentType.SPRITE;
+}
+
+export function isText(node: SNode): boolean {
+    return node.renderType === EnumRenderComponentType.TEXT;
 }

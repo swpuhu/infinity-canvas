@@ -133,6 +133,7 @@ export namespace SNodeEvents {
     export const POINTER_DOWN = 'pointerdown';
     export const POINTER_MOVE = 'pointermove';
     export const POINTER_UP = 'pointerup';
+    export const POINTER_CANCEL = 'pointercancel';
 
     export const KEY_DOWN = 'keydown';
     export const KEY_UP = 'keyup';
@@ -141,6 +142,8 @@ export namespace SNodeEvents {
     export const TOUCH_MOVE = 'touchmove';
     export const TOUCH_END = 'touchend';
     export const TOUCH_CANCEL = 'touchcancel';
+
+    export const DB_CLICK = 'dblclick';
 
     export const WHEEL = 'wheel';
 
@@ -176,6 +179,7 @@ export namespace SNodeEvents {
         [SNodeEvents.TOUCH_END]: TouchEvent;
         [SNodeEvents.TOUCH_CANCEL]: TouchEvent;
         [SNodeEvents.WHEEL]: WheelEvent;
+        [SNodeEvents.DB_CLICK]: IPointerEvent;
     };
 
     export type EventHandler<T extends keyof EventMap> = (
@@ -202,4 +206,10 @@ export enum EnumAspectKeepMode {
     NONE = 'none',
     WIDTH = 'width',
     HEIGHT = 'height',
+}
+
+export enum EnumRenderComponentType {
+    NONE = 'none',
+    SPRITE = 'sprite',
+    TEXT = 'text',
 }

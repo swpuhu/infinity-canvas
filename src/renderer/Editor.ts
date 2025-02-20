@@ -62,7 +62,7 @@ export class CanvasEditor {
         text.width = 500;
         text.position.set(0, 0);
 
-        const para = text.addRenderComp(SParagraph);
+        const para = text.addComponent(SParagraph);
         para.text = '遇事不决\n可问春风';
         // para.setFontSize(100);
 
@@ -73,7 +73,7 @@ export class CanvasEditor {
 
         scene.stage.addChild(text);
 
-        const resizeGizmo = new ResizeGizmo(this);
+        new ResizeGizmo(this);
 
         this._renderer.on(EventNames.RESIZE, (width, height) => {
             scene.resizeCanvasSize({ width, height });

@@ -3,6 +3,7 @@ import { SRenderComponent } from './RenderComponents/SRenderComponent';
 import { mat3, ReadonlyVec2, vec2 } from 'gl-matrix';
 import {
     EnumAspectKeepMode,
+    EnumRenderComponentType,
     EventNames,
     IPoint,
     IPointData,
@@ -37,7 +38,7 @@ class SNode extends EventEmitter {
     private _width: number = 0;
     private _height: number = 0;
 
-    private _renderComps: SRenderComponent[] = [];
+    private _comps: SRenderComponent[] = [];
 
     public needClip: boolean = false;
 
@@ -58,6 +59,8 @@ class SNode extends EventEmitter {
     private _active = true;
 
     public aspectKeepMode = EnumAspectKeepMode.NONE;
+
+    public renderType: EnumRenderComponentType = EnumRenderComponentType.NONE;
 
     get active() {
         return this._active;
@@ -283,15 +286,21 @@ class SNode extends EventEmitter {
     }
 
     public getRenderComps(): SRenderComponent[] {
-        return this._renderComps;
+        return this._comps;
     }
 
-    public addRenderComp<T extends SRenderComponent>(CompCtr: new () => T): T {
+    public addComponent<T extends SRenderComponent>(CompCtr: new () => T): T {
         const instance = new CompCtr();
         instance.node = this;
         instance.init();
-        this._renderComps.push(instance);
+        this._comps.push(instance);
         return instance;
+    }
+
+    public getComponent<T extends SRenderComponent>(
+        compCtr: new () => T
+    ): T | null {
+        return this._comps.find(comp => comp instanceof compCtr) as T;
     }
 
     public removeChildren(): void {
@@ -388,7 +397,7 @@ class SNode extends EventEmitter {
     }
 
     public destroy(): void {
-        this._renderComps.forEach(renderComp => {
+        this._comps.forEach(renderComp => {
             renderComp.destroy();
         });
     }

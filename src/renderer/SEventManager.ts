@@ -5,6 +5,7 @@ import eventBus from '@/common/eventBus';
 import { ReadonlyVec2 } from 'gl-matrix';
 import { compareNodeDepth } from '@/common/util';
 
+const DB_CLICK_TIME_THRESHOLD = 300;
 export class SEvent implements SNodeEvents.IEvent {
     private _type: string;
     private _stopPropagation: boolean = false;
@@ -96,6 +97,8 @@ export class CanvasEventSystem {
 
     private _pressed = false;
 
+    private _prevPointerUpTime = 0;
+
     static initialize(canvas: HTMLCanvasElement): CanvasEventSystem {
         if (this._instance) {
             throw new Error('CanvasEventSystem is already initialized');
@@ -116,9 +119,10 @@ export class CanvasEventSystem {
         this.canvas = canvas;
 
         this._delegateDOMEvents();
-        this._listenersMap.set('pointerdown', []);
-        this._listenersMap.set('pointermove', []);
-        this._listenersMap.set('pointerup', []);
+        this._listenersMap.set(SNodeEvents.POINTER_DOWN, []);
+        this._listenersMap.set(SNodeEvents.POINTER_MOVE, []);
+        this._listenersMap.set(SNodeEvents.POINTER_UP, []);
+        this._listenersMap.set(SNodeEvents.DB_CLICK, []);
     }
 
     private _delegateDOMEvents() {
@@ -126,11 +130,13 @@ export class CanvasEventSystem {
     }
 
     private _handlePointerEvents() {
-        this.canvas.addEventListener('pointerdown', event => {
+        this.canvas.addEventListener(SNodeEvents.POINTER_DOWN, event => {
             this._pressed = true;
             let shouldStopPropagation = false;
 
-            const pointerDownListeners = this._listenersMap.get('pointerdown');
+            const pointerDownListeners = this._listenersMap.get(
+                SNodeEvents.POINTER_DOWN
+            );
             const pointerEvent = new SPointerEvent(
                 SNodeEvents.POINTER_DOWN,
                 event
@@ -154,13 +160,15 @@ export class CanvasEventSystem {
             }
         });
 
-        this.canvas.addEventListener('pointermove', event => {
+        this.canvas.addEventListener(SNodeEvents.POINTER_MOVE, event => {
             if (!this._pressed) {
                 return;
             }
             let shouldStopPropagation = false;
             let isFirst = true;
-            const pointerMoveListeners = this._listenersMap.get('pointermove');
+            const pointerMoveListeners = this._listenersMap.get(
+                SNodeEvents.POINTER_MOVE
+            );
             const pointerEvent = new SPointerEvent(
                 SNodeEvents.POINTER_MOVE,
                 event
@@ -183,29 +191,77 @@ export class CanvasEventSystem {
             }
         });
 
-        this.canvas.addEventListener('pointerup', event => {
+        this.canvas.addEventListener(SNodeEvents.POINTER_UP, event => {
+            let shouldInvokeDbClick = false;
+            const now = Date.now();
+            const diff = now - this._prevPointerUpTime;
+            if (diff < DB_CLICK_TIME_THRESHOLD) {
+                shouldInvokeDbClick = true;
+            }
+            this._prevPointerUpTime = now;
             try {
-                const pointerUpListeners = this._listenersMap.get('pointerup');
+                const pointerUpListeners = this._listenersMap.get(
+                    SNodeEvents.POINTER_UP
+                );
                 let shouldStopPropagation = false;
                 let isFirst = true;
                 const pointerEvent = new SPointerEvent(
                     SNodeEvents.POINTER_UP,
                     event
                 );
-                for (const listener of pointerUpListeners!) {
+                for (const pointerListener of pointerUpListeners!) {
                     if (shouldStopPropagation) {
                         break;
                     }
-                    if (listener.node.hitTest([event.offsetX, event.offsetY])) {
+                    if (
+                        pointerListener.node.hitTest([
+                            event.offsetX,
+                            event.offsetY,
+                        ])
+                    ) {
                         if (isFirst) {
                             isFirst = false;
-                            pointerEvent.setTarget(listener.node);
+                            pointerEvent.setTarget(pointerListener.node);
                         }
-                        pointerEvent.setCurrentTarget(listener.node);
+                        pointerEvent.setCurrentTarget(pointerListener.node);
                         shouldStopPropagation = this._dispatchPointerEvent(
-                            listener,
+                            pointerListener,
                             pointerEvent
                         );
+                    }
+                }
+
+                if (shouldInvokeDbClick) {
+                    // console.log('should invoke dbclick');
+                    const dbClickListeners = this._listenersMap.get(
+                        SNodeEvents.DB_CLICK
+                    );
+                    let shouldStopPropagation = false;
+                    let isFirst = true;
+                    const pointerEvent = new SPointerEvent(
+                        SNodeEvents.DB_CLICK,
+                        event
+                    );
+                    for (const dbClickListener of dbClickListeners!) {
+                        if (shouldStopPropagation) {
+                            break;
+                        }
+                        if (
+                            dbClickListener.node.hitTest([
+                                event.offsetX,
+                                event.offsetY,
+                            ])
+                        ) {
+                            if (isFirst) {
+                                isFirst = false;
+                                pointerEvent.setTarget(dbClickListener.node);
+                            }
+                            pointerEvent.setCurrentTarget(dbClickListener.node);
+                            shouldStopPropagation = this._dispatchPointerEvent(
+                                dbClickListener,
+                                pointerEvent
+                            );
+                        }
                     }
                 }
             } catch (e) {
@@ -213,6 +269,10 @@ export class CanvasEventSystem {
             } finally {
                 this._pressed = false;
             }
+        });
+
+        this.canvas.addEventListener(SNodeEvents.POINTER_CANCEL, event => {
+            this._pressed = false;
         });
     }
 
