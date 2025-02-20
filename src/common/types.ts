@@ -71,6 +71,7 @@ export namespace SNodeConfig {
         RECT = 'rect',
         CONTAINER = 'container',
         SPRITE = 'sprite',
+        CIRCLE = 'circle',
     }
 
     export type SGraphicsPropsConfig = {
@@ -98,18 +99,26 @@ export namespace SNodeConfig {
         height?: number;
         ref?: IRefSNode;
         needClip?: boolean;
-        children?: (BaseConfig | RectConfig)[];
+        children?: SNodeConfig.Config[];
         transform?: TransformOptions;
         active?: boolean;
     };
 
     export type ContainerConfig = BaseConfig;
 
-    export type RectConfig = BaseConfig & {
-        type: NodeType.RECT;
+    export type SGraphicsPropsAndStyle = {
         props: SGraphicsPropsConfig;
         style: SGraphicsStyleConfig;
     };
+    export type RectConfig = BaseConfig &
+        SGraphicsPropsAndStyle & {
+            type: NodeType.RECT;
+        };
+
+    export type CircleConfig = BaseConfig &
+        SGraphicsPropsAndStyle & {
+            type: NodeType.CIRCLE;
+        };
 
     export type SpriteConfig = BaseConfig & {
         type: NodeType.SPRITE;
@@ -120,11 +129,18 @@ export namespace SNodeConfig {
         [NodeType.RECT]: RectConfig;
         [NodeType.CONTAINER]: ContainerConfig;
         [NodeType.SPRITE]: SpriteConfig;
+        [NodeType.CIRCLE]: CircleConfig;
     };
 
     export type Config = NodeTypeMap[keyof NodeTypeMap];
 }
 
+const a: SNodeConfig.Config = {
+    type: SNodeConfig.NodeType.CIRCLE,
+    style: {
+        fill: 0x000000,
+    },
+};
 export namespace SNodeEvents {
     export const MOUSE_DOWN = 'mousedown';
     export const MOUSE_MOVE = 'mousemove';
@@ -212,4 +228,12 @@ export enum EnumRenderComponentType {
     NONE = 'none',
     SPRITE = 'sprite',
     TEXT = 'text',
+}
+
+export enum ResizeGizmoMode {
+    EDIT = 'edit',
+    RESIZE = 'resize',
+    ROTATE = 'rotate',
+    DRAG = 'drag',
+    NONE = 'none',
 }

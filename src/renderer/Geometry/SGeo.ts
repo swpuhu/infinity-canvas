@@ -1,7 +1,12 @@
 import { Canvas, Paint } from 'canvaskit-wasm';
 import { SRenderComponent } from '../RenderComponents/SRenderComponent';
 import { CanvasKitModule } from '@/lib/canvaskit';
-import { FillOptions, ShadowOptions, StrokeOptions } from '@/common/types';
+import {
+    FillOptions,
+    ShadowOptions,
+    SNodeConfig,
+    StrokeOptions,
+} from '@/common/types';
 import { safeColor } from '@/common/util';
 
 export class SGeo extends SRenderComponent {
@@ -73,6 +78,22 @@ export class SGeo extends SRenderComponent {
         }
         if (options?.alpha) {
             paint.setAlphaf(options?.alpha);
+        }
+    }
+
+    public applyStyle(options: SNodeConfig.SGraphicsPropsAndStyle): void {
+        let alpha = 1;
+        if (options.style?.alpha) {
+            alpha = options.style.alpha;
+        }
+        if (options.style?.fill) {
+            this.fill({ color: options.style.fill, alpha });
+        }
+        if (options.style?.stroke) {
+            this.stroke({ color: options.style.stroke, alpha });
+        }
+        if (options.style?.shadow) {
+            this.shadow(options.style.shadow);
         }
     }
 

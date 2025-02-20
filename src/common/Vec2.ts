@@ -9,6 +9,14 @@ export class Vec2 implements IPoint {
         this.y = y;
     }
 
+    sub(other: Vec2): Vec2 {
+        return new Vec2(this.x - other.x, this.y - other.y);
+    }
+
+    add(other: Vec2): Vec2 {
+        return new Vec2(this.x + other.x, this.y + other.y);
+    }
+
     clone(): Vec2 {
         return new Vec2(this.x, this.y);
     }
@@ -33,5 +41,22 @@ export class Vec2 implements IPoint {
 
     mag(): number {
         return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+
+    rotate(radian: number): Vec2 {
+        const cos = Math.cos(radian);
+        const sin = Math.sin(radian);
+        return new Vec2(
+            this.x * cos - this.y * sin,
+            this.x * sin + this.y * cos
+        );
+    }
+
+    signRad(v: Vec2) {
+        // NOTE: this algorithm will return 0.0 without signed if vectors are parallex
+        // var angle = this.angle(vector);
+        // var cross = this.cross(vector);
+        // return Math.sign(cross) * angle;
+        return Math.atan2(this.y, this.x) - Math.atan2(v.y, v.x);
     }
 }

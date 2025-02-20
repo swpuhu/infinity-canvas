@@ -5,6 +5,7 @@ import { InputRect } from 'canvaskit-wasm';
 import { SGeoRect } from './Geometry/SGeoRect';
 import { Vec2 } from '@/common/Vec2';
 import { vec2 } from 'gl-matrix';
+import { SGeoCircle } from './Geometry/SGeoCircle';
 
 const nodeNameRefMap = new Map<string, SNode>();
 
@@ -50,20 +51,11 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
     if (config.type === SNodeConfig.NodeType.RECT) {
         const rectConfig = config as SNodeConfig.RectConfig;
         const rect = node.addComponent(SGeoRect);
-
-        let alpha = 1;
-        if (rectConfig.style?.alpha) {
-            alpha = rectConfig.style.alpha;
-        }
-        if (rectConfig.style?.fill) {
-            rect.fill({ color: rectConfig.style.fill, alpha });
-        }
-        if (rectConfig.style?.stroke) {
-            rect.stroke({ color: rectConfig.style.stroke, alpha });
-        }
-        if (rectConfig.style?.shadow) {
-            rect.shadow(rectConfig.style.shadow);
-        }
+        rect.applyStyle(rectConfig);
+    } else if (config.type === SNodeConfig.NodeType.CIRCLE) {
+        const circleConfig = config as SNodeConfig.CircleConfig;
+        const circle = node.addComponent(SGeoCircle);
+        circle.applyStyle(circleConfig);
     } else if (config.type === SNodeConfig.NodeType.SPRITE) {
         const spriteConfig = config as SNodeConfig.SpriteConfig;
         const sprite = node.addComponent(SSprite);

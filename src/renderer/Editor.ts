@@ -37,7 +37,7 @@ export class CanvasEditor {
         // 创建基础布局
         const scene = new SScene({
             canvasSize,
-            designSize: { width: 1080, height: 1920 },
+            designSize: { width: 420, height: 640 },
             sideWidth: 200,
         });
 
@@ -63,7 +63,7 @@ export class CanvasEditor {
         text.position.set(0, 0);
 
         const para = text.addComponent(SParagraph);
-        para.text = '遇事不决\n可问春风';
+        para.text = '懒羊羊组长赛高！';
         // para.setFontSize(100);
 
         setTimeout(() => {

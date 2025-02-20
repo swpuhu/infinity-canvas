@@ -2,10 +2,13 @@
     position: absolute;
     width: 1px;
     height: 50px;
+    left: 0;
+    top: 0;
     background-color: red;
     z-index: 1000;
     pointer-events: none;
     animation: cursorBlink 1s step-end infinite;
+    transform-origin: left top;
 }
 
 .text-area {
