@@ -31,7 +31,6 @@ export class Renderer extends EventEmitter {
         this._glContextHandle =
             CanvasKitModule.CanvasKit.GetWebGLContext(canvas);
 
-        console.log('width', canvas.width, 'height', canvas.height);
         this.grContext = CanvasKitModule.CanvasKit.MakeWebGLContext(
             this._glContextHandle
         );
@@ -51,9 +50,7 @@ export class Renderer extends EventEmitter {
             if (entry) {
                 const { width, height } = entry.contentRect;
                 this.resizeSurface(width, height);
-                setTimeout(() => {
-                    this.emit(EventNames.RESIZE, width, height);
-                }, 100);
+                // this.emit(EventNames.RESIZE, width, height);
             }
         });
         this.resizeObserver.observe(canvas);
@@ -76,9 +73,6 @@ export class Renderer extends EventEmitter {
 
     public resizeSurface(width: number, height: number) {
         const canvas = this._canvasElement;
-
-        canvas.width = width * 1;
-        canvas.height = height * 1;
 
         if (this.surface) {
             this.surface.delete();

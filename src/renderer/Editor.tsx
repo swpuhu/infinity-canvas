@@ -68,8 +68,8 @@ export class CanvasEditor {
 
         setTimeout(() => {
             // para.node?.setSize(200, 267);
-            eventBus.reDraw();
         }, 1000);
+        // eventBus.reDraw();
 
         scene.stage.addChild(text);
 
@@ -77,9 +77,8 @@ export class CanvasEditor {
 
         this._renderer.on(EventNames.RESIZE, (width, height) => {
             scene.resizeCanvasSize({ width, height });
+            eventBus.reDraw();
         });
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
 
         this._renderer.render(scene.rootNode);
 

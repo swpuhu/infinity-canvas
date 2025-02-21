@@ -13,6 +13,9 @@ export function createElement<T extends keyof JSX.IntrinsicElements>(
     : T extends 'circle'
     ? SNodeConfig.CircleConfig
     : never {
+    if (typeof type === 'function') {
+        return (type as any)(props, ...children);
+    }
     const config: SNodeConfig.Config = {
         type: type as SNodeConfig.NodeType,
         ...props,

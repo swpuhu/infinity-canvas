@@ -15,7 +15,10 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 let editor: CanvasEditor | null = null;
 onMounted(async () => {
     try {
-        editor = new CanvasEditor(canvasRef.value!);
+        const canvasEle = canvasRef.value!;
+        canvasEle.width = window.innerWidth;
+        canvasEle.height = window.innerHeight;
+        editor = new CanvasEditor(canvasEle);
         await editor.init();
     } catch (error) {
         console.error('应用启动失败:', error);

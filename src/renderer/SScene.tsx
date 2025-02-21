@@ -4,6 +4,7 @@ import { createNodeFromConfig, refSNode } from './util';
 import { Vec2 } from '@/common/Vec2';
 import EventEmitter from 'eventemitter3';
 import { createElement } from './createElement';
+import { SceneX } from './UIComponent/SceneX';
 
 export class SScene extends EventEmitter {
     public rootNode: SNode;
@@ -38,7 +39,6 @@ export class SScene extends EventEmitter {
 
     constructor(option: SceneOptions) {
         super();
-        console.log('option', option);
         this.option = option;
         this.availableSize = {
             width: option.canvasSize.width - option.sideWidth * 2,
@@ -46,7 +46,6 @@ export class SScene extends EventEmitter {
         };
 
         const virtualCanvasScale = this.getVirtualCanvasScale();
-        console.log('virtualCanvasScale', virtualCanvasScale);
 
         this.virtualCanvasRef = refSNode();
         this.leftSideRef = refSNode();
@@ -56,98 +55,20 @@ export class SScene extends EventEmitter {
         this.canvasContainerRef = refSNode();
 
         const rootNodeConfig = (
-            <container
-                name="root"
-                width={option.canvasSize.width}
-                height={option.canvasSize.height}
-                transform={{
-                    position: new Vec2(
-                        option.canvasSize.width / 2,
-                        option.canvasSize.height / 2
-                    ),
-                }}
-            >
-                <container
-                    name="canvas-container"
-                    transform={{
-                        scale: virtualCanvasScale,
-                    }}
-                    ref={this.canvasContainerRef}
-                >
-                    <rect
-                        name="virtualCanvas"
-                        props={{
-                            width: this.option.designSize.width,
-                            height: this.option.designSize.height,
-                        }}
-                        needClip={true}
-                        style={{
-                            fill: 0xffffff,
-                            shadow: {
-                                color: 0xaaaaaa,
-                                blur: 10,
-                            },
-                        }}
-                        width={this.option.designSize.width}
-                        height={this.option.designSize.height}
-                    >
-                        <container
-                            name="bottom-layer"
-                            ref={this.bottomLayerRef}
-                            width={this.option.designSize.width}
-                            height={this.option.designSize.height}
-                        />
-                        <container
-                            name="content-node"
-                            ref={this.virtualCanvasRef}
-                            width={this.option.designSize.width}
-                            height={this.option.designSize.height}
-                        />
-                    </rect>
-                    <container
-                        name="top-layer"
-                        ref={this.topLayerRef}
-                        transform={{
-                            position: new Vec2(0, 0),
-                        }}
-                    />
-                </container>
-                <rect
-                    name="left-side"
-                    ref={this.leftSideRef}
-                    width={this.option.sideWidth}
-                    height={this.option.canvasSize.height}
-                    style={{
-                        fill: 0xcccccc,
-                    }}
-                    transform={{
-                        position: new Vec2(
-                            -option.canvasSize.width / 2,
-                            -option.canvasSize.height / 2
-                        ),
-                        anchor: new Vec2(0, 0),
-                    }}
-                />
-                <rect
-                    name="right-side"
-                    ref={this.rightSideRef}
-                    width={this.option.sideWidth}
-                    height={this.option.canvasSize.height}
-                    style={{
-                        fill: 0xcccccc,
-                    }}
-                    transform={{
-                        position: new Vec2(
-                            option.canvasSize.width / 2,
-                            -option.canvasSize.height / 2
-                        ),
-                        anchor: new Vec2(1, 0),
-                    }}
-                />
-            </container>
+            <SceneX
+                canvasSize={this.option.canvasSize}
+                designSize={this.option.designSize}
+                sideWidth={this.option.sideWidth}
+                virtualCanvasScale={virtualCanvasScale}
+                canvasContainerRef={this.canvasContainerRef}
+                bottomLayerRef={this.bottomLayerRef}
+                virtualCanvasRef={this.virtualCanvasRef}
+                topLayerRef={this.topLayerRef}
+                leftSideRef={this.leftSideRef}
+                rightSideRef={this.rightSideRef}
+            />
         );
 
-        console.log('rootNode', rootNodeConfig);
         this.rootNode = createNodeFromConfig(rootNodeConfig);
     }
 
@@ -202,6 +123,7 @@ export class SScene extends EventEmitter {
             position: new Vec2(canvasSize.width / 2, -canvasSize.height / 2),
         });
 
+        console.log('virtualCanvasScale', virtualCanvasScale);
         canvasContainer.setTransform({
             scale: virtualCanvasScale,
         });
