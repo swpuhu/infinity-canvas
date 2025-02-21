@@ -82,7 +82,7 @@ export class SParagraph extends SRenderComponent {
         }
     }
 
-    private _nodeSizeChanged = () => {
+    private _nodeSizeChanged = (_width: number, _height: number) => {
         if (!this.node) {
             return;
         }
@@ -91,7 +91,7 @@ export class SParagraph extends SRenderComponent {
             return;
         }
         const newFontSize =
-            this.node.height / this._heightMultiplier / currentLines.length;
+            _height / this._heightMultiplier / currentLines.length;
 
         this.setFontSize(Math.floor(newFontSize));
     };
@@ -117,7 +117,9 @@ export class SParagraph extends SRenderComponent {
             return;
         }
         this.node.aspectKeepMode = EnumAspectKeepMode.HEIGHT;
-        this.node.on(SNodeEvents.SIZE_CHANGE, this._nodeSizeChanged);
+        this.node.setSize = (width, height) => {
+            this._nodeSizeChanged(width, height);
+        };
         this.node.renderType = EnumRenderComponentType.TEXT;
     }
 

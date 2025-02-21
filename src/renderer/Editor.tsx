@@ -50,7 +50,7 @@ export class CanvasEditor {
                     url: '/r2.png',
                 }}
                 transform={{
-                    scale: { x: 3, y: 3 },
+                    scale: { x: 1, y: 1 },
                     anchor: { x: 0, y: 0 },
                 }}
             />

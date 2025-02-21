@@ -50,7 +50,9 @@ export class Renderer extends EventEmitter {
             if (entry) {
                 const { width, height } = entry.contentRect;
                 this.resizeSurface(width, height);
-                // this.emit(EventNames.RESIZE, width, height);
+                setTimeout(() => {
+                    this.emit(EventNames.RESIZE, width, height);
+                }, 100);
             }
         });
         this.resizeObserver.observe(canvas);
@@ -72,8 +74,8 @@ export class Renderer extends EventEmitter {
     };
 
     public resizeSurface(width: number, height: number) {
-        const canvas = this._canvasElement;
-
+        this._canvasElement.width = width;
+        this._canvasElement.height = height;
         if (this.surface) {
             this.surface.delete();
         }

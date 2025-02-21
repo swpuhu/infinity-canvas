@@ -58,49 +58,49 @@ export class SSprite extends SRenderComponent {
             }
             const spritePaint = CanvasKitModule.getSpritePaint();
 
-            // {
-            //     const tempPaint = new CanvasKitModule.CanvasKit.Paint();
+            {
+                const tempPaint = new CanvasKitModule.CanvasKit.Paint();
 
-            //     const dilate = CanvasKitModule.CanvasKit.ImageFilter.MakeDilate(
-            //         5,
-            //         5,
-            //         null
-            //     );
+                const dilate = CanvasKitModule.CanvasKit.ImageFilter.MakeDilate(
+                    5,
+                    5,
+                    null
+                );
 
-            //     const zeroColorMatrix =
-            //         CanvasKitModule.CanvasKit.ColorMatrix.scaled(0, 0, 0, 1);
-            //     CanvasKitModule.CanvasKit.ColorMatrix.postTranslate(
-            //         zeroColorMatrix,
-            //         1,
-            //         0.5,
-            //         0,
-            //         0
-            //     );
-            //     const zeroColorFilter =
-            //         CanvasKitModule.CanvasKit.ColorFilter.MakeMatrix(
-            //             zeroColorMatrix
-            //         );
-            //     const zeroFilter =
-            //         CanvasKitModule.CanvasKit.ImageFilter.MakeColorFilter(
-            //             zeroColorFilter,
-            //             dilate
-            //         );
+                const zeroColorMatrix =
+                    CanvasKitModule.CanvasKit.ColorMatrix.scaled(0, 0, 0, 1);
+                CanvasKitModule.CanvasKit.ColorMatrix.postTranslate(
+                    zeroColorMatrix,
+                    1,
+                    0.5,
+                    0,
+                    0
+                );
+                const zeroColorFilter =
+                    CanvasKitModule.CanvasKit.ColorFilter.MakeMatrix(
+                        zeroColorMatrix
+                    );
+                const zeroFilter =
+                    CanvasKitModule.CanvasKit.ImageFilter.MakeColorFilter(
+                        zeroColorFilter,
+                        dilate
+                    );
 
-            //     tempPaint.setImageFilter(zeroFilter);
-            //     canvas.drawImageRectOptions(
-            //         this._img,
-            //         [0, 0, this._img.width(), this._img.height()],
-            //         [
-            //             -node.width * node.anchor.x,
-            //             -node.height * node.anchor.y,
-            //             node.width * (1 - node.anchor.x),
-            //             node.height * (1 - node.anchor.y),
-            //         ],
-            //         CanvasKitModule.CanvasKit.FilterMode.Linear,
-            //         CanvasKitModule.CanvasKit.MipmapMode.Linear,
-            //         tempPaint
-            //     );
-            // }
+                tempPaint.setImageFilter(zeroFilter);
+                canvas.drawImageRectOptions(
+                    this._img,
+                    [0, 0, this._img.width(), this._img.height()],
+                    [
+                        -node.width * node.anchor.x,
+                        -node.height * node.anchor.y,
+                        node.width * (1 - node.anchor.x),
+                        node.height * (1 - node.anchor.y),
+                    ],
+                    CanvasKitModule.CanvasKit.FilterMode.Linear,
+                    CanvasKitModule.CanvasKit.MipmapMode.Linear,
+                    tempPaint
+                );
+            }
 
             canvas.drawImageRectOptions(
                 this._img,

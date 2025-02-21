@@ -23,7 +23,7 @@ export class CanvasKitModule {
     }
 
     static async loadFont() {
-        const fontData = await fetch('FZYTK.TTF').then(response =>
+        const fontData = await fetch('Yuanti.ttf').then(response =>
             response.arrayBuffer()
         );
         const fontMgr = CanvasKitModule.CanvasKit.FontMgr.FromData(fontData);

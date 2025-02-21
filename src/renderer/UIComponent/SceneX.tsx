@@ -13,7 +13,7 @@ export function SceneX(option: {
     topLayerRef: SNodeConfig.IRefSNode;
     leftSideRef: SNodeConfig.IRefSNode;
     rightSideRef: SNodeConfig.IRefSNode;
-}) {
+}): JSX.IntrinsicElements {
     return (
         <container
             name="root"
@@ -39,6 +39,7 @@ export function SceneX(option: {
                         width: option.designSize.width,
                         height: option.designSize.height,
                     }}
+                    ref={option.virtualCanvasRef}
                     needClip={true}
                     style={{
                         fill: 0xffffff,
@@ -49,20 +50,7 @@ export function SceneX(option: {
                     }}
                     width={option.designSize.width}
                     height={option.designSize.height}
-                >
-                    <container
-                        name="bottom-layer"
-                        ref={option.bottomLayerRef}
-                        width={option.designSize.width}
-                        height={option.designSize.height}
-                    />
-                    <container
-                        name="content-node"
-                        ref={option.virtualCanvasRef}
-                        width={option.designSize.width}
-                        height={option.designSize.height}
-                    />
-                </rect>
+                ></rect>
                 <container
                     name="top-layer"
                     ref={option.topLayerRef}

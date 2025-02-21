@@ -103,6 +103,7 @@ export class SScene extends EventEmitter {
             width: canvasSize.width - this.option.sideWidth * 2,
             height: canvasSize.height,
         };
+        console.log('resizeCanvasSize', this.availableSize);
 
         const virtualCanvasScale = this.getVirtualCanvasScale();
         const canvasContainer = this.canvasContainerRef.value!;

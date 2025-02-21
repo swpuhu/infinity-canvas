@@ -16,8 +16,8 @@ let editor: CanvasEditor | null = null;
 onMounted(async () => {
     try {
         const canvasEle = canvasRef.value!;
-        canvasEle.width = window.innerWidth;
-        canvasEle.height = window.innerHeight;
+        // canvasEle.width = window.innerWidth;
+        // canvasEle.height = window.innerHeight;
         editor = new CanvasEditor(canvasEle);
         await editor.init();
     } catch (error) {
