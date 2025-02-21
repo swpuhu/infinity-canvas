@@ -3,18 +3,19 @@ import { CanvasEventSystem } from './SEventManager';
 import { Renderer } from './renderer';
 import { SScene } from './SScene';
 import { EventNames, SNodeConfig, SNodeEvents } from '@/common/types';
-import { createNodeFromConfig } from './util';
-import { loadImage } from '@/common/util';
 import { ResizeGizmo } from './components/ResizeGizmo';
 import SNode from './SNode';
 import { SParagraph } from './RenderComponents/SParagraph';
+import { createElement } from './createElement';
 import eventBus from '@/common/eventBus';
+import { createNodeFromConfig } from './util';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
     private _eventSystem: CanvasEventSystem | null = null;
 
     private _scene: SScene | null = null;
+    private _resizeGizmo: ResizeGizmo | null = null;
 
     constructor(private canvas: HTMLCanvasElement) {}
 
@@ -43,19 +44,18 @@ export class CanvasEditor {
 
         this._scene = scene;
 
-        const testPic = createNodeFromConfig({
-            type: SNodeConfig.NodeType.SPRITE,
-            name: 'testPic',
-            props: {
-                url: '/r2.png',
-            },
-            transform: {
-                scale: { x: 3, y: 3 },
-                anchor: { x: 0, y: 0 },
-            },
-        });
-
-        scene.stage.addChild(testPic);
+        const testPicConfig: SNodeConfig.SpriteConfig = (
+            <sprite
+                props={{
+                    url: '/r2.png',
+                }}
+                transform={{
+                    scale: { x: 3, y: 3 },
+                    anchor: { x: 0, y: 0 },
+                }}
+            />
+        );
+        scene.stage.addChild(createNodeFromConfig(testPicConfig));
 
         const text = new SNode();
         text.anchor.set(0, 0);
@@ -68,12 +68,12 @@ export class CanvasEditor {
 
         setTimeout(() => {
             // para.node?.setSize(200, 267);
-            // eventBus.reDraw();
+            eventBus.reDraw();
         }, 1000);
 
         scene.stage.addChild(text);
 
-        new ResizeGizmo(this);
+        this._resizeGizmo = new ResizeGizmo(this);
 
         this._renderer.on(EventNames.RESIZE, (width, height) => {
             scene.resizeCanvasSize({ width, height });
@@ -103,5 +103,6 @@ export class CanvasEditor {
         this._renderer?.destroy();
         this._eventSystem?.destroy();
         CanvasKitModule.destroy();
+        this._resizeGizmo?.destroy();
     }
 }

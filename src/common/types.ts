@@ -107,8 +107,8 @@ export namespace SNodeConfig {
     export type ContainerConfig = BaseConfig;
 
     export type SGraphicsPropsAndStyle = {
-        props: SGraphicsPropsConfig;
-        style: SGraphicsStyleConfig;
+        props?: SGraphicsPropsConfig;
+        style?: SGraphicsStyleConfig;
     };
     export type RectConfig = BaseConfig &
         SGraphicsPropsAndStyle & {

@@ -38,7 +38,7 @@ class SNode extends EventEmitter {
     private _width: number = 0;
     private _height: number = 0;
 
-    private _comps: SRenderComponent[] = [];
+    private _renderComps: SRenderComponent[] = [];
 
     public needClip: boolean = false;
 
@@ -291,21 +291,21 @@ class SNode extends EventEmitter {
     }
 
     public getRenderComps(): SRenderComponent[] {
-        return this._comps;
+        return this._renderComps;
     }
 
     public addComponent<T extends SRenderComponent>(CompCtr: new () => T): T {
         const instance = new CompCtr();
         instance.node = this;
         instance.init();
-        this._comps.push(instance);
+        this._renderComps.push(instance);
         return instance;
     }
 
     public getComponent<T extends SRenderComponent>(
         compCtr: new () => T
     ): T | null {
-        return this._comps.find(comp => comp instanceof compCtr) as T;
+        return this._renderComps.find(comp => comp instanceof compCtr) as T;
     }
 
     public removeChildren(): void {
@@ -402,7 +402,7 @@ class SNode extends EventEmitter {
     }
 
     public destroy(): void {
-        this._comps.forEach(renderComp => {
+        this._renderComps.forEach(renderComp => {
             renderComp.destroy();
         });
     }

@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "target": "ESNext",
+        "jsxFactory": "createElement",
         "useDefineForClassFields": true,
         "module": "ESNext",
         "moduleResolution": "Node",

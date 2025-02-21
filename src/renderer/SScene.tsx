@@ -3,6 +3,7 @@ import SNode from './SNode';
 import { createNodeFromConfig, refSNode } from './util';
 import { Vec2 } from '@/common/Vec2';
 import EventEmitter from 'eventemitter3';
+import { createElement } from './createElement';
 
 export class SScene extends EventEmitter {
     public rootNode: SNode;
@@ -54,107 +55,100 @@ export class SScene extends EventEmitter {
         this.bottomLayerRef = refSNode();
         this.canvasContainerRef = refSNode();
 
-        const testBlockRef = refSNode();
-        this.rootNode = createNodeFromConfig({
-            name: 'root',
-            type: SNodeConfig.NodeType.CONTAINER,
-            width: option.canvasSize.width,
-            height: option.canvasSize.height,
-            transform: {
-                position: new Vec2(
-                    option.canvasSize.width / 2,
-                    option.canvasSize.height / 2
-                ),
-            },
-            children: [
-                {
-                    name: 'canvas-container',
-                    type: SNodeConfig.NodeType.CONTAINER,
-                    transform: {
+        const rootNodeConfig = (
+            <container
+                name="root"
+                width={option.canvasSize.width}
+                height={option.canvasSize.height}
+                transform={{
+                    position: new Vec2(
+                        option.canvasSize.width / 2,
+                        option.canvasSize.height / 2
+                    ),
+                }}
+            >
+                <container
+                    name="canvas-container"
+                    transform={{
                         scale: virtualCanvasScale,
-                    },
-                    ref: this.canvasContainerRef,
-                    children: [
-                        {
-                            name: 'virtualCanvas',
-                            type: SNodeConfig.NodeType.RECT,
-                            props: {
-                                width: this.option.designSize.width,
-                                height: this.option.designSize.height,
-                            },
-                            needClip: true,
-                            style: {
-                                fill: 0xffffff,
-                                shadow: {
-                                    color: 0xaaaaaa,
-                                    blur: 10,
-                                },
-                            },
+                    }}
+                    ref={this.canvasContainerRef}
+                >
+                    <rect
+                        name="virtualCanvas"
+                        props={{
                             width: this.option.designSize.width,
                             height: this.option.designSize.height,
-                            children: [
-                                {
-                                    name: 'bottom-layer',
-                                    type: SNodeConfig.NodeType.CONTAINER,
-                                    ref: this.bottomLayerRef,
-                                    width: this.option.designSize.width,
-                                    height: this.option.designSize.height,
-                                },
-                                {
-                                    name: 'content-node',
-                                    type: SNodeConfig.NodeType.CONTAINER,
-                                    ref: this.virtualCanvasRef,
-                                    width: this.option.designSize.width,
-                                    height: this.option.designSize.height,
-                                },
-                            ],
-                        },
-                        {
-                            name: 'top-layer',
-                            type: SNodeConfig.NodeType.CONTAINER,
-                            ref: this.topLayerRef,
-                            transform: {
-                                position: new Vec2(0, 0),
+                        }}
+                        needClip={true}
+                        style={{
+                            fill: 0xffffff,
+                            shadow: {
+                                color: 0xaaaaaa,
+                                blur: 10,
                             },
-                        },
-                    ],
-                },
-                {
-                    name: 'left-side',
-                    type: SNodeConfig.NodeType.RECT,
-                    ref: this.leftSideRef,
-                    width: this.option.sideWidth,
-                    height: this.option.canvasSize.height,
-                    style: {
+                        }}
+                        width={this.option.designSize.width}
+                        height={this.option.designSize.height}
+                    >
+                        <container
+                            name="bottom-layer"
+                            ref={this.bottomLayerRef}
+                            width={this.option.designSize.width}
+                            height={this.option.designSize.height}
+                        />
+                        <container
+                            name="content-node"
+                            ref={this.virtualCanvasRef}
+                            width={this.option.designSize.width}
+                            height={this.option.designSize.height}
+                        />
+                    </rect>
+                    <container
+                        name="top-layer"
+                        ref={this.topLayerRef}
+                        transform={{
+                            position: new Vec2(0, 0),
+                        }}
+                    />
+                </container>
+                <rect
+                    name="left-side"
+                    ref={this.leftSideRef}
+                    width={this.option.sideWidth}
+                    height={this.option.canvasSize.height}
+                    style={{
                         fill: 0xcccccc,
-                    },
-                    transform: {
+                    }}
+                    transform={{
                         position: new Vec2(
                             -option.canvasSize.width / 2,
                             -option.canvasSize.height / 2
                         ),
                         anchor: new Vec2(0, 0),
-                    },
-                },
-                {
-                    name: 'right-side',
-                    type: SNodeConfig.NodeType.RECT,
-                    ref: this.rightSideRef,
-                    width: this.option.sideWidth,
-                    height: this.option.canvasSize.height,
-                    style: {
+                    }}
+                />
+                <rect
+                    name="right-side"
+                    ref={this.rightSideRef}
+                    width={this.option.sideWidth}
+                    height={this.option.canvasSize.height}
+                    style={{
                         fill: 0xcccccc,
-                    },
-                    transform: {
+                    }}
+                    transform={{
                         position: new Vec2(
                             option.canvasSize.width / 2,
                             -option.canvasSize.height / 2
                         ),
                         anchor: new Vec2(1, 0),
-                    },
-                },
-            ],
-        });
+                    }}
+                />
+            </container>
+        );
+
+        console.log('rootNode', rootNodeConfig);
+        this.rootNode = createNodeFromConfig(rootNodeConfig);
     }
 
     public getCanvasNode(): SNode {
