@@ -169,7 +169,9 @@ export class ResizeGizmo {
         }
     };
 
-    private selectText(startIndex: number, endIndex: number): void {}
+    private selectText(startIndex: number, endIndex: number): void {
+        console.log('selectText', startIndex, endIndex);
+    }
 
     private _onHideTextAreaInput = (event: Event): void => {
         const e = event as InputEvent | CompositionEvent;
@@ -186,38 +188,23 @@ export class ResizeGizmo {
             this._scene.canvasLayer,
             SNodeEvents.POINTER_DOWN,
             (event: SNodeEvents.IPointerEvent) => {
-                if (this._currentMode === 'edit' && this._currentText) {
-                    const localPos = event.getLocalPosition(
-                        this._currentText.node!
-                    );
-                    const cursorIndex = this._currentText.getCursorIndex(
-                        localPos[0],
-                        localPos[1]
-                    );
-                    const worldPos =
-                        this._setCursorDivPositionByIndex(cursorIndex);
-                    if (worldPos) {
-                        this._focusTextArea(
-                            this._currentText,
-                            worldPos,
-                            cursorIndex,
-                            cursorIndex
-                        );
-                    }
-                }
+                let hitNode: SNode | null = null;
                 const allNodes = this._collectAllNodes();
                 let hasHit = false;
                 for (let i = 0; i < allNodes.length; i++) {
                     const node = allNodes[i];
                     const hit = node.hitTest(event.getWorldPosition());
                     if (hit) {
-                        this.mountToNode(node);
-                        this._onDragPointerDown(event);
                         hasHit = true;
+                        hitNode = node;
                         break;
                     }
                 }
-                if (!hasHit) {
+                if (hitNode) {
+                    this.mountToNode(hitNode);
+                    event.setCurrentTarget(hitNode);
+                    this._onDragPointerDown(event);
+                } else {
                     this.unMount();
                 }
             }
@@ -454,14 +441,21 @@ export class ResizeGizmo {
         if (!this._root || !this._currentNode) {
             return;
         }
+        this._isDragging = true;
         if (
             this._currentMode === 'edit' &&
-            event.currentTarget === this._currentText!.node
+            this._currentText &&
+            this._currentText.node === this._currentNode
         ) {
             this._enterEditMode(this._currentNode, event);
+            const localPos = this._currentText!.node!.toLocal(
+                event.getWorldPosition()
+            );
+            this._dragStartPos.set(localPos[0], localPos[1]);
+            this._enableDrag();
             return;
         }
-        this._isDragging = true;
+        this._exitEditMode();
         const localPos = this._currentNode.parent!.toLocal(
             event.getWorldPosition()
         );
@@ -506,9 +500,25 @@ export class ResizeGizmo {
         if (!this._currentNode || !this._isDragging) {
             return;
         }
-        const localPos = this._currentNode.parent!.toLocal(
-            event.getWorldPosition()
-        );
+
+        const isEditMode = this._currentMode === 'edit';
+        const host = isEditMode
+            ? this._currentText!.node
+            : this._currentNode.parent;
+        const localPos = host!.toLocal(event.getWorldPosition());
+        if (isEditMode) {
+            const startIndex = this._currentText!.getCursorIndex(
+                this._dragStartPos.x,
+                this._dragStartPos.y
+            );
+            const endIndex = this._currentText!.getCursorIndex(
+                localPos[0],
+                localPos[1]
+            );
+            this.selectText(startIndex, endIndex);
+
+            return;
+        }
         const diff = new Vec2(
             localPos[0] - this._dragStartPos.x,
             localPos[1] - this._dragStartPos.y
@@ -741,5 +751,10 @@ export class ResizeGizmo {
         this._root!.active = false;
         this._exitEditMode();
         this.updateHandlerNodes();
+    }
+
+    public destroy(): void {
+        this._hideTextArea!.remove();
+        this._cursorDiv!.remove();
     }
 }

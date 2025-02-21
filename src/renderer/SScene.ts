@@ -17,6 +17,8 @@ export class SScene extends EventEmitter {
 
     private topLayerRef: SNodeConfig.IRefSNode;
 
+    private bottomLayerRef: SNodeConfig.IRefSNode;
+
     private canvasContainerRef: SNodeConfig.IRefSNode;
 
     private option: SceneOptions;
@@ -49,6 +51,7 @@ export class SScene extends EventEmitter {
         this.leftSideRef = refSNode();
         this.rightSideRef = refSNode();
         this.topLayerRef = refSNode();
+        this.bottomLayerRef = refSNode();
         this.canvasContainerRef = refSNode();
 
         const testBlockRef = refSNode();
@@ -75,7 +78,6 @@ export class SScene extends EventEmitter {
                         {
                             name: 'virtualCanvas',
                             type: SNodeConfig.NodeType.RECT,
-                            ref: this.virtualCanvasRef,
                             props: {
                                 width: this.option.designSize.width,
                                 height: this.option.designSize.height,
@@ -92,28 +94,18 @@ export class SScene extends EventEmitter {
                             height: this.option.designSize.height,
                             children: [
                                 {
-                                    type: SNodeConfig.NodeType.RECT,
-                                    name: 'test-block',
-                                    ref: testBlockRef,
-                                    props: {
-                                        width: 200,
-                                        height: 200,
-                                    },
-                                    width: 200,
-                                    height: 200,
-                                    transform: {
-                                        position: new Vec2(
-                                            option.designSize.width / 3,
-                                            0
-                                        ),
-                                    },
-                                    style: {
-                                        fill: 0xffbb00,
-                                        shadow: {
-                                            color: 0xffbc00,
-                                            blur: 10,
-                                        },
-                                    },
+                                    name: 'bottom-layer',
+                                    type: SNodeConfig.NodeType.CONTAINER,
+                                    ref: this.bottomLayerRef,
+                                    width: this.option.designSize.width,
+                                    height: this.option.designSize.height,
+                                },
+                                {
+                                    name: 'content-node',
+                                    type: SNodeConfig.NodeType.CONTAINER,
+                                    ref: this.virtualCanvasRef,
+                                    width: this.option.designSize.width,
+                                    height: this.option.designSize.height,
                                 },
                             ],
                         },

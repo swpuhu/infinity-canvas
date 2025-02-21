@@ -28,6 +28,14 @@ export class SParagraph extends SRenderComponent {
 
     private _heightMultiplier: number = 1.4;
 
+    private _selectedRange: {
+        startIndex: number;
+        endIndex: number;
+    } = {
+        startIndex: -1,
+        endIndex: -1,
+    };
+
     get text() {
         return this._text;
     }

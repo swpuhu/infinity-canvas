@@ -199,7 +199,6 @@ class SNode extends EventEmitter {
 
     public set rotation(value: number) {
         this._rotation = value;
-        console.log(this._rotation);
         this.updateWorldMatrix();
     }
 
