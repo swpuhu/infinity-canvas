@@ -5,6 +5,7 @@ import {
     ResizeGizmoMode,
     SNodeConfig,
     SNodeEvents,
+    TransformOptions,
 } from '@/common/types';
 import SNode from '../SNode';
 import {
@@ -16,16 +17,12 @@ import {
 import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '../Editor';
 import { SScene } from '../SScene';
-import { mat3, mat4, ReadonlyVec2, vec2 } from 'gl-matrix';
-import {
-    decomposeMatrix,
-    isSprite,
-    isText,
-    visitNodeRecursive,
-} from '@/common/util';
-import { CanvasEventSystem, SPointerEvent } from '../SEventManager';
+import { ReadonlyVec2 } from 'gl-matrix';
+import { decomposeMatrix, isText, visitNodeRecursive } from '@/common/util';
+import { CanvasEventSystem } from '../SEventManager';
 import { SParagraph } from '../RenderComponents/SParagraph';
 import eventBus from '@/common/eventBus';
+import { createElement } from '../createElement';
 
 const RESIZE_GIZMO_SIZE = 10;
 const ROTATE_GIZMO_SIZE = 8;
@@ -35,6 +32,13 @@ const ROTATE_GIZMO_COLOR = 0x00ffbc;
 const GIZMO_LINE_WIDTH = 1;
 const GIZMO_LINE_COLOR = 0xcccccc;
 
+function Line(props: {
+    name: string;
+    ref: SNodeConfig.IRefSNode;
+    transform: TransformOptions;
+}): JSX.Element {
+    return <rect {...props} />;
+}
 export class ResizeGizmo {
     protected _scene: SScene;
     protected _editor: CanvasEditor;
@@ -340,6 +344,18 @@ export class ResizeGizmo {
             ...handlerSize,
             style: blockStyle,
         });
+        const CommonResizePoint = (props: {
+            name: string;
+            ref: SNodeConfig.IRefSNode;
+        }) => {
+            return (
+                <rect
+                    name={props.name}
+                    ref={props.ref}
+                    style={blockStyle}
+                ></rect>
+            );
+        };
 
         // 创建控制点
         const controlPoints = [
@@ -362,58 +378,61 @@ export class ResizeGizmo {
             transform: { anchor },
         });
 
-        this._root = createNodeFromConfig({
-            name: 'resize-gizmo',
-            type: SNodeConfig.NodeType.CONTAINER,
-            transform: {
-                anchor: {
-                    x: 0,
-                    y: 0,
-                },
-            },
-            active: false,
-            children: [
-                {
-                    name: 'lines',
-                    type: SNodeConfig.NodeType.CONTAINER,
-                    children: [
-                        createLine('left-line', this._leftLineRef, {
-                            x: 0.5,
-                            y: 0,
-                        }),
-                        createLine('right-line', this._rightLineRef, {
-                            x: 0.5,
-                            y: 1,
-                        }),
-                        createLine('top-line', this._topLineRef, {
-                            x: 1,
-                            y: 0.5,
-                        }),
-                        createLine('bottom-line', this._bottomLineRef, {
-                            x: 0,
-                            y: 0.5,
-                        }),
-                    ],
-                },
-                {
-                    name: 'resize-points',
-                    type: SNodeConfig.NodeType.CONTAINER,
-                    children: controlPoints.map(p =>
-                        commonRectConfig(p.name, p.ref)
-                    ),
-                },
-                {
-                    name: 'rotate-point',
-                    type: SNodeConfig.NodeType.CIRCLE,
-                    ref: this._rotateRef,
-                    width: ROTATE_GIZMO_SIZE,
-                    height: ROTATE_GIZMO_SIZE,
-                    style: {
-                        fill: ROTATE_GIZMO_COLOR,
-                    },
-                },
-            ],
-        });
+        const Line = (props: {
+            name: string;
+            ref: SNodeConfig.IRefSNode;
+            anchor: IPointData;
+        }) => {
+            return (
+                <rect
+                    name={props.name}
+                    ref={props.ref}
+                    style={lineStyle}
+                    transform={{ anchor: props.anchor }}
+                ></rect>
+            );
+        };
+
+        const rootConfig = (
+            <container name="resize-gizmo">
+                <container name="lines">
+                    <Line
+                        name="left-line"
+                        ref={this._leftLineRef}
+                        anchor={{ x: 0.5, y: 0 }}
+                    />
+                    <Line
+                        name="right-line"
+                        ref={this._rightLineRef}
+                        anchor={{ x: 0.5, y: 1 }}
+                    />
+                    <Line
+                        name="top-line"
+                        ref={this._topLineRef}
+                        anchor={{ x: 1, y: 0.5 }}
+                    />
+                    <Line
+                        name="bottom-line"
+                        ref={this._bottomLineRef}
+                        anchor={{ x: 0, y: 0.5 }}
+                    />
+                </container>
+                <container name="resize-points">
+                    {controlPoints.map(p => (
+                        <CommonResizePoint name={p.name} ref={p.ref} />
+                    ))}
+                </container>
+                <circle
+                    name="rotate-point"
+                    ref={this._rotateRef}
+                    width={ROTATE_GIZMO_SIZE}
+                    height={ROTATE_GIZMO_SIZE}
+                    style={blockStyle}
+                />
+            </container>
+        );
+
+        this._root = createNodeFromConfig(rootConfig);
 
         // 收集引用节点
         this.resizeHandlerNodes = controlPoints.map(p => p.ref.value!);

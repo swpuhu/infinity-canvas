@@ -39,12 +39,12 @@ export class CanvasEditor {
         const scene = new SScene({
             canvasSize,
             designSize: { width: 420, height: 640 },
-            sideWidth: 200,
+            sideWidth: Math.max(100, window.innerWidth * 0.2),
         });
 
         this._scene = scene;
 
-        const testPicConfig: SNodeConfig.SpriteConfig = (
+        const testPicConfig = (
             <sprite
                 props={{
                     url: '/r2.png',
@@ -55,7 +55,8 @@ export class CanvasEditor {
                 }}
             />
         );
-        scene.stage.addChild(createNodeFromConfig(testPicConfig));
+        const testPic = createNodeFromConfig(testPicConfig);
+        scene.stage.addChild(testPic);
 
         const text = new SNode();
         text.anchor.set(0, 0);
@@ -72,6 +73,7 @@ export class CanvasEditor {
         // eventBus.reDraw();
 
         scene.stage.addChild(text);
+        const a = <container name="resize-gizmo"></container>;
 
         this._resizeGizmo = new ResizeGizmo(this);
 
@@ -81,14 +83,6 @@ export class CanvasEditor {
         });
 
         this._renderer.render(scene.rootNode);
-
-        // testPic.on(SNodeEvents.POINTER_DOWN, (e: SNodeEvents.PointerEvent) => {
-        //     console.log(e);
-        //     testPic.rotation = 30;
-        //     resizeGizmo.mountToNode(testPic);
-        // });
-
-        // console.log(img.width);
     }
 
     get eventSystem() {

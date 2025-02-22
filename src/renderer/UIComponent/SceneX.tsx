@@ -13,7 +13,7 @@ export function SceneX(option: {
     topLayerRef: SNodeConfig.IRefSNode;
     leftSideRef: SNodeConfig.IRefSNode;
     rightSideRef: SNodeConfig.IRefSNode;
-}): JSX.IntrinsicElements {
+}) {
     return (
         <container
             name="root"
@@ -57,7 +57,7 @@ export function SceneX(option: {
                     transform={{
                         position: new Vec2(0, 0),
                     }}
-                />
+                ></container>
             </container>
             <rect
                 name="left-side"
