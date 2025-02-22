@@ -2,10 +2,8 @@ import { CanvasKitModule } from '@/lib/canvaskit';
 import { CanvasEventSystem } from './SEventManager';
 import { Renderer } from './renderer';
 import { SScene } from './SScene';
-import { EventNames, SNodeConfig, SNodeEvents } from '@/common/types';
+import { EventNames } from '@/common/types';
 import { ResizeGizmo } from './components/ResizeGizmo';
-import SNode from './SNode';
-import { SParagraph } from './RenderComponents/SParagraph';
 import { createElement } from './createElement';
 import eventBus from '@/common/eventBus';
 import { createNodeFromConfig } from './util';
@@ -46,9 +44,7 @@ export class CanvasEditor {
 
         const testPicConfig = (
             <sprite
-                props={{
-                    url: '/r2.png',
-                }}
+                url={'r2.png'}
                 transform={{
                     scale: { x: 1, y: 1 },
                     anchor: { x: 0, y: 0 },
@@ -58,22 +54,18 @@ export class CanvasEditor {
         const testPic = createNodeFromConfig(testPicConfig);
         scene.stage.addChild(testPic);
 
-        const text = new SNode();
-        text.anchor.set(0, 0);
-        text.width = 500;
-        text.position.set(0, 0);
+        const paraConfig = (
+            <para
+                text="懒羊羊组长赛高！"
+                fontSize={50}
+                transform={{ anchor: { x: 0, y: 0 } }}
+            />
+        );
 
-        const para = text.addComponent(SParagraph);
-        para.text = '懒羊羊组长赛高！';
-        // para.setFontSize(100);
+        const para = createNodeFromConfig(paraConfig);
+        console.log('para', para);
 
-        setTimeout(() => {
-            // para.node?.setSize(200, 267);
-        }, 1000);
-        // eventBus.reDraw();
-
-        scene.stage.addChild(text);
-        const a = <container name="resize-gizmo"></container>;
+        scene.stage.addChild(para);
 
         this._resizeGizmo = new ResizeGizmo(this);
 

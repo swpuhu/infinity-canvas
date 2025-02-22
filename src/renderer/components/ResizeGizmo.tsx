@@ -155,8 +155,7 @@ export class ResizeGizmo {
             const f = textWorldMatrix[7];
             this._cursorDiv!.style.transform = `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`;
             const globalScale = this._currentText.node!.getGlobalScale();
-            this._cursorDiv!.style.height =
-                cursorInfo.size * globalScale.y + 'px';
+            this._cursorDiv!.style.height = cursorInfo.size + 'px';
             return worldPos;
         }
         return null;
@@ -394,7 +393,7 @@ export class ResizeGizmo {
         };
 
         const rootConfig = (
-            <container name="resize-gizmo">
+            <container name="resize-gizmo" active={false}>
                 <container name="lines">
                     <Line
                         name="left-line"

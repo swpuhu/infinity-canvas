@@ -294,8 +294,11 @@ class SNode extends EventEmitter {
         return this._renderComps;
     }
 
-    public addComponent<T extends SRenderComponent>(CompCtr: new () => T): T {
-        const instance = new CompCtr();
+    public addComponent<T extends SRenderComponent, Args extends any[]>(
+        CompCtr: new (...args: Args) => T,
+        ...args: Args
+    ): T {
+        const instance = new CompCtr(...args);
         instance.node = this;
         instance.init();
         this._renderComps.push(instance);

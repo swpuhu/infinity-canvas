@@ -72,6 +72,7 @@ export namespace SNodeConfig {
         CONTAINER = 'container',
         SPRITE = 'sprite',
         CIRCLE = 'circle',
+        PARAGRAPH = 'para',
     }
 
     export type SGraphicsPropsConfig = {
@@ -120,10 +121,14 @@ export namespace SNodeConfig {
             type: NodeType.CIRCLE;
         };
 
-    export type SpriteConfig = BaseConfig & {
-        type: NodeType.SPRITE;
-        props: SSpritePropsConfig;
+    export type SpriteConfig = BaseConfig & SSpritePropsConfig;
+
+    export type SParagraphPropsConfig = {
+        text?: string;
+        fontSize?: number;
     };
+
+    export type ParagraphConfig = BaseConfig & SParagraphPropsConfig;
 
     export type NodeTypeMap = {
         [NodeType.RECT]: RectConfig;

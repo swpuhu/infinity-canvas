@@ -10,6 +10,7 @@ import { CanvasKitModule } from '@/lib/canvaskit';
 import {
     EnumAspectKeepMode,
     EnumRenderComponentType,
+    SNodeConfig,
     SNodeEvents,
 } from '@/common/types';
 import { Vec2 } from '@/common/Vec2';
@@ -43,6 +44,12 @@ export class SParagraph extends SRenderComponent {
     set text(value: string) {
         this._text = value;
         this.resetBuilder();
+    }
+
+    constructor(props?: SNodeConfig.SParagraphPropsConfig) {
+        super();
+        this._text = props?.text || '';
+        this._fontSize = props?.fontSize || 50;
     }
 
     public setFontSize(size: number) {
@@ -121,6 +128,7 @@ export class SParagraph extends SRenderComponent {
             this._nodeSizeChanged(width, height);
         };
         this.node.renderType = EnumRenderComponentType.TEXT;
+        this.resetBuilder();
     }
 
     public getCursorInfoByIndex(cursorIndex: number): {

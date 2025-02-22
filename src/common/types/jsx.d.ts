@@ -10,6 +10,7 @@ declare global {
             container: Omit<SNodeConfig.ContainerConfig, 'type'>;
             rect: Omit<SNodeConfig.RectConfig, 'type'>;
             circle: Omit<SNodeConfig.CircleConfig, 'type'>;
+            para: Omit<SNodeConfig.ParagraphConfig, 'type'>;
         }
     }
 }

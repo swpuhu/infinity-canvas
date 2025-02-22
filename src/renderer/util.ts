@@ -6,7 +6,7 @@ import { SGeoRect } from './Geometry/SGeoRect';
 import { Vec2 } from '@/common/Vec2';
 import { vec2 } from 'gl-matrix';
 import { SGeoCircle } from './Geometry/SGeoCircle';
-
+import { SParagraph } from './RenderComponents/SParagraph';
 const nodeNameRefMap = new Map<string, SNode>();
 
 export function refSNode(v?: SNode): SNodeConfig.IRefSNode {
@@ -59,8 +59,10 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
     } else if (config.type === SNodeConfig.NodeType.SPRITE) {
         const spriteConfig = config as SNodeConfig.SpriteConfig;
         const sprite = node.addComponent(SSprite);
-
-        sprite.setImageByUrl(spriteConfig.props.url || '');
+        sprite.setImageByUrl(spriteConfig.url || '');
+    } else if (config.type === SNodeConfig.NodeType.PARAGRAPH) {
+        const paragraphConfig = config as SNodeConfig.ParagraphConfig;
+        node.addComponent(SParagraph, paragraphConfig);
     }
 
     // 处理子元素
