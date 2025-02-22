@@ -166,10 +166,15 @@ export class ResizeGizmo {
             const startIndex = this._hideTextArea!.selectionStart;
             const endIndex = this._hideTextArea!.selectionEnd;
             if (startIndex === endIndex) {
+                this._currentText.unSelect();
                 this._setCursorDivPositionByIndex(startIndex);
+                eventBus.reDraw();
+                return;
             }
             console.log('selection change', startIndex, endIndex);
+            this._hideCursor();
             this._currentText.setSelectionRange(startIndex, endIndex);
+            eventBus.reDraw();
         }
     };
 
@@ -179,7 +184,6 @@ export class ResizeGizmo {
             [startIndex, endIndex] = [endIndex, startIndex];
         }
         this._hideTextArea!.setSelectionRange(startIndex, endIndex);
-        this._hideCursor();
     }
 
     private _hideCursor(): void {
@@ -315,8 +319,9 @@ export class ResizeGizmo {
             return;
         }
         this._currentMode = ResizeGizmoMode.NONE;
+        this._hideCursor();
+        this._currentText!.unSelect();
         this._hideTextArea!.classList.add('hide');
-        this._cursorDiv!.classList.add('hide');
         this._currentText = null;
     }
 

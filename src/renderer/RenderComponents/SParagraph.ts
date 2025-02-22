@@ -178,15 +178,28 @@ export class SParagraph extends SRenderComponent {
             CanvasKitModule.CanvasKit.RectWidthStyle.Tight
         );
 
-        console.log(rects);
+        console.log('isLastChar', isLastChar);
         if (isLastChar) {
-            return {
+            const info = {
                 pos: [rects[0].rect[2], rects[0].rect[1]],
                 size: rects[0].rect[3] - rects[0].rect[1],
                 endPos: [rects[0].rect[2], rects[0].rect[3]],
                 startIndex: cursorIndex,
                 endIndex: cursorIndex,
             };
+
+            const lastLineMetrics = lineMetrics[lineMetrics.length - 1];
+            if (lastLineMetrics.width === 0) {
+                info.pos = [
+                    0,
+                    this._fontSize *
+                        this._heightMultiplier *
+                        (lineMetrics.length - 1),
+                ];
+                info.size = this._fontSize * this._heightMultiplier;
+            }
+
+            return info as any;
         }
 
         return {
