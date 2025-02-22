@@ -103,6 +103,18 @@ export class SParagraph extends SRenderComponent {
         this.setFontSize(Math.floor(newFontSize));
     };
 
+    public setSelectionRange(startIndex: number, endIndex: number) {
+        let _startIndex = startIndex;
+        let _endIndex = endIndex;
+        this._selectedRange.startIndex = _startIndex;
+        this._selectedRange.endIndex = _endIndex;
+    }
+
+    public unSelect() {
+        this._selectedRange.startIndex = -1;
+        this._selectedRange.endIndex = -1;
+    }
+
     protected onCreated(): void {
         const paraStyle = new CanvasKitModule.CanvasKit.ParagraphStyle({
             textStyle: {
@@ -133,6 +145,7 @@ export class SParagraph extends SRenderComponent {
 
     public getCursorInfoByIndex(cursorIndex: number): {
         pos: ReadonlyVec2;
+        endPos: ReadonlyVec2;
         size: number;
         startIndex: number;
         endIndex: number;
@@ -170,6 +183,7 @@ export class SParagraph extends SRenderComponent {
             return {
                 pos: [rects[0].rect[2], rects[0].rect[1]],
                 size: rects[0].rect[3] - rects[0].rect[1],
+                endPos: [rects[0].rect[2], rects[0].rect[3]],
                 startIndex: cursorIndex,
                 endIndex: cursorIndex,
             };
@@ -178,6 +192,7 @@ export class SParagraph extends SRenderComponent {
         return {
             pos: [rects[0].rect[0], rects[0].rect[1]],
             size: rects[0].rect[3] - rects[0].rect[1],
+            endPos: [rects[0].rect[0], rects[0].rect[3]],
             startIndex: cursorIndex,
             endIndex: cursorIndex,
         };
@@ -191,6 +206,23 @@ export class SParagraph extends SRenderComponent {
         return info.pos;
     }
 
+    public drawSelectionBlock(canvas: Canvas): void {
+        if (!this._paragraph) {
+            return;
+        }
+        const rects = this._paragraph.getRectsForRange(
+            this._selectedRange.startIndex,
+            this._selectedRange.endIndex,
+            CanvasKitModule.CanvasKit.RectHeightStyle.Tight,
+            CanvasKitModule.CanvasKit.RectWidthStyle.Tight
+        );
+
+        for (let i = 0; i < rects.length; i++) {
+            const rect = rects[i];
+            canvas.drawRect(rect.rect, CanvasKitModule.getTextSelectionPaint());
+        }
+    }
+
     public draw(canvas: Canvas): void {
         if (!this._paragraph) {
             return;
@@ -198,6 +230,7 @@ export class SParagraph extends SRenderComponent {
         if (!this.node) {
             return;
         }
+        this.drawSelectionBlock(canvas);
         canvas.drawParagraph(
             this._paragraph,
             -this.node.width * this.node.anchor.x,

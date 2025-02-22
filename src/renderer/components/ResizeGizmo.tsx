@@ -17,7 +17,7 @@ import {
 import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '../Editor';
 import { SScene } from '../SScene';
-import { ReadonlyVec2 } from 'gl-matrix';
+import { ReadonlyVec2, vec2 } from 'gl-matrix';
 import { decomposeMatrix, isText, visitNodeRecursive } from '@/common/util';
 import { CanvasEventSystem } from '../SEventManager';
 import { SParagraph } from '../RenderComponents/SParagraph';
@@ -137,7 +137,7 @@ export class ResizeGizmo {
         const cursorInfo = this._currentText.getCursorInfoByIndex(cursorIndex);
         if (cursorInfo) {
             const worldPos = this._currentText.node!.toGlobal(cursorInfo.pos);
-            this._cursorDiv!.classList.remove('hide');
+            this._showCursor();
             this._currentText.node?.addChild(this._dummyCursorNode);
             this._dummyCursorNode.setTransform({
                 position: {
@@ -154,7 +154,7 @@ export class ResizeGizmo {
             const e = textWorldMatrix[6];
             const f = textWorldMatrix[7];
             this._cursorDiv!.style.transform = `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`;
-            const globalScale = this._currentText.node!.getGlobalScale();
+
             this._cursorDiv!.style.height = cursorInfo.size + 'px';
             return worldPos;
         }
@@ -169,11 +169,26 @@ export class ResizeGizmo {
                 this._setCursorDivPositionByIndex(startIndex);
             }
             console.log('selection change', startIndex, endIndex);
+            this._currentText.setSelectionRange(startIndex, endIndex);
         }
     };
 
     private selectText(startIndex: number, endIndex: number): void {
         console.log('selectText', startIndex, endIndex);
+        if (startIndex > endIndex) {
+            [startIndex, endIndex] = [endIndex, startIndex];
+        }
+        this._hideTextArea!.setSelectionRange(startIndex, endIndex);
+        this._hideCursor();
+    }
+
+    private _hideCursor(): void {
+        this._cursorDiv!.classList.add('hide');
+    }
+
+    private _showCursor(): void {
+        this._cursorDiv!.classList.remove('hide');
+        this._currentText?.unSelect();
     }
 
     private _onHideTextAreaInput = (event: Event): void => {

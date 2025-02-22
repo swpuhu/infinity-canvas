@@ -6,6 +6,8 @@ export class CanvasKitModule {
 
     static _spritePaint: Paint | null = null;
 
+    static _textSelectionPaint: Paint | null = null;
+
     static _fontMgr: FontMgr | null = null;
 
     static get CanvasKit() {
@@ -19,6 +21,10 @@ export class CanvasKitModule {
         if (this._spritePaint) {
             this._spritePaint.delete();
             this._spritePaint = null;
+        }
+        if (this._textSelectionPaint) {
+            this._textSelectionPaint.delete();
+            this._textSelectionPaint = null;
         }
     }
 
@@ -49,6 +55,16 @@ export class CanvasKitModule {
         return this._spritePaint;
     }
 
+    static getTextSelectionPaint(): Paint {
+        if (!this._textSelectionPaint) {
+            this._textSelectionPaint = new this.CanvasKit.Paint();
+            this._textSelectionPaint.setStyle(this.CanvasKit.PaintStyle.Fill);
+            this._textSelectionPaint.setColor(
+                [173, 214, 255].map(c => c / 255)
+            );
+        }
+        return this._textSelectionPaint;
+    }
     private constructor() {
         throw new Error(
             'do not allow construct by new operator, please use static method init to initialize'
