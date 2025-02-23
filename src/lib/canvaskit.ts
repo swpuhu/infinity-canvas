@@ -65,6 +65,7 @@ export class CanvasKitModule {
         }
         return this._textSelectionPaint;
     }
+
     private constructor() {
         throw new Error(
             'do not allow construct by new operator, please use static method init to initialize'

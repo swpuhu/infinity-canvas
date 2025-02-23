@@ -114,8 +114,8 @@ export class ResizeGizmo {
         this._cursorDiv = document.createElement('div');
         this._cursorDiv.classList.add('cursor', 'hide');
 
-        document.body.appendChild(this._hideTextArea);
-        document.body.appendChild(this._cursorDiv);
+        this._editor.canvas.parentElement!.appendChild(this._hideTextArea);
+        this._editor.canvas.parentElement!.appendChild(this._cursorDiv);
         this._hideTextArea.addEventListener(
             'compositionupdate',
             this._onHideTextAreaInput

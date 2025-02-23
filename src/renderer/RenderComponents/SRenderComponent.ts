@@ -4,7 +4,7 @@ import type SNode from '../SNode';
 
 export abstract class SRenderComponent {
     public node: SNode | undefined;
-
+    private _isEnabled: boolean = true;
     public init(): void {
         this.onCreated();
     }
@@ -14,4 +14,16 @@ export abstract class SRenderComponent {
     public abstract draw(canvas: Canvas): void;
 
     public destroy(): void {}
+
+    public disable(): void {
+        this._isEnabled = false;
+    }
+
+    public enable(): void {
+        this._isEnabled = true;
+    }
+
+    public get isEnabled(): boolean {
+        return this._isEnabled;
+    }
 }

@@ -15,7 +15,14 @@ export class CanvasEditor {
     private _scene: SScene | null = null;
     private _resizeGizmo: ResizeGizmo | null = null;
 
-    constructor(private canvas: HTMLCanvasElement) {}
+    constructor(private _canvas: HTMLCanvasElement) {}
+
+    get canvas(): HTMLCanvasElement {
+        if (!this._canvas) {
+            throw new Error('canvas is not initialized');
+        }
+        return this._canvas;
+    }
 
     get scene(): SScene {
         if (!this._scene) {
@@ -26,8 +33,8 @@ export class CanvasEditor {
 
     async init() {
         await CanvasKitModule.init();
-        this._eventSystem = CanvasEventSystem.initialize(this.canvas);
-        this._renderer = new Renderer(this.canvas);
+        this._eventSystem = CanvasEventSystem.initialize(this._canvas);
+        this._renderer = new Renderer(this._canvas);
         const canvasSize = {
             width: window.innerWidth,
             height: window.innerHeight,
@@ -36,7 +43,7 @@ export class CanvasEditor {
         // 创建基础布局
         const scene = new SScene({
             canvasSize,
-            designSize: { width: 420, height: 640 },
+            designSize: { width: 800, height: 640 },
             sideWidth: Math.max(100, window.innerWidth * 0.2),
         });
 
@@ -75,6 +82,13 @@ export class CanvasEditor {
         });
 
         this._renderer.render(scene.rootNode);
+    }
+
+    public saveToImage() {
+        if (!this._scene) {
+            throw new Error('scene is not initialized');
+        }
+        this._renderer?.saveToImage(this._scene.getCanvasNode());
     }
 
     get eventSystem() {

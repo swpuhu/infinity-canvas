@@ -20,20 +20,24 @@ export class SSprite extends SRenderComponent {
     };
     private _img: Image | null = null;
 
+    private _url: string = '';
+
+    public get url(): string {
+        return this._url;
+    }
+
     public resizeMode: EnumResizeMode = SSprite.ResizeMode.RAW;
     protected onCreated(): void {
         this.node!.renderType = EnumRenderComponentType.SPRITE;
     }
 
-    public async setImageByUrl(src?: string): Promise<void> {
-        if (!src) {
-            return;
-        }
+    public async setImageByUrl(src: string): Promise<void> {
         if (this._img) {
             this._img.delete();
             this._img = null;
         }
         const imgBuffer = await loadImageArrayBuffer(src);
+        this._url = src;
         this.setImage(imgBuffer);
         eventBus.reDraw();
     }
