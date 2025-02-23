@@ -106,9 +106,6 @@ export class ResizeGizmo {
         this._scene.on(EventNames.RESIZE, this._onResize);
         this.addPointerEvent();
         this._initHideTextArea();
-
-        this._enableDrag();
-        this._enableResize();
     }
     private _initHideTextArea(): void {
         this._hideTextArea = document.createElement('textarea');
@@ -356,6 +353,16 @@ export class ResizeGizmo {
         // 通用样式配置
         const blockStyle = { fill: RESIZE_GIZMO_COLOR };
         const lineStyle = { fill: GIZMO_LINE_COLOR };
+        const commonRectConfig = (
+            name: string,
+            ref: SNodeConfig.IRefSNode
+        ) => ({
+            name,
+            type: SNodeConfig.NodeType.RECT,
+            ref,
+            ...handlerSize,
+            style: blockStyle,
+        });
         const CommonResizePoint = (props: {
             name: string;
             ref: SNodeConfig.IRefSNode;
@@ -365,8 +372,6 @@ export class ResizeGizmo {
                     name={props.name}
                     ref={props.ref}
                     style={blockStyle}
-                    width={handlerSize.width}
-                    height={handlerSize.height}
                 ></rect>
             );
         };
@@ -498,6 +503,8 @@ export class ResizeGizmo {
             this._currentNode.position.x,
             this._currentNode.position.y
         );
+
+        this._enableDrag();
     };
 
     protected _enableDrag(): void {
@@ -572,7 +579,7 @@ export class ResizeGizmo {
             return;
         }
         this._isDragging = false;
-        // this._disableDrag();
+        this._disableDrag();
     };
 
     private _onResizePointerDown = (event: SNodeEvents.IPointerEvent): void => {
@@ -631,7 +638,7 @@ export class ResizeGizmo {
         this._resizeStartPos.set(localPos[0], localPos[1]);
 
         this.updateHandlerNodes();
-        // this._enableResize();
+        this._enableResize();
     };
 
     private _enableResize(): void {
@@ -717,7 +724,7 @@ export class ResizeGizmo {
         }
         changeAnchorButStay(this._currentNode!, this._originAnchor);
         this._isResizing = false;
-        // this._disableResize();
+        this._disableResize();
         this._currentHandleNode = null;
     };
 
