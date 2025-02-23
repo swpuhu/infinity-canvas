@@ -110,6 +110,7 @@ export class ResizeGizmo {
     private _initHideTextArea(): void {
         this._hideTextArea = document.createElement('textarea');
         this._hideTextArea.classList.add('text-area', 'hide');
+        this._hideTextArea.wrap = 'off';
 
         this._cursorDiv = document.createElement('div');
         this._cursorDiv.classList.add('cursor', 'hide');
