@@ -51,9 +51,7 @@ export class Renderer extends EventEmitter {
             if (entry) {
                 const { width, height } = entry.contentRect;
                 this.resizeSurface(width, height);
-                setTimeout(() => {
-                    this.emit(EventNames.RESIZE, width, height);
-                }, 100);
+                this.emit(EventNames.RESIZE, width, height);
             }
         });
         this.resizeObserver.observe(canvas);

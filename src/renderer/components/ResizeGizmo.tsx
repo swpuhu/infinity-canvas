@@ -157,6 +157,12 @@ export class ResizeGizmo {
             this._cursorDiv!.style.transform = `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`;
 
             this._cursorDiv!.style.height = cursorInfo.size + 'px';
+            if (worldPos) {
+                setTimeout(() => {
+                    this._hideTextArea!.style.left = worldPos[0] + 50 + 'px';
+                    this._hideTextArea!.style.top = worldPos[1] + 'px';
+                }, 100);
+            }
             return worldPos;
         }
         return null;
@@ -280,10 +286,6 @@ export class ResizeGizmo {
         this._hideTextArea!.classList.remove('hide');
         this._hideTextArea!.textContent = textComp.text;
 
-        if (worldPos) {
-            this._hideTextArea!.style.left = worldPos[0] + 50 + 'px';
-            this._hideTextArea!.style.top = worldPos[1] + 'px';
-        }
         setTimeout(() => {
             this._hideTextArea!.focus();
             this._hideTextArea!.setSelectionRange(startIndex, endIndex);
