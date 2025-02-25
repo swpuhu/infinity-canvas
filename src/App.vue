@@ -2,8 +2,14 @@
     <div class="app">
         <div class="editor-container">
             <div class="toolbar">
-                <div class="toolbar-left">
+                <div class="toolbar-head">
                     <UButton type="primary" @click="handleSave">保存</UButton>
+                    <UButton
+                        type="primary"
+                        @click="handleAddText"
+                        :selected="uiStore.willAddText"
+                        >添加文字</UButton
+                    >
                 </div>
                 <div class="toolbar-right">
                     <!-- 右侧工具按钮预留位置 -->
@@ -20,8 +26,11 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { CanvasEditor } from './renderer/Editor';
 import UButton from './components/UButton.vue';
+import { useUIStore } from './store/UIStore';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
+
+const uiStore = useUIStore();
 
 let editor: CanvasEditor | null = null;
 onMounted(async () => {
@@ -48,6 +57,12 @@ const handleSave = () => {
         editor.saveToImage();
     } catch (error) {
         console.error('保存失败:', error);
+    }
+};
+
+const handleAddText = () => {
+    if (editor) {
+        uiStore.setWillAddText(true);
     }
 };
 </script>

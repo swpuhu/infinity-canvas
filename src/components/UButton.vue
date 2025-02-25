@@ -5,6 +5,7 @@
             type ? `u-button--${type}` : '',
             size ? `u-button--${size}` : '',
             { 'is-disabled': disabled },
+            { 'is-selected': selected },
         ]"
         :disabled="disabled"
         @click="$emit('click', $event)"
@@ -18,6 +19,7 @@ interface Props {
     type?: 'primary' | 'success' | 'warning' | 'danger' | 'info';
     size?: 'small' | 'medium' | 'large';
     disabled?: boolean;
+    selected?: boolean;
 }
 
 defineProps<Props>();
@@ -69,6 +71,38 @@ defineEmits<{
     background-image: none;
     background-color: #fff;
     border-color: #ebeef5;
+}
+
+/* 选中状态样式 */
+.u-button.is-selected {
+    color: #409eff;
+    border-color: #409eff;
+    background-color: #ecf5ff;
+}
+
+.u-button.is-selected:hover {
+    color: #66b1ff;
+    border-color: #66b1ff;
+    background-color: #ecf5ff;
+}
+
+.u-button.is-selected:active {
+    color: #3a8ee6;
+    border-color: #3a8ee6;
+    background-color: #ecf5ff;
+}
+
+/* 主题按钮的选中状态 */
+.u-button--primary.is-selected {
+    background: #66b1ff;
+    border-color: #66b1ff;
+    color: #fff;
+}
+
+.u-button--success.is-selected {
+    background: #85ce61;
+    border-color: #85ce61;
+    color: #fff;
 }
 
 /* 类型样式 */

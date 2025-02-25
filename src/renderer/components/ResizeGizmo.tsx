@@ -16,13 +16,13 @@ import {
 } from '../util';
 import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '../Editor';
-import { SScene } from '../SScene';
 import { ReadonlyVec2, vec2 } from 'gl-matrix';
 import { decomposeMatrix, isText, visitNodeRecursive } from '@/common/util';
 import { CanvasEventSystem } from '../SEventManager';
 import { SParagraph } from '../RenderComponents/SParagraph';
 import eventBus from '@/common/eventBus';
 import { createElement } from '../createElement';
+import { WhiteboardScene } from '../WhiteboardScene';
 
 const RESIZE_GIZMO_SIZE = 10;
 const ROTATE_GIZMO_SIZE = 8;
@@ -33,7 +33,7 @@ const GIZMO_LINE_WIDTH = 1;
 const GIZMO_LINE_COLOR = 0xcccccc;
 
 export class ResizeGizmo {
-    protected _scene: SScene;
+    protected _scene: WhiteboardScene;
     protected _editor: CanvasEditor;
     protected _root: SNode | null = null;
 
