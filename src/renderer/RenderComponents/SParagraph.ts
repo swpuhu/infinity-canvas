@@ -9,11 +9,11 @@ import { SRenderComponent } from './SRenderComponent';
 import { CanvasKitModule } from '@/lib/canvaskit';
 import {
     EnumAspectKeepMode,
+    EnumParaLayoutMode,
+    EnumParaResizeMode,
     EnumRenderComponentType,
     SNodeConfig,
-    SNodeEvents,
 } from '@/common/types';
-import { Vec2 } from '@/common/Vec2';
 import { ReadonlyVec2 } from 'gl-matrix';
 
 export class SParagraph extends SRenderComponent {
@@ -28,6 +28,11 @@ export class SParagraph extends SRenderComponent {
     private _fontSize: number = 50;
 
     private _heightMultiplier: number = 1.4;
+
+    private _layoutMode: EnumParaLayoutMode = EnumParaLayoutMode.AUTO;
+
+    private _resizeMode: EnumParaResizeMode =
+        EnumParaResizeMode.RESIZE_FONT_SIZE;
 
     private _selectedRange: {
         startIndex: number;
@@ -50,6 +55,9 @@ export class SParagraph extends SRenderComponent {
         super();
         this._text = props?.text || '';
         this._fontSize = props?.fontSize || 50;
+        this._layoutMode = props?.layoutMode || EnumParaLayoutMode.AUTO;
+        this._resizeMode =
+            props?.resizeMode || EnumParaResizeMode.RESIZE_FONT_SIZE;
     }
 
     public setFontSize(size: number) {
@@ -58,7 +66,7 @@ export class SParagraph extends SRenderComponent {
     }
 
     private resetBuilder() {
-        if (!this._paragraphBuilder) {
+        if (!this._paragraphBuilder || !this.node) {
             return;
         }
         if (this._paragraph) {
@@ -78,29 +86,36 @@ export class SParagraph extends SRenderComponent {
         // this._paragraphBuilder.pop();
         this._paragraph = this._paragraphBuilder.build();
 
-        this._paragraph.layout(10000);
-        const height = this._paragraph.getHeight();
-        const width = this._paragraph.getMaxIntrinsicWidth();
-        // this._paragraph.layout(width);
-        // console.log('width', width, 'height', height);
-        if (this.node) {
-            this.node.width = width;
-            this.node.height = height;
+        let width = this.node.width;
+        if (this._layoutMode === EnumParaLayoutMode.AUTO) {
+            this._paragraph.layout(10000);
+            width = this._paragraph.getMaxIntrinsicWidth();
+        } else {
+            this._paragraph.layout(this.node.width);
         }
+        const height = this._paragraph.getHeight();
+        this.node.width = width;
+        this.node.height = height;
     }
 
-    private _nodeSizeChanged = (_width: number, _height: number) => {
+    private _nodeSizeChanged = (width: number, height: number) => {
         if (!this.node) {
             return;
         }
-        const currentLines = this._paragraph?.getLineMetrics();
-        if (!currentLines) {
-            return;
-        }
-        const newFontSize =
-            _height / this._heightMultiplier / currentLines.length;
+        this.node.width = width;
+        this.node.height = height;
+        if (this._resizeMode === EnumParaResizeMode.RESIZE_FONT_SIZE) {
+            const currentLines = this._paragraph?.getLineMetrics();
+            if (!currentLines) {
+                return;
+            }
+            const newFontSize =
+                height / this._heightMultiplier / currentLines.length;
 
-        this.setFontSize(Math.floor(newFontSize));
+            this.setFontSize(Math.floor(newFontSize));
+        } else {
+            this._paragraph?.layout(width);
+        }
     };
 
     public setSelectionRange(startIndex: number, endIndex: number) {

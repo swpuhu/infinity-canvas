@@ -125,6 +125,8 @@ export namespace SNodeConfig {
     export type SParagraphPropsConfig = {
         text?: string;
         fontSize?: number;
+        layoutMode?: EnumParaLayoutMode;
+        resizeMode?: EnumParaResizeMode;
     };
 
     export type ParagraphConfig = BaseConfig & SParagraphPropsConfig;
@@ -255,4 +257,14 @@ export enum ResizeGizmoMode {
     ROTATE = 'rotate',
     DRAG = 'drag',
     NONE = 'none',
+}
+
+export enum EnumParaLayoutMode {
+    AUTO = 'auto',
+    FIXED = 'fixed',
+}
+
+export enum EnumParaResizeMode {
+    ONLY_NODE = 'onlyNode',
+    RESIZE_FONT_SIZE = 'resizeFontSize',
 }

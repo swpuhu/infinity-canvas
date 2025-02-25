@@ -2,17 +2,23 @@ import { CanvasKitModule } from '@/lib/canvaskit';
 import { CanvasEventSystem } from './SEventManager';
 import { Renderer } from './renderer';
 import { SScene } from './SScene';
-import { EventNames, SNodeEvents } from '@/common/types';
+import {
+    EnumParaLayoutMode,
+    EnumParaResizeMode,
+    EventNames,
+    SNodeEvents,
+} from '@/common/types';
 import { ResizeGizmo } from './components/ResizeGizmo';
 import { createElement } from './createElement';
 import eventBus from '@/common/eventBus';
 import { createNodeFromConfig } from './util';
+import { WhiteboardScene } from './WhiteboardScene';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
     private _eventSystem: CanvasEventSystem | null = null;
 
-    private _scene: SScene | null = null;
+    private _scene: WhiteboardScene | null = null;
     private _resizeGizmo: ResizeGizmo | null = null;
 
     constructor(private _canvas: HTMLCanvasElement) {
@@ -26,7 +32,7 @@ export class CanvasEditor {
         return this._canvas;
     }
 
-    get scene(): SScene {
+    get scene(): WhiteboardScene {
         if (!this._scene) {
             throw new Error('scene is not initialized');
         }
@@ -43,10 +49,10 @@ export class CanvasEditor {
         };
 
         // 创建基础布局
-        const scene = new SScene({
+        const scene = new WhiteboardScene({
             canvasSize,
-            designSize: { width: 800, height: 640 },
-            sideWidth: Math.max(100, window.innerWidth * 0.2),
+            designSize: canvasSize,
+            sideWidth: 0,
         });
 
         this._scene = scene;
@@ -68,6 +74,7 @@ export class CanvasEditor {
                 text="懒羊羊组长赛高！"
                 fontSize={50}
                 transform={{ anchor: { x: 0, y: 0 } }}
+                width={300}
             />
         );
 

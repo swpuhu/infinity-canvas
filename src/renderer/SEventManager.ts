@@ -4,7 +4,7 @@ import eventBus from '@/common/eventBus';
 import { compareNodeDepth } from '@/common/util';
 import { SKeyboardEvent, SPointerEvent, SWheelEvent } from './SEvents';
 
-const DB_CLICK_TIME_THRESHOLD = 300;
+const DB_CLICK_TIME_THRESHOLD = 200;
 
 export class SListener<T extends keyof SNodeEvents.EventMap> {
     private _node: SNode;
@@ -48,7 +48,7 @@ export class CanvasEventSystem {
 
     private _pressed = false;
 
-    private _prevPointerUpTime = 0;
+    private _prevPointerDownTime = 0;
 
     static initialize(canvas: HTMLCanvasElement): CanvasEventSystem {
         if (this._instance) {
@@ -151,6 +151,16 @@ export class CanvasEventSystem {
     private _handlePointerDown = (event: PointerEvent) => {
         this._pressed = true;
         this._processPointerEvent(SNodeEvents.POINTER_DOWN, event);
+
+        // 处理双击事件
+        const now = Date.now();
+        const diff = now - this._prevPointerDownTime;
+        console.log(diff);
+        if (diff < DB_CLICK_TIME_THRESHOLD) {
+            console.log('trigger dblclick');
+            this._processPointerEvent(SNodeEvents.DB_CLICK, event);
+        }
+        this._prevPointerDownTime = now;
     };
 
     private _handlePointerMove = (event: PointerEvent) => {
@@ -163,14 +173,6 @@ export class CanvasEventSystem {
     private _handlePointerUp = (event: PointerEvent) => {
         try {
             this._processPointerEvent(SNodeEvents.POINTER_UP, event);
-
-            // 处理双击事件
-            const now = Date.now();
-            const diff = now - this._prevPointerUpTime;
-            if (diff < DB_CLICK_TIME_THRESHOLD) {
-                this._processPointerEvent(SNodeEvents.DB_CLICK, event);
-            }
-            this._prevPointerUpTime = now;
         } catch (e) {
             console.error(e);
         } finally {

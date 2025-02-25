@@ -152,9 +152,12 @@ export class ResizeGizmo {
             const d = textWorldMatrix[4];
             const e = textWorldMatrix[6];
             const f = textWorldMatrix[7];
+            const globalScale = this._dummyCursorNode.getGlobalScale();
             this._cursorDiv!.style.transform = `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`;
 
+            console.log(globalScale);
             this._cursorDiv!.style.height = cursorInfo.size + 'px';
+            this._cursorDiv!.style.width = 1 / globalScale.x + 'px';
             if (worldPos) {
                 setTimeout(() => {
                     this._hideTextArea!.style.left = worldPos[0] + 50 + 'px';
@@ -491,7 +494,6 @@ export class ResizeGizmo {
                 event.getWorldPosition()
             );
             this._dragStartPos.set(localPos[0], localPos[1]);
-            this._enableDrag();
             return;
         }
         this._exitEditMode();
