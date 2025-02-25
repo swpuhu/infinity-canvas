@@ -2,7 +2,7 @@ import { CanvasKitModule } from '@/lib/canvaskit';
 import { CanvasEventSystem } from './SEventManager';
 import { Renderer } from './renderer';
 import { SScene } from './SScene';
-import { EventNames } from '@/common/types';
+import { EventNames, SNodeEvents } from '@/common/types';
 import { ResizeGizmo } from './components/ResizeGizmo';
 import { createElement } from './createElement';
 import eventBus from '@/common/eventBus';
@@ -15,7 +15,9 @@ export class CanvasEditor {
     private _scene: SScene | null = null;
     private _resizeGizmo: ResizeGizmo | null = null;
 
-    constructor(private _canvas: HTMLCanvasElement) {}
+    constructor(private _canvas: HTMLCanvasElement) {
+        _canvas.tabIndex = 1;
+    }
 
     get canvas(): HTMLCanvasElement {
         if (!this._canvas) {
@@ -79,6 +81,14 @@ export class CanvasEditor {
         this._renderer.on(EventNames.RESIZE, (width, height) => {
             scene.resizeCanvasSize({ width, height });
             eventBus.reDraw();
+        });
+
+        this.eventSystem.addSystemEventListener(SNodeEvents.KEY_UP, event => {
+            console.log('key up', event.key);
+        });
+
+        this.eventSystem.addSystemEventListener(SNodeEvents.KEY_DOWN, event => {
+            console.log('key down', event);
         });
 
         this._renderer.render(scene.rootNode);

@@ -1,4 +1,3 @@
-import { SEvent, SPointerEvent } from '@/renderer/SEventManager';
 import SNode from '@/renderer/SNode';
 import { ReadonlyVec2 } from 'gl-matrix';
 
@@ -184,9 +183,22 @@ export namespace SNodeEvents {
         getLocalPosition: (node: SNode) => ReadonlyVec2;
         getWorldPosition: () => ReadonlyVec2;
     };
+
+    export type IKeyboardEvent = IEvent & {
+        key: string;
+        code: string;
+        ctrlKey: boolean;
+        shiftKey: boolean;
+        altKey: boolean;
+        repeat: boolean;
+    };
+
+    export type IWheelEvent = IEvent & {
+        deltaX: number;
+        deltaY: number;
+    };
+
     type TouchEvent = {} & IEvent;
-    type KeyboardEvent = {} & IEvent;
-    type WheelEvent = {} & IEvent;
 
     export type EventMap = {
         [SNodeEvents.MOUSE_DOWN]: MouseEvent;
@@ -195,13 +207,13 @@ export namespace SNodeEvents {
         [SNodeEvents.POINTER_DOWN]: IPointerEvent;
         [SNodeEvents.POINTER_MOVE]: IPointerEvent;
         [SNodeEvents.POINTER_UP]: IPointerEvent;
-        [SNodeEvents.KEY_DOWN]: KeyboardEvent;
-        [SNodeEvents.KEY_UP]: KeyboardEvent;
+        [SNodeEvents.KEY_DOWN]: IKeyboardEvent;
+        [SNodeEvents.KEY_UP]: IKeyboardEvent;
         [SNodeEvents.TOUCH_START]: TouchEvent;
         [SNodeEvents.TOUCH_MOVE]: TouchEvent;
         [SNodeEvents.TOUCH_END]: TouchEvent;
         [SNodeEvents.TOUCH_CANCEL]: TouchEvent;
-        [SNodeEvents.WHEEL]: WheelEvent;
+        [SNodeEvents.WHEEL]: IWheelEvent;
         [SNodeEvents.DB_CLICK]: IPointerEvent;
     };
 

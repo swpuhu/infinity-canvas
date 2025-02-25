@@ -1,67 +1,10 @@
-import { ALL_EVENT_NAMES, SNodeEvents } from '@/common/types';
+import { SNodeEvents } from '@/common/types';
 import SNode from './SNode';
-import { Vec2 } from '@/common/Vec2';
 import eventBus from '@/common/eventBus';
-import { ReadonlyVec2 } from 'gl-matrix';
 import { compareNodeDepth } from '@/common/util';
+import { SKeyboardEvent, SPointerEvent, SWheelEvent } from './SEvents';
 
 const DB_CLICK_TIME_THRESHOLD = 300;
-export class SEvent implements SNodeEvents.IEvent {
-    private _type: string;
-    private _stopPropagation: boolean = false;
-    private _target: SNode | null = null;
-    private _currentTarget: SNode | null = null;
-
-    constructor(type: string) {
-        this._type = type;
-    }
-
-    get target(): SNode | null {
-        return this._target;
-    }
-
-    get currentTarget(): SNode | null {
-        return this._currentTarget;
-    }
-
-    get type(): string {
-        return this._type;
-    }
-
-    isStopPropagation(): boolean {
-        return this._stopPropagation;
-    }
-
-    stopPropagation(): void {
-        this._stopPropagation = true;
-    }
-
-    setTarget(target: SNode): void {
-        this._target = target;
-    }
-
-    setCurrentTarget(currentTarget: SNode): void {
-        this._currentTarget = currentTarget;
-    }
-}
-
-export class SPointerEvent extends SEvent implements SNodeEvents.IPointerEvent {
-    private _nativeEvent: PointerEvent;
-    constructor(type: string, nativeEvent: PointerEvent) {
-        super(type);
-        this._nativeEvent = nativeEvent;
-    }
-
-    getLocalPosition(node: SNode): ReadonlyVec2 {
-        return node.toLocal(
-            new Vec2(this._nativeEvent.offsetX, this._nativeEvent.offsetY)
-        );
-    }
-
-    getWorldPosition(): ReadonlyVec2 {
-        return [this._nativeEvent.offsetX, this._nativeEvent.offsetY];
-    }
-}
 
 export class SListener<T extends keyof SNodeEvents.EventMap> {
     private _node: SNode;
@@ -146,7 +89,64 @@ export class CanvasEventSystem {
 
     private _delegateDOMEvents() {
         this._handlePointerEvents();
+
+        this._handleKeyboardEvents();
+
+        this._handleWheelEvents();
     }
+
+    private _handleKeyboardEvents() {
+        this.canvas.addEventListener(
+            SNodeEvents.KEY_DOWN,
+            this._handleKeyDownEvents
+        );
+
+        this.canvas.addEventListener(
+            SNodeEvents.KEY_UP,
+            this._handleKeyUpEvents
+        );
+    }
+    private _handleWheelEvents() {
+        this.canvas.addEventListener(
+            SNodeEvents.WHEEL,
+            this._processWheelEvent
+        );
+    }
+
+    private _handleKeyDownEvents = (event: KeyboardEvent) => {
+        this._processKeyboardEvent(SNodeEvents.KEY_DOWN, event);
+    };
+
+    private _handleKeyUpEvents = (event: KeyboardEvent) => {
+        this._processKeyboardEvent(SNodeEvents.KEY_UP, event);
+    };
+
+    private _processKeyboardEvent(
+        eventType: keyof SNodeEvents.EventMap,
+        nativeEvent: KeyboardEvent
+    ) {
+        const handlers = this._systemListenersMap.get(eventType);
+        if (!handlers || handlers.length === 0) {
+            return;
+        }
+        const event = new SKeyboardEvent(eventType, nativeEvent);
+
+        for (const handler of handlers) {
+            handler(event);
+        }
+    }
+
+    private _processWheelEvent = (event: WheelEvent) => {
+        const handlers = this._systemListenersMap.get(SNodeEvents.WHEEL);
+        if (!handlers || handlers.length === 0) {
+            return;
+        }
+        const wheelEvent = new SWheelEvent(event);
+
+        for (const handler of handlers) {
+            handler(wheelEvent);
+        }
+    };
 
     private _handlePointerDown = (event: PointerEvent) => {
         this._pressed = true;
@@ -335,6 +335,19 @@ export class CanvasEventSystem {
         this.canvas.removeEventListener(
             SNodeEvents.POINTER_UP,
             this._handlePointerUp
+        );
+        this.canvas.removeEventListener(
+            SNodeEvents.KEY_DOWN,
+            this._handleKeyDownEvents
+        );
+
+        this.canvas.removeEventListener(
+            SNodeEvents.KEY_UP,
+            this._handleKeyUpEvents
+        );
+        this.canvas.removeEventListener(
+            SNodeEvents.WHEEL,
+            this._processWheelEvent
         );
         CanvasEventSystem._instance = null;
     }

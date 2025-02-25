@@ -151,3 +151,56 @@ export function isSprite(node: SNode): boolean {
 export function isText(node: SNode): boolean {
     return node.renderType === EnumRenderComponentType.TEXT;
 }
+
+/**
+ * 检测用户的操作系统是否是Mac OS
+ * 使用多种方法综合判断，提高准确性和兼容性
+ * @returns {boolean} 如果是Mac OS返回true，否则返回false
+ */
+export function isMacOS(): boolean {
+    try {
+        // 方法1：检查navigator.userAgent
+        if (navigator.userAgent) {
+            const userAgent = navigator.userAgent.toLowerCase();
+            if (
+                userAgent.includes('mac os x') ||
+                userAgent.includes('macintosh')
+            ) {
+                return true;
+            }
+        }
+
+        // 方法2：使用navigator.platform (虽已弃用但仍广泛支持)
+        if (navigator.platform) {
+            const macPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'];
+            if (macPlatforms.includes(navigator.platform)) {
+                return true;
+            }
+        }
+
+        // 方法3：检查navigator.appVersion
+        if (
+            navigator.appVersion &&
+            navigator.appVersion.indexOf('Mac') !== -1
+        ) {
+            return true;
+        }
+
+        // 方法4：使用现代的navigator.userAgentData API (可能不被所有浏览器支持)
+        if ('userAgentData' in navigator) {
+            try {
+                const userAgentData = (navigator as any).userAgentData;
+                if (userAgentData && userAgentData.platform === 'macOS') {
+                    return true;
+                }
+            } catch (e) {
+                // 忽略错误，继续尝试其他方法
+            }
+        }
+
+        return false;
+    } catch (e) {
+        console.error('检测Mac操作系统时发生错误:', e);
+        return false; // 发生任何错误时默认返回false
+    }
+}

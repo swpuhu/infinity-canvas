@@ -515,20 +515,6 @@ export class ResizeGizmo {
             this._onDragPointerUp
         );
     }
-
-    protected _disableDrag(): void {
-        CanvasEventSystem.instance.removeEventListener(
-            this._scene.rootNode,
-            SNodeEvents.POINTER_MOVE,
-            this._onDragPointerMove
-        );
-        CanvasEventSystem.instance.removeEventListener(
-            this._scene.rootNode,
-            SNodeEvents.POINTER_UP,
-            this._onDragPointerUp
-        );
-    }
-
     protected _onDragPointerMove = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
         if (!this._currentNode || !this._isDragging) {
@@ -650,19 +636,6 @@ export class ResizeGizmo {
         );
     }
 
-    private _disableResize(): void {
-        this._editor.eventSystem.removeEventListener(
-            this._scene.rootNode,
-            SNodeEvents.POINTER_MOVE,
-            this._onResizePointerMove
-        );
-        this._editor.eventSystem.removeEventListener(
-            this._scene.rootNode,
-            SNodeEvents.POINTER_UP,
-            this._onResizePointerUp
-        );
-    }
-
     private _onResizePointerMove = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
         if (!this._root || !this._currentNode || !this._isResizing) {
@@ -714,8 +687,7 @@ export class ResizeGizmo {
     };
 
     private _onResizePointerUp = (event: SNodeEvents.IPointerEvent): void => {
-        const node = event.target;
-        if (!node) {
+        if (!this._root || !this._currentNode || !this._isResizing) {
             return;
         }
         changeAnchorButStay(this._currentNode!, this._originAnchor);
