@@ -83,14 +83,6 @@ export class CanvasEditor {
             eventBus.reDraw();
         });
 
-        this.eventSystem.addSystemEventListener(SNodeEvents.KEY_UP, event => {
-            console.log('key up', event.key);
-        });
-
-        this.eventSystem.addSystemEventListener(SNodeEvents.KEY_DOWN, event => {
-            console.log('key down', event);
-        });
-
         this._renderer.render(scene.rootNode);
     }
 

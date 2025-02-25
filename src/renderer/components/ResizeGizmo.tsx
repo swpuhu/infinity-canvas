@@ -32,13 +32,6 @@ const ROTATE_GIZMO_COLOR = 0x00ffbc;
 const GIZMO_LINE_WIDTH = 1;
 const GIZMO_LINE_COLOR = 0xcccccc;
 
-function Line(props: {
-    name: string;
-    ref: SNodeConfig.IRefSNode;
-    transform: TransformOptions;
-}): JSX.Element {
-    return <rect {...props} />;
-}
 export class ResizeGizmo {
     protected _scene: SScene;
     protected _editor: CanvasEditor;
@@ -96,6 +89,8 @@ export class ResizeGizmo {
     private _cursorDiv: HTMLElement | null = null;
 
     private _currentMode: ResizeGizmoMode = ResizeGizmoMode.NONE;
+
+    private _isLockAspect = false;
 
     constructor(editor: CanvasEditor) {
         this._editor = editor;
@@ -382,19 +377,6 @@ export class ResizeGizmo {
             { name: 'right-top', ref: this._rtNodeRef },
         ];
 
-        // 创建连接线
-        const createLine = (
-            name: string,
-            ref: SNodeConfig.IRefSNode,
-            anchor: IPointData
-        ) => ({
-            name,
-            type: SNodeConfig.NodeType.RECT,
-            ref,
-            style: lineStyle,
-            transform: { anchor },
-        });
-
         const Line = (props: {
             name: string;
             ref: SNodeConfig.IRefSNode;
@@ -470,7 +452,28 @@ export class ResizeGizmo {
                 this._onResizePointerDown
             );
         });
+        this._editor.eventSystem.addSystemEventListener(
+            SNodeEvents.KEY_DOWN,
+            this._onKeyDown
+        );
+
+        this._editor.eventSystem.addSystemEventListener(
+            SNodeEvents.KEY_UP,
+            this._onKeyUp
+        );
     }
+
+    private _onKeyDown = (event: SNodeEvents.IKeyboardEvent): void => {
+        if (event.shiftKey) {
+            this._isLockAspect = true;
+        }
+    };
+
+    private _onKeyUp = (event: SNodeEvents.IKeyboardEvent): void => {
+        if (event.shiftKey) {
+            this._isLockAspect = false;
+        }
+    };
 
     protected _onDragPointerDown = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
@@ -669,14 +672,28 @@ export class ResizeGizmo {
             } else if (this._currentHandleNode === this._rbNodeRef.value) {
                 diff.y = -diff.y;
             }
+            console.log(diff);
             let nextWidth = this._resizeStartNodeSize.x + diff.x;
             let nextHeight = this._resizeStartNodeSize.y + diff.y;
-            if (this._currentNode.aspectKeepMode === EnumAspectKeepMode.WIDTH) {
-                nextHeight = nextWidth / this._originAspect;
-            } else if (
-                this._currentNode.aspectKeepMode === EnumAspectKeepMode.HEIGHT
+            const keepWidthHeight = nextWidth / this._originAspect;
+            const keepHeightWidth = nextHeight * this._originAspect;
+
+            let aspectKeepMode = this._currentNode.aspectKeepMode;
+            if (
+                aspectKeepMode === EnumAspectKeepMode.NONE &&
+                this._isLockAspect
             ) {
-                nextWidth = nextHeight * this._originAspect;
+                if (nextWidth > keepHeightWidth) {
+                    aspectKeepMode = EnumAspectKeepMode.WIDTH;
+                } else {
+                    aspectKeepMode = EnumAspectKeepMode.HEIGHT;
+                }
+            }
+
+            if (aspectKeepMode === EnumAspectKeepMode.WIDTH) {
+                nextHeight = keepWidthHeight;
+            } else if (aspectKeepMode === EnumAspectKeepMode.HEIGHT) {
+                nextWidth = keepHeightWidth;
             }
             this._root.width = nextWidth;
             this._root.height = nextHeight;
