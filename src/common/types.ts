@@ -59,6 +59,9 @@ export type TransformOptions = {
 
 export namespace EventNames {
     export const RESIZE = 'resize';
+    export const POINTER_DOWN_NODE = 'pointerDownNode';
+    export const DB_CLICK_NODE = 'dbClickNode';
+    export const RESIZE_START = 'resizeStart';
 }
 
 export namespace SNodeConfig {

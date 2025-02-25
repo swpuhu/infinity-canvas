@@ -23,6 +23,8 @@ import { SParagraph } from '../RenderComponents/SParagraph';
 import eventBus from '@/common/eventBus';
 import { createElement } from '../createElement';
 import { WhiteboardScene } from '../WhiteboardScene';
+import { ResizerUI } from './resizer/ResizerUI';
+import { EventsHandler } from './resizer/EventsHandler';
 
 const RESIZE_GIZMO_SIZE = 10;
 const ROTATE_GIZMO_SIZE = 8;
@@ -37,18 +39,6 @@ export class ResizeGizmo {
     protected _editor: CanvasEditor;
     protected _root: SNode | null = null;
 
-    protected _lbNodeRef: SNodeConfig.IRefSNode = refSNode();
-    protected _ltNodeRef: SNodeConfig.IRefSNode = refSNode();
-    protected _rbNodeRef: SNodeConfig.IRefSNode = refSNode();
-    protected _rtNodeRef: SNodeConfig.IRefSNode = refSNode();
-
-    protected _leftLineRef: SNodeConfig.IRefSNode = refSNode();
-    protected _rightLineRef: SNodeConfig.IRefSNode = refSNode();
-    protected _topLineRef: SNodeConfig.IRefSNode = refSNode();
-    protected _bottomLineRef: SNodeConfig.IRefSNode = refSNode();
-
-    private _dummyCursorNode = new SNode();
-
     protected _rotateRef: SNodeConfig.IRefSNode = refSNode();
 
     protected _resizeStartPos: Vec2 = new Vec2(0, 0);
@@ -62,8 +52,6 @@ export class ResizeGizmo {
     protected _dragStartPos: Vec2 = new Vec2(0, 0);
 
     protected resizeHandlerNodes: SNode[] = [];
-
-    protected _lineNodes: SNode[] = [];
 
     protected _isResizing = false;
 
@@ -80,23 +68,21 @@ export class ResizeGizmo {
         y: 0,
     };
 
+    private _isLockAspect = false;
     private _originRotation: number = 0;
 
-    private _hideTextArea: HTMLTextAreaElement | null = null;
+    private _uiComponent: ResizerUI;
 
-    private _currentText: SParagraph | null = null;
-
-    private _cursorDiv: HTMLElement | null = null;
-
-    private _currentMode: ResizeGizmoMode = ResizeGizmoMode.NONE;
-
-    private _isLockAspect = false;
+    private _eventsHandler: EventsHandler;
 
     constructor(editor: CanvasEditor) {
         this._editor = editor;
         this._scene = editor.scene;
-        this._createHandler();
-        this._scene.topLayer.addChild(this._root!);
+
+        this._uiComponent = new ResizerUI(this._scene);
+        this._eventsHandler = new EventsHandler(editor, this._uiComponent);
+
+        this._scene.topLayer.addChild(this._uiComponent.node!);
         this._bindEvents();
         this._scene.on(EventNames.RESIZE, this._onResize);
         this.addPointerEvent();
@@ -105,140 +91,8 @@ export class ResizeGizmo {
         this._enableDrag();
         this._enableResize();
     }
-    private _initHideTextArea(): void {
-        this._hideTextArea = document.createElement('textarea');
-        this._hideTextArea.classList.add('text-area', 'hide');
-        this._hideTextArea.wrap = 'off';
-
-        this._cursorDiv = document.createElement('div');
-        this._cursorDiv.classList.add('cursor', 'hide');
-
-        this._editor.canvas.parentElement!.appendChild(this._hideTextArea);
-        this._editor.canvas.parentElement!.appendChild(this._cursorDiv);
-        this._hideTextArea.addEventListener(
-            'compositionupdate',
-            this._onHideTextAreaInput
-        );
-        this._hideTextArea.addEventListener('input', this._onHideTextAreaInput);
-
-        this._hideTextArea.addEventListener(
-            'selectionchange',
-            this._onHideTextAreaSelectionChange
-        );
-    }
-
-    private _setCursorDivPositionByIndex(
-        cursorIndex: number
-    ): ReadonlyVec2 | null {
-        if (!this._currentText) {
-            return null;
-        }
-        const cursorInfo = this._currentText.getCursorInfoByIndex(cursorIndex);
-        if (cursorInfo) {
-            const worldPos = this._currentText.node!.toGlobal(cursorInfo.pos);
-            this._showCursor();
-            this._currentText.node?.addChild(this._dummyCursorNode);
-            this._dummyCursorNode.setTransform({
-                position: {
-                    x: cursorInfo.pos[0],
-                    y: cursorInfo.pos[1],
-                },
-            });
-            const textWorldMatrix = this._dummyCursorNode.getWorldMatrix();
-            this._dummyCursorNode.removeFromParent();
-            const a = textWorldMatrix[0];
-            const b = textWorldMatrix[1];
-            const c = textWorldMatrix[3];
-            const d = textWorldMatrix[4];
-            const e = textWorldMatrix[6];
-            const f = textWorldMatrix[7];
-            const globalScale = this._dummyCursorNode.getGlobalScale();
-            this._cursorDiv!.style.transform = `matrix(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`;
-
-            console.log(globalScale);
-            this._cursorDiv!.style.height = cursorInfo.size + 'px';
-            this._cursorDiv!.style.width = 1 / globalScale.x + 'px';
-            if (worldPos) {
-                setTimeout(() => {
-                    this._hideTextArea!.style.left = worldPos[0] + 50 + 'px';
-                    this._hideTextArea!.style.top = worldPos[1] + 'px';
-                }, 100);
-            }
-            return worldPos;
-        }
-        return null;
-    }
-
-    private _onHideTextAreaSelectionChange = (event: Event): void => {
-        if (this._currentText) {
-            const startIndex = this._hideTextArea!.selectionStart;
-            const endIndex = this._hideTextArea!.selectionEnd;
-            if (startIndex === endIndex) {
-                this._currentText.unSelect();
-                this._setCursorDivPositionByIndex(startIndex);
-                eventBus.reDraw();
-                return;
-            }
-            console.log('selection change', startIndex, endIndex);
-            this._hideCursor();
-            this._currentText.setSelectionRange(startIndex, endIndex);
-            eventBus.reDraw();
-        }
-    };
-
-    private selectText(startIndex: number, endIndex: number): void {
-        console.log('selectText', startIndex, endIndex);
-        if (startIndex > endIndex) {
-            [startIndex, endIndex] = [endIndex, startIndex];
-        }
-        this._hideTextArea!.setSelectionRange(startIndex, endIndex);
-    }
-
-    private _hideCursor(): void {
-        this._cursorDiv!.classList.add('hide');
-    }
-
-    private _showCursor(): void {
-        this._cursorDiv!.classList.remove('hide');
-        this._currentText?.unSelect();
-    }
-
-    private _onHideTextAreaInput = (event: Event): void => {
-        const e = event as InputEvent | CompositionEvent;
-        if (this._currentText) {
-            this._currentText.text = this._hideTextArea!.value;
-            alignToNode(this._root!, this._currentText.node!);
-            this.updateHandlerNodes();
-            eventBus.reDraw();
-        }
-    };
 
     protected addPointerEvent(): void {
-        this._editor.eventSystem.addEventListener(
-            this._scene.canvasLayer,
-            SNodeEvents.POINTER_DOWN,
-            (event: SNodeEvents.IPointerEvent) => {
-                let hitNode: SNode | null = null;
-                const allNodes = this._collectAllNodes();
-                let hasHit = false;
-                for (let i = 0; i < allNodes.length; i++) {
-                    const node = allNodes[i];
-                    const hit = node.hitTest(event.getWorldPosition());
-                    if (hit) {
-                        hasHit = true;
-                        hitNode = node;
-                        break;
-                    }
-                }
-                if (hitNode) {
-                    this.mountToNode(hitNode);
-                    event.setCurrentTarget(hitNode);
-                    this._onDragPointerDown(event);
-                } else {
-                    this.unMount();
-                }
-            }
-        );
         this._editor.eventSystem.addEventListener(
             this._scene.canvasLayer,
             SNodeEvents.DB_CLICK,
@@ -258,203 +112,7 @@ export class ResizeGizmo {
         );
     }
 
-    protected _collectAllNodes(): SNode[] {
-        const nodes: SNode[] = [];
-        visitNodeRecursive(this._scene.canvasLayer, node => {
-            if (node !== this._scene.canvasLayer) {
-                nodes.unshift(node);
-            }
-        });
-        return nodes;
-    }
-
-    private _collectTextNodes(): SNode[] {
-        const nodes: SNode[] = [];
-        visitNodeRecursive(this._scene.canvasLayer, node => {
-            if (node !== this._scene.canvasLayer && isText(node)) {
-                nodes.unshift(node);
-            }
-        });
-        return nodes;
-    }
-
-    private _focusTextArea(
-        textComp: SParagraph,
-        worldPos: ReadonlyVec2,
-        startIndex: number,
-        endIndex: number
-    ): void {
-        this._hideTextArea!.classList.remove('hide');
-        this._hideTextArea!.textContent = textComp.text;
-
-        setTimeout(() => {
-            this._hideTextArea!.focus();
-            this._hideTextArea!.setSelectionRange(startIndex, endIndex);
-        }, 100);
-    }
-
-    private _enterEditMode(
-        node: SNode,
-        event: SNodeEvents.IPointerEvent
-    ): void {
-        const textComp = node.getComponent(SParagraph);
-        this._currentMode = ResizeGizmoMode.EDIT;
-        if (textComp) {
-            const eventLocalPos = event.getLocalPosition(node);
-            const cursorIndex = textComp.getCursorIndex(
-                eventLocalPos[0],
-                eventLocalPos[1]
-            );
-            this._currentText = textComp;
-            const worldPos = this._setCursorDivPositionByIndex(cursorIndex);
-            if (worldPos) {
-                this._focusTextArea(
-                    textComp,
-                    worldPos,
-                    cursorIndex,
-                    cursorIndex
-                );
-            }
-        }
-    }
-
-    private _exitEditMode(): void {
-        if (this._currentMode !== ResizeGizmoMode.EDIT) {
-            return;
-        }
-        this._currentMode = ResizeGizmoMode.NONE;
-        this._hideCursor();
-        this._currentText!.unSelect();
-        this._hideTextArea!.classList.add('hide');
-        this._currentText = null;
-    }
-
-    protected _onResize = (): void => {
-        const { scale } = decomposeMatrix(
-            this._lbNodeRef.value!.getWorldMatrix()
-        );
-        const handlerWidth = RESIZE_GIZMO_SIZE / scale.x;
-        const handlerHeight = RESIZE_GIZMO_SIZE / scale.y;
-        const lineWidth = GIZMO_LINE_WIDTH / scale.x;
-
-        this.resizeHandlerNodes.forEach(node => {
-            node.width = handlerWidth;
-            node.height = handlerHeight;
-        });
-        this._leftLineRef.value!.width = lineWidth;
-        this._rightLineRef.value!.width = lineWidth;
-        this._topLineRef.value!.height = lineWidth;
-        this._bottomLineRef.value!.height = lineWidth;
-    };
-
-    protected _createHandler(): void {
-        const globalScale = this._scene.getVirtualCanvasScale();
-        const handlerSize = {
-            width: RESIZE_GIZMO_SIZE / globalScale.x,
-            height: RESIZE_GIZMO_SIZE / globalScale.y,
-        };
-
-        // 通用样式配置
-        const blockStyle = { fill: RESIZE_GIZMO_COLOR };
-        const lineStyle = { fill: GIZMO_LINE_COLOR };
-        const CommonResizePoint = (props: {
-            name: string;
-            ref: SNodeConfig.IRefSNode;
-        }) => {
-            return (
-                <rect
-                    name={props.name}
-                    ref={props.ref}
-                    style={blockStyle}
-                    width={handlerSize.width}
-                    height={handlerSize.height}
-                ></rect>
-            );
-        };
-
-        // 创建控制点
-        const controlPoints = [
-            { name: 'left-bottom', ref: this._lbNodeRef },
-            { name: 'left-top', ref: this._ltNodeRef },
-            { name: 'right-bottom', ref: this._rbNodeRef },
-            { name: 'right-top', ref: this._rtNodeRef },
-        ];
-
-        const Line = (props: {
-            name: string;
-            ref: SNodeConfig.IRefSNode;
-            anchor: IPointData;
-        }) => {
-            return (
-                <rect
-                    name={props.name}
-                    ref={props.ref}
-                    style={lineStyle}
-                    transform={{ anchor: props.anchor }}
-                ></rect>
-            );
-        };
-
-        const rootConfig = (
-            <container name="resize-gizmo" active={false}>
-                <container name="lines">
-                    <Line
-                        name="left-line"
-                        ref={this._leftLineRef}
-                        anchor={{ x: 0.5, y: 0 }}
-                    />
-                    <Line
-                        name="right-line"
-                        ref={this._rightLineRef}
-                        anchor={{ x: 0.5, y: 1 }}
-                    />
-                    <Line
-                        name="top-line"
-                        ref={this._topLineRef}
-                        anchor={{ x: 1, y: 0.5 }}
-                    />
-                    <Line
-                        name="bottom-line"
-                        ref={this._bottomLineRef}
-                        anchor={{ x: 0, y: 0.5 }}
-                    />
-                </container>
-                <container name="resize-points">
-                    {controlPoints.map(p => (
-                        <CommonResizePoint name={p.name} ref={p.ref} />
-                    ))}
-                </container>
-                <circle
-                    name="rotate-point"
-                    ref={this._rotateRef}
-                    width={ROTATE_GIZMO_SIZE}
-                    height={ROTATE_GIZMO_SIZE}
-                    style={blockStyle}
-                />
-            </container>
-        );
-
-        this._root = createNodeFromConfig(rootConfig);
-
-        // 收集引用节点
-        this.resizeHandlerNodes = controlPoints.map(p => p.ref.value!);
-        this.resizeHandlerNodes.push(this._rotateRef.value!);
-        this._lineNodes = [
-            this._leftLineRef.value!,
-            this._rightLineRef.value!,
-            this._topLineRef.value!,
-            this._bottomLineRef.value!,
-        ];
-    }
-
     private _bindEvents(): void {
-        this.resizeHandlerNodes.forEach(node => {
-            this._editor.eventSystem.addEventListener(
-                node,
-                SNodeEvents.POINTER_DOWN,
-                this._onResizePointerDown
-            );
-        });
         this._editor.eventSystem.addSystemEventListener(
             SNodeEvents.KEY_DOWN,
             this._onKeyDown
@@ -628,19 +286,6 @@ export class ResizeGizmo {
         // this._enableResize();
     };
 
-    private _enableResize(): void {
-        this._editor.eventSystem.addEventListener(
-            this._scene.rootNode,
-            SNodeEvents.POINTER_MOVE,
-            this._onResizePointerMove
-        );
-        this._editor.eventSystem.addEventListener(
-            this._scene.rootNode,
-            SNodeEvents.POINTER_UP,
-            this._onResizePointerUp
-        );
-    }
-
     private _onResizePointerMove = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
         if (!this._root || !this._currentNode || !this._isResizing) {
@@ -715,52 +360,6 @@ export class ResizeGizmo {
         this._currentHandleNode = null;
     };
 
-    public updateHandlerNodes(): void {
-        if (!this._root) {
-            return;
-        }
-        const [l, b, r, t] = this._root.getLocalRect();
-        // console.log(l, b, r, t);
-
-        this._lbNodeRef.value!.position.set(l, b);
-        this._ltNodeRef.value!.position.set(l, t);
-        this._rbNodeRef.value!.position.set(r, b);
-        this._rtNodeRef.value!.position.set(r, t);
-
-        const { x: scaleX } = this._lbNodeRef.value!.getGlobalScale()!;
-
-        const handlerWidth = RESIZE_GIZMO_SIZE / scaleX;
-        const handlerHeight = RESIZE_GIZMO_SIZE / scaleX;
-        const rotateHandlerSize = ROTATE_GIZMO_SIZE / scaleX;
-
-        const lineWidth = GIZMO_LINE_WIDTH / scaleX;
-        this.resizeHandlerNodes.forEach(node => {
-            node.width = handlerWidth;
-            node.height = handlerHeight;
-        });
-        this._leftLineRef.value!.width = lineWidth;
-        this._leftLineRef.value!.height = t - b;
-        this._leftLineRef.value!.position.set(l, b);
-
-        this._bottomLineRef.value!.height = lineWidth;
-        this._bottomLineRef.value!.width = r - l;
-        this._bottomLineRef.value!.position.set(l, b);
-
-        this._rightLineRef.value!.width = lineWidth;
-        this._rightLineRef.value!.height = t - b;
-        this._rightLineRef.value!.position.set(r, t);
-
-        this._topLineRef.value!.height = lineWidth;
-        this._topLineRef.value!.width = r - l;
-        this._topLineRef.value!.position.set(r, t);
-
-        this._rotateRef.value!.width = rotateHandlerSize;
-        this._rotateRef.value!.height = rotateHandlerSize;
-
-        const midX = (l + r) / 2;
-        this._rotateRef.value!.position.set(midX, b - 20 / scaleX);
-    }
-
     public mountToNode(targetNode: SNode): void {
         if (!this._root) {
             return;
@@ -774,12 +373,7 @@ export class ResizeGizmo {
     public unMount(): void {
         this._currentNode = null;
         this._root!.active = false;
-        this._exitEditMode();
-        this.updateHandlerNodes();
     }
 
-    public destroy(): void {
-        this._hideTextArea!.remove();
-        this._cursorDiv!.remove();
-    }
+    public destroy(): void {}
 }
