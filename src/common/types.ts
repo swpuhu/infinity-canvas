@@ -176,6 +176,7 @@ export namespace SNodeEvents {
         stopPropagation: () => void;
         currentTarget: SNode | null;
         setCurrentTarget(currentTarget: SNode): void;
+        isStopPropagation: () => boolean;
     };
 
     type MouseEvent = {} & IEvent;
