@@ -5,13 +5,38 @@ import SNode from '@/renderer/SNode';
 import EventEmitter from 'eventemitter3';
 import { ResizerUI } from './ResizerUI';
 import { DragEventsHandler } from './DragEventsHandler';
+import { ResizeEventsHandler } from './ResizeEventsHandler';
+import { RotateEventsHandler } from './RotateEventsHandler';
+import { EditEventsHandler } from './EditEventsHandler';
 
 export class EventsHandler extends EventEmitter {
     private _dragEventsHandler: DragEventsHandler;
 
+    private _resizeEventsHandler: ResizeEventsHandler;
+
+    private _rotateEventsHandler: RotateEventsHandler;
+
+    private _editEventsHandler: EditEventsHandler;
+
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         super();
         this._dragEventsHandler = new DragEventsHandler(_editor, _resizerUI);
+        this._resizeEventsHandler = new ResizeEventsHandler(
+            _editor,
+            _resizerUI
+        );
+        this._rotateEventsHandler = new RotateEventsHandler(
+            _editor,
+            _resizerUI
+        );
+        this._editEventsHandler = new EditEventsHandler(_editor, _resizerUI);
+
+        this._dragEventsHandler.on(EventNames.DRAG_SELECT_NODE, node => {
+            this._resizeEventsHandler.setCurrentNode(node);
+            this._rotateEventsHandler.setCurrentNode(node);
+            this._editEventsHandler.setCurrentNode(node);
+        });
+
         this._editor.eventSystem.addEventListener(
             this._editor.scene.canvasLayer,
             SNodeEvents.POINTER_DOWN,
@@ -40,6 +65,10 @@ export class EventsHandler extends EventEmitter {
             }
         }
         this.emit(EventNames.DB_CLICK_NODE, hitNode);
+        if (hitNode) {
+            this._editEventsHandler.setCurrentNode(hitNode);
+            this._editEventsHandler.enterEditMode(hitNode, event);
+        }
     };
 
     private _handleCanvasLayerPointerDown = (
@@ -57,18 +86,15 @@ export class EventsHandler extends EventEmitter {
                 break;
             }
         }
+        this.emit(EventNames.POINTER_DOWN_NODE, hitNode);
         if (hitNode) {
-            this.emit(EventNames.POINTER_DOWN_NODE, hitNode);
             if (isText(hitNode)) {
             }
-            // this.mountToNode(hitNode);
             event.setCurrentTarget(hitNode);
-            // this._onDragPointerDown(event);
             this._dragEventsHandler.dragStart(event);
         } else {
-            // this.unMount();
+            this._editEventsHandler.exitEditMode();
         }
-        this.emit(EventNames.POINTER_DOWN_NODE, hitNode);
     };
 
     protected _collectAllNodes(): SNode[] {

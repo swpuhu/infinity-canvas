@@ -6,6 +6,7 @@ import { ReadonlyVec2 } from 'gl-matrix';
 import { ResizerUI } from './ResizerUI';
 import eventBus from '@/common/eventBus';
 import { alignToNode } from '@/renderer/util';
+import { isText } from '@/common/util';
 
 export class EditEventsHandler {
     private _hideTextArea: HTMLTextAreaElement | null = null;
@@ -20,6 +21,13 @@ export class EditEventsHandler {
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         this._initHideTextArea();
     }
+
+    public setCurrentNode(node: SNode): void {
+        if (isText(node)) {
+            this._currentText = node.getComponent(SParagraph);
+        }
+    }
+
     private _initHideTextArea(): void {
         this._hideTextArea = document.createElement('textarea');
         this._hideTextArea.classList.add('text-area', 'hide');
@@ -67,10 +75,7 @@ export class EditEventsHandler {
         }, 100);
     }
 
-    private _enterEditMode(
-        node: SNode,
-        event: SNodeEvents.IPointerEvent
-    ): void {
+    public enterEditMode(node: SNode, event: SNodeEvents.IPointerEvent): void {
         const textComp = node.getComponent(SParagraph);
         this._currentMode = ResizeGizmoMode.EDIT;
         if (textComp) {
@@ -92,7 +97,7 @@ export class EditEventsHandler {
         }
     }
 
-    private _exitEditMode(): void {
+    public exitEditMode(): void {
         if (this._currentMode !== ResizeGizmoMode.EDIT) {
             return;
         }

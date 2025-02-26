@@ -3,6 +3,7 @@ import { ResizerUI } from './ResizerUI';
 import EventEmitter from 'eventemitter3';
 import { SNodeEvents } from '@/common/types';
 import { Vec2 } from '@/common/Vec2';
+import SNode from '@/renderer/SNode';
 
 export class RotateEventsHandler extends EventEmitter {
     private _isRotating = false;
@@ -10,6 +11,9 @@ export class RotateEventsHandler extends EventEmitter {
     private _rotateStartPos: Vec2 = new Vec2(0, 0);
 
     private _rotateStartRootNodePos: Vec2 = new Vec2(0, 0);
+
+    private _currentNode: SNode | null = null;
+
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         super();
         this._enableRotate();
@@ -19,6 +23,9 @@ export class RotateEventsHandler extends EventEmitter {
             SNodeEvents.POINTER_DOWN,
             this._onRotatePointerDown
         );
+    }
+    public setCurrentNode(node: SNode): void {
+        this._currentNode = node;
     }
 
     private _enableRotate(): void {
