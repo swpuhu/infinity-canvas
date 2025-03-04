@@ -12,15 +12,13 @@ import { Vec2 } from '@/common/Vec2';
 import { alignToNode, changeAnchorButStay } from '@/renderer/util';
 
 export class ResizeEventsHandler extends EventEmitter {
-    protected _currentHandleNode: SNode | null = null;
+    private _currentHandleNode: SNode | null = null;
 
-    protected _currentNodeOriginPos: Vec2 = new Vec2(0, 0);
+    private _originAspect: number = 1;
 
-    protected _originAspect: number = 1;
+    private _resizeStartNodeSize: Vec2 = new Vec2(0, 0);
 
-    protected _resizeStartNodeSize: Vec2 = new Vec2(0, 0);
-
-    protected _resizeStartPos: Vec2 = new Vec2(0, 0);
+    private _resizeStartPos: Vec2 = new Vec2(0, 0);
 
     private _originAnchor: IPointData = {
         x: 0,
@@ -28,7 +26,7 @@ export class ResizeEventsHandler extends EventEmitter {
     };
 
     private _isLockAspect = false;
-    protected _currentNode: SNode | null = null;
+    private _currentNode: SNode | null = null;
     private _isResizing: boolean = false;
 
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
@@ -81,10 +79,6 @@ export class ResizeEventsHandler extends EventEmitter {
                 y: 0,
             });
         }
-        this._currentNodeOriginPos.set(
-            this._currentNode!.position.x,
-            this._currentNode!.position.y
-        );
         const hostNode = this._resizerUI.node;
         const localPos = hostNode!.toLocal(event.getWorldPosition());
         this._resizeStartNodeSize.set(hostNode!.width, hostNode!.height);
@@ -134,7 +128,7 @@ export class ResizeEventsHandler extends EventEmitter {
         }
         this._resizerUI.node!.width = nextWidth;
         this._resizerUI.node!.height = nextHeight;
-        alignToNode(this._currentNode!, this._resizerUI.node!);
+        this._currentNode!.alignTo(this._resizerUI.node!);
         this._resizerUI.updateHandlerNodes();
     };
 

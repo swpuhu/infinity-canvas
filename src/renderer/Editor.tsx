@@ -73,7 +73,9 @@ export class CanvasEditor {
             <para
                 text="懒羊羊组长赛高！"
                 fontSize={50}
-                transform={{ anchor: { x: 0, y: 0 } }}
+                transform={{
+                    anchor: { x: 0, y: 0 },
+                }}
                 width={300}
             />
         );

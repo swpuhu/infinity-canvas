@@ -15,6 +15,7 @@ import { createUUID } from '@/common/uuid';
 import { autobind } from 'core-decorators';
 import EventEmitter from 'eventemitter3';
 import { angleToRadians, decomposeMatrix } from '@/common/util';
+import { alignToNode } from './util';
 
 class SNode extends EventEmitter {
     private _children: SNode[] = [];
@@ -408,6 +409,10 @@ class SNode extends EventEmitter {
         this._renderComps.forEach(renderComp => {
             renderComp.destroy();
         });
+    }
+
+    public alignTo(target: SNode): void {
+        alignToNode(this, target);
     }
 }
 
