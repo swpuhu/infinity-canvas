@@ -8,6 +8,7 @@ import { DragEventsHandler } from './DragEventsHandler';
 import { ResizeEventsHandler } from './ResizeEventsHandler';
 import { RotateEventsHandler } from './RotateEventsHandler';
 import { EditEventsHandler } from './EditEventsHandler';
+import { SelectEventsHandler } from './SelectEventsHandler';
 
 export class EventsHandler extends EventEmitter {
     private _dragEventsHandler: DragEventsHandler;
@@ -17,6 +18,8 @@ export class EventsHandler extends EventEmitter {
     private _rotateEventsHandler: RotateEventsHandler;
 
     private _editEventsHandler: EditEventsHandler;
+
+    private _selectEventsHandler: SelectEventsHandler;
 
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         super();
@@ -31,6 +34,7 @@ export class EventsHandler extends EventEmitter {
         );
         this._editEventsHandler = new EditEventsHandler(_editor, _resizerUI);
 
+        this._selectEventsHandler = new SelectEventsHandler(_editor);
         this._dragEventsHandler.on(EventNames.DRAG_SELECT_NODE, node => {
             this._resizeEventsHandler.setCurrentNode(node);
             this._rotateEventsHandler.setCurrentNode(node);
@@ -94,6 +98,7 @@ export class EventsHandler extends EventEmitter {
             this._dragEventsHandler.dragStart(event);
         } else {
             this._editEventsHandler.exitEditMode();
+            this._selectEventsHandler.selectStart(event);
         }
     };
 

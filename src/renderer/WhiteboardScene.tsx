@@ -109,4 +109,8 @@ export class WhiteboardScene extends EventEmitter {
 
         this.emit(EventNames.RESIZE, virtualCanvasScale);
     }
+
+    public getAllNodes(): ReadonlyArray<SNode> {
+        return this.virtualCanvasRef.value!.children;
+    }
 }

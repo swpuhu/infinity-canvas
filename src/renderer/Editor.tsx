@@ -109,6 +109,7 @@ export class CanvasEditor {
         return this._eventSystem;
     }
 
+
     destroy() {
         this._renderer?.destroy();
         this._eventSystem?.destroy();

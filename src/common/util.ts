@@ -19,12 +19,14 @@ export function safeColor(color: number | number[]): Float32Array {
             return new Float32Array(color);
         }
     } else if (typeof color === 'number') {
-        // 如果color在0x000000~0xffffff范围内,则alpha默认为255
         const isRGB = color >= 0x000000 && color <= 0xffffff;
-        const a = isRGB ? 255 : (color >> 24) & 0xff;
-        const r = (color >> 16) & 0xff;
-        const g = (color >> 8) & 0xff;
-        const b = color & 0xff;
+
+        // Extract color components - same for both formats
+        const r = (color >> (isRGB ? 16 : 24)) & 0xff;
+        const g = (color >> (isRGB ? 8 : 16)) & 0xff;
+        const b = (color >> (isRGB ? 0 : 8)) & 0xff;
+        const a = isRGB ? 255 : color & 0xff;
+
         return new Float32Array([r / 255, g / 255, b / 255, a / 255]);
     }
     return new Float32Array([0, 0, 0, 255]);

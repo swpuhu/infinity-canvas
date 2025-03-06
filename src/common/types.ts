@@ -94,6 +94,7 @@ export namespace SNodeConfig {
         stroke?: number | number[];
         shadow?: ShadowOptions;
         alpha?: number;
+        strokeWidth?: number;
     };
 
     export type BaseConfig = {
