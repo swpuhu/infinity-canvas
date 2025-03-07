@@ -3,11 +3,11 @@ import { isText, visitNodeRecursive } from '@/common/util';
 import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
 import EventEmitter from 'eventemitter3';
-import { ResizerUI } from './ResizerUI';
 import { DragEventsHandler } from './DragEventsHandler';
-import { ResizeEventsHandler } from './ResizeEventsHandler';
-import { RotateEventsHandler } from './RotateEventsHandler';
 import { EditEventsHandler } from './EditEventsHandler';
+import { ResizeEventsHandler } from './ResizeEventsHandler';
+import { ResizerUI } from './ResizerUI';
+import { RotateEventsHandler } from './RotateEventsHandler';
 import { SelectEventsHandler } from './SelectEventsHandler';
 
 export class EventsHandler extends EventEmitter {
@@ -35,10 +35,16 @@ export class EventsHandler extends EventEmitter {
         this._editEventsHandler = new EditEventsHandler(_editor, _resizerUI);
 
         this._selectEventsHandler = new SelectEventsHandler(_editor);
-        this._dragEventsHandler.on(EventNames.DRAG_SELECT_NODE, node => {
-            this._resizeEventsHandler.setCurrentNode(node);
-            this._rotateEventsHandler.setCurrentNode(node);
+        this._dragEventsHandler.on(EventNames.DRAG_SELECT_NODE, (node: SNode) => {
+            this._resizeEventsHandler.setCurrentNode([node]);
+            this._rotateEventsHandler.setCurrentNode([node]);
             this._editEventsHandler.setCurrentNode(node);
+        });
+
+        this._selectEventsHandler.on(EventNames.DRAG_SELECT_END, (nodes: SNode[]) => {
+            this._resizeEventsHandler.setCurrentNode(nodes);
+            this._rotateEventsHandler.setCurrentNode(nodes);
+            this.emit(EventNames.DRAG_SELECT_END, nodes);
         });
 
         this._editor.eventSystem.addEventListener(

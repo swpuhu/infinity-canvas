@@ -1,10 +1,10 @@
 import { EventNames, SNodeEvents } from '@/common/types';
+import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '@/renderer/Editor';
 import { CanvasEventSystem } from '@/renderer/SEventManager';
-import { ResizerUI } from './ResizerUI';
 import SNode from '@/renderer/SNode';
-import { Vec2 } from '@/common/Vec2';
 import EventEmitter from 'eventemitter3';
+import { ResizerUI } from './ResizerUI';
 
 export class DragEventsHandler extends EventEmitter {
     protected _currentNode: SNode | null = null;
@@ -25,6 +25,12 @@ export class DragEventsHandler extends EventEmitter {
     }
 
     protected _enableDrag(): void {
+        CanvasEventSystem.instance.addEventListener(
+            this._resizerUI.node,
+            SNodeEvents.POINTER_DOWN,
+            this.dragStart
+        );
+
         CanvasEventSystem.instance.addEventListener(
             this._editor.scene.rootNode,
             SNodeEvents.POINTER_MOVE,

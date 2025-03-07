@@ -1,38 +1,12 @@
 import {
-    EnumAspectKeepMode,
     EventNames,
-    IPointData,
-    ResizeGizmoMode,
-    SNodeConfig,
-    SNodeEvents,
-    TransformOptions,
 } from '@/common/types';
-import SNode from '../SNode';
-import {
-    alignToNode,
-    changeAnchorButStay,
-    createNodeFromConfig,
-    refSNode,
-} from '../util';
-import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '../Editor';
-import { ReadonlyVec2, vec2 } from 'gl-matrix';
-import { decomposeMatrix, isText, visitNodeRecursive } from '@/common/util';
-import { CanvasEventSystem } from '../SEventManager';
-import { SParagraph } from '../RenderComponents/SParagraph';
-import eventBus from '@/common/eventBus';
-import { createElement } from '../createElement';
+import SNode from '../SNode';
+import { getWorldRect } from '../util';
 import { WhiteboardScene } from '../WhiteboardScene';
-import { ResizerUI } from './resizer/ResizerUI';
 import { EventsHandler } from './resizer/EventsHandler';
-
-const RESIZE_GIZMO_SIZE = 10;
-const ROTATE_GIZMO_SIZE = 8;
-const RESIZE_GIZMO_COLOR = 0x00bcfb;
-const ROTATE_GIZMO_COLOR = 0x00ffbc;
-
-const GIZMO_LINE_WIDTH = 1;
-const GIZMO_LINE_COLOR = 0xcccccc;
+import { ResizerUI } from './resizer/ResizerUI';
 
 export class ResizeGizmo {
     private _scene: WhiteboardScene;
@@ -54,13 +28,28 @@ export class ResizeGizmo {
             if (!node) {
                 this.unMount();
             } else {
-                this.mountToNode(node);
+                this.mountToNode([node]);
             }
+        });
+        this._eventsHandler.on(EventNames.DRAG_SELECT_END, (nodes: SNode[]) => {
+            this.mountToNode(nodes);
         });
     }
 
-    public mountToNode(targetNode: SNode): void {
-        this._uiComponent.alignToNode(targetNode);
+    public mountToNode(targetNodes: SNode[]): void {
+        if (targetNodes.length === 0) {
+            this.unMount();
+            return;
+        }
+        const worldRect = getWorldRect(targetNodes);
+        const dummyNode = new SNode();
+        dummyNode.position.set(worldRect[0], worldRect[1]);
+        dummyNode.width = worldRect[2] - worldRect[0];
+        dummyNode.height = worldRect[3] - worldRect[1];
+        dummyNode.anchor.set(0, 0);
+
+        this._uiComponent.alignToNode(dummyNode);
+        console.log(this._uiComponent.node);
         this._uiComponent.show();
         this._uiComponent.updateHandlerNodes();
     }
@@ -69,5 +58,5 @@ export class ResizeGizmo {
         this._uiComponent.hide();
     }
 
-    public destroy(): void {}
+    public destroy(): void { }
 }

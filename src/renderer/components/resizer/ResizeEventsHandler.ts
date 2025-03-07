@@ -1,15 +1,15 @@
-import { CanvasEditor } from '@/renderer/Editor';
-import { ResizerUI } from './ResizerUI';
 import {
     EnumAspectKeepMode,
     EventNames,
     IPointData,
     SNodeEvents,
 } from '@/common/types';
-import EventEmitter from 'eventemitter3';
-import SNode from '@/renderer/SNode';
 import { Vec2 } from '@/common/Vec2';
-import { alignToNode, changeAnchorButStay } from '@/renderer/util';
+import { CanvasEditor } from '@/renderer/Editor';
+import SNode from '@/renderer/SNode';
+import { changeAnchorButStay } from '@/renderer/util';
+import EventEmitter from 'eventemitter3';
+import { ResizerUI } from './ResizerUI';
 
 export class ResizeEventsHandler extends EventEmitter {
     private _currentHandleNode: SNode | null = null;
@@ -26,7 +26,7 @@ export class ResizeEventsHandler extends EventEmitter {
     };
 
     private _isLockAspect = false;
-    private _currentNode: SNode | null = null;
+    private _currentNodes: SNode[] = [];
     private _isResizing: boolean = false;
 
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
@@ -40,23 +40,23 @@ export class ResizeEventsHandler extends EventEmitter {
             );
         });
     }
-    public setCurrentNode(node: SNode): void {
-        this._currentNode = node;
+    public setCurrentNode(nodes: SNode[]): void {
+        this._currentNodes = nodes;
     }
 
     private _onResizePointerDown = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
-        if (!this._currentNode) {
+        if (!this._currentNodes) {
             return;
         }
 
         this.emit(EventNames.RESIZE_START);
 
-        this._originAnchor = this._currentNode.anchor.clone();
+        // this._originAnchor = this._currentNodes.anchor.clone();
         this._isResizing = true;
         this._currentHandleNode = event.target;
 
-        this._originAspect = this._currentNode.width / this._currentNode.height;
+        // this._originAspect = this._currentNodes.width / this._currentNodes.height;
 
         if (event.target === this._resizerUI.lbNode) {
             changeAnchorButStay(this._resizerUI.node, {
@@ -89,7 +89,7 @@ export class ResizeEventsHandler extends EventEmitter {
 
     private _onResizePointerMove = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
-        if (!this._currentNode || !this._isResizing) {
+        if (!this._currentNodes || !this._isResizing) {
             return;
         }
         const hostNode = this._resizerUI.node;
@@ -112,7 +112,7 @@ export class ResizeEventsHandler extends EventEmitter {
         const keepWidthHeight = nextWidth / this._originAspect;
         const keepHeightWidth = nextHeight * this._originAspect;
 
-        let aspectKeepMode = this._currentNode.aspectKeepMode;
+        let aspectKeepMode = EnumAspectKeepMode.NONE;
         if (aspectKeepMode === EnumAspectKeepMode.NONE && this._isLockAspect) {
             if (nextWidth > keepHeightWidth) {
                 aspectKeepMode = EnumAspectKeepMode.WIDTH;
@@ -128,15 +128,15 @@ export class ResizeEventsHandler extends EventEmitter {
         }
         this._resizerUI.node!.width = nextWidth;
         this._resizerUI.node!.height = nextHeight;
-        this._currentNode!.alignTo(this._resizerUI.node!);
+        // this._currentNodes!.alignTo(this._resizerUI.node!);
         this._resizerUI.updateHandlerNodes();
     };
 
     private _onResizePointerUp = (event: SNodeEvents.IPointerEvent): void => {
-        if (!this._currentNode || !this._isResizing) {
+        if (!this._currentNodes || !this._isResizing) {
             return;
         }
-        changeAnchorButStay(this._currentNode!, this._originAnchor);
+        // changeAnchorButStay(this._currentNodes!, this._originAnchor);
         this._isResizing = false;
         this._currentHandleNode = null;
     };

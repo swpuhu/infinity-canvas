@@ -63,6 +63,7 @@ export namespace EventNames {
     export const DB_CLICK_NODE = 'dbClickNode';
     export const RESIZE_START = 'resizeStart';
     export const DRAG_SELECT_NODE = 'dragSelectNode';
+    export const DRAG_SELECT_END = 'dragSelectEnd';
 }
 
 export namespace SNodeConfig {

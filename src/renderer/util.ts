@@ -1,12 +1,11 @@
 import { IPointData, SNodeConfig } from '@/common/types';
-import SNode from './SNode';
-import { SSprite } from './RenderComponents/SSprite';
 import { InputRect } from 'canvaskit-wasm';
-import { SGeoRect } from './Geometry/SGeoRect';
-import { Vec2 } from '@/common/Vec2';
 import { vec2 } from 'gl-matrix';
 import { SGeoCircle } from './Geometry/SGeoCircle';
+import { SGeoRect } from './Geometry/SGeoRect';
 import { SParagraph } from './RenderComponents/SParagraph';
+import { SSprite } from './RenderComponents/SSprite';
+import SNode from './SNode';
 const nodeNameRefMap = new Map<string, SNode>();
 
 export function refSNode(v?: SNode): SNodeConfig.IRefSNode {
@@ -104,4 +103,19 @@ export function changeAnchorButStay(node: SNode, anchor: IPointData) {
     );
     node.position.set(diffInParent[0], diffInParent[1]);
     node.anchor.set(anchor.x, anchor.y);
+}
+
+
+export function getWorldRect(nodes: SNode[]): number[] {
+    const worldRects = nodes.map(node => node.getWorldPoints());
+    const allPoints = worldRects.flatMap(rect => rect);
+
+    const allX = allPoints.map(([x, y]) => x);
+    const allY = allPoints.map(([x, y]) => y);
+    const minX = Math.min(...allX);
+    const minY = Math.min(...allY);
+    const maxX = Math.max(...allX);
+    const maxY = Math.max(...allY);
+
+    return [minX, minY, maxX, maxY];
 }

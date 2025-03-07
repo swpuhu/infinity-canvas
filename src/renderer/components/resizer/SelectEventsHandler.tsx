@@ -1,14 +1,14 @@
-import { CanvasEditor } from '@/renderer/Editor';
 import {
+    EventNames,
     SNodeEvents,
 } from '@/common/types';
-import EventEmitter from 'eventemitter3';
+import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
-import { SelectUI } from './SelectUI';
 import { createNodeFromConfig } from '@/renderer/util';
-import { createElement } from '../../createElement';
-import { ReadonlyVec2 } from 'gl-matrix';
-import { vec2 } from 'gl-matrix';
+import EventEmitter from 'eventemitter3';
+import { ReadonlyVec2, vec2 } from 'gl-matrix';
+import { SelectUI } from './SelectUI';
+import { createElement } from '@/renderer/createElement';
 
 export class SelectEventsHandler extends EventEmitter {
     private _selectedNodes: SNode[] = [];
@@ -96,6 +96,8 @@ export class SelectEventsHandler extends EventEmitter {
         })));
 
         this._hideUI();
+
+        this.emit(EventNames.DRAG_SELECT_END, this._selectedNodes);
     };
 
     // 递归检查节点及其子节点是否与选框相交

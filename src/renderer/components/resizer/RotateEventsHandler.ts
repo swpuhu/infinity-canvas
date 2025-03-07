@@ -1,10 +1,10 @@
-import { CanvasEditor } from '@/renderer/Editor';
-import { ResizerUI } from './ResizerUI';
-import EventEmitter from 'eventemitter3';
 import { SNodeEvents } from '@/common/types';
 import { Vec2 } from '@/common/Vec2';
+import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
 import { changeAnchorButStay } from '@/renderer/util';
+import EventEmitter from 'eventemitter3';
+import { ResizerUI } from './ResizerUI';
 
 export class RotateEventsHandler extends EventEmitter {
     private _isRotating = false;
@@ -13,7 +13,7 @@ export class RotateEventsHandler extends EventEmitter {
 
     private _rotateStartRootNodePos: Vec2 = new Vec2(0, 0);
 
-    private _currentNode: SNode | null = null;
+    private _currentNodes: SNode[] = [];
 
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         super();
@@ -25,8 +25,8 @@ export class RotateEventsHandler extends EventEmitter {
             this._onRotatePointerDown
         );
     }
-    public setCurrentNode(node: SNode): void {
-        this._currentNode = node;
+    public setCurrentNode(nodes: SNode[]): void {
+        this._currentNodes = nodes;
     }
 
     private _enableRotate(): void {
@@ -73,7 +73,7 @@ export class RotateEventsHandler extends EventEmitter {
         const diffRad = dragVec.signRad(startVec);
         const angle = (diffRad * 180) / Math.PI;
         this._resizerUI.node.rotation = angle;
-        this._currentNode!.alignTo(this._resizerUI.node!);
+        // this._currentNodes!.alignTo(this._resizerUI.node!);
         this._resizerUI.updateHandlerNodes();
     };
 

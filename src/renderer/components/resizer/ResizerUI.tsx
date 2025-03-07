@@ -1,11 +1,11 @@
-import { alignToNode, createNodeFromConfig } from '@/renderer/util';
+import { createNodeFromConfig } from '@/renderer/util';
 
 import { EventNames, IPointData, SNodeConfig } from '@/common/types';
+import { decomposeMatrix } from '@/common/util';
+import { createElement } from '@/renderer/createElement';
 import SNode from '@/renderer/SNode';
 import { refSNode } from '@/renderer/util';
 import { WhiteboardScene } from '@/renderer/WhiteboardScene';
-import { decomposeMatrix } from '@/common/util';
-import { createElement } from '@/renderer/createElement';
 
 const RESIZE_GIZMO_SIZE = 10;
 const ROTATE_GIZMO_SIZE = 8;
@@ -200,7 +200,7 @@ export class ResizerUI {
         if (!this._root) {
             return;
         }
-        alignToNode(this._root, node);
+        this._root.alignTo(node);
     }
 
     public updateHandlerNodes(): void {

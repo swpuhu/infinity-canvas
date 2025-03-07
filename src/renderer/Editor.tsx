@@ -1,16 +1,12 @@
-import { CanvasKitModule } from '@/lib/canvaskit';
-import { CanvasEventSystem } from './SEventManager';
-import { Renderer } from './renderer';
-import { SScene } from './SScene';
+import eventBus from '@/common/eventBus';
 import {
-    EnumParaLayoutMode,
-    EnumParaResizeMode,
-    EventNames,
-    SNodeEvents,
+    EventNames
 } from '@/common/types';
+import { CanvasKitModule } from '@/lib/canvaskit';
 import { ResizeGizmo } from './components/ResizeGizmo';
 import { createElement } from './createElement';
-import eventBus from '@/common/eventBus';
+import { Renderer } from './renderer';
+import { CanvasEventSystem } from './SEventManager';
 import { createNodeFromConfig } from './util';
 import { WhiteboardScene } from './WhiteboardScene';
 
@@ -63,6 +59,7 @@ export class CanvasEditor {
                 transform={{
                     scale: { x: 1, y: 1 },
                     anchor: { x: 0, y: 0 },
+                    position: { x: -100, y: -200 },
                 }}
             />
         );
