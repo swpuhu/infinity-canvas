@@ -1,3 +1,4 @@
+import { Pool } from '@/common/Pool';
 import { EventNames, SNodeEvents } from '@/common/types';
 import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '@/renderer/Editor';
@@ -7,7 +8,7 @@ import EventEmitter from 'eventemitter3';
 import { ResizerUI } from './ResizerUI';
 
 export class DragEventsHandler extends EventEmitter {
-    protected _currentNode: SNode | null = null;
+    protected _currentNodes: SNode[] = [];
 
     protected _isDragging = false;
 
@@ -15,13 +16,17 @@ export class DragEventsHandler extends EventEmitter {
 
     protected _originPos: Vec2 = new Vec2(0, 0);
 
+    protected _pool: Pool<SNode> = new Pool(10, SNode);
+
+    protected _dummyNodes: SNode[] = [];
+
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         super();
         this._enableDrag();
     }
 
-    public setCurrentNode(node: SNode): void {
-        this._currentNode = node;
+    public setCurrentNode(nodes: SNode[]): void {
+        this._currentNodes = nodes;
     }
 
     protected _enableDrag(): void {
@@ -42,18 +47,30 @@ export class DragEventsHandler extends EventEmitter {
             this._onDragPointerUp
         );
     }
+
+    private cloneNodesAndMoveIn(): void {
+        this._dummyNodes = this._currentNodes.map((node) => {
+            const dummyNode = this._pool.get();
+            dummyNode.width = node.width;
+            dummyNode.height = node.height;
+            dummyNode.anchor.set(node.anchor.x, node.anchor.y);
+            dummyNode.setParent(node);
+            dummyNode.moveInto(this._resizerUI.node);
+            return dummyNode;
+        });
+    }
+
     public dragStart = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
-        this._currentNode = event.currentTarget;
-        if (!this._currentNode) {
-            return;
-        }
-        this.emit(EventNames.DRAG_SELECT_NODE, this._currentNode);
+        console.log('currentNodes', this._currentNodes);
+        this.emit(EventNames.DRAG_SELECT_NODE, this._currentNodes);
         this._isDragging = true;
         const localPos = this._resizerUI.node.parent!.toLocal(
             event.getWorldPosition()
         );
         this._dragStartPos.set(localPos[0], localPos[1]);
+
+        this.cloneNodesAndMoveIn();
 
         this._originPos.set(
             this._resizerUI.node.position.x,
@@ -63,7 +80,7 @@ export class DragEventsHandler extends EventEmitter {
 
     protected _onDragPointerMove = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
-        if (!this._currentNode || !this._isDragging) {
+        if (!this._currentNodes || !this._isDragging) {
             return;
         }
         const localPos = this._resizerUI.node.parent!.toLocal(
@@ -78,7 +95,11 @@ export class DragEventsHandler extends EventEmitter {
             this._originPos.x + diff.x,
             this._originPos.y + diff.y
         );
-        this._currentNode!.alignTo(this._resizerUI.node!);
+        this._dummyNodes.forEach((dummyNode, i) => {
+            const pairNode = this._currentNodes[i];
+            pairNode.alignTo(dummyNode);
+        });
+        // this._currentNodes!.alignTo(this._resizerUI.node!);
     };
 
     private _onDragPointerUp = (event: SNodeEvents.IPointerEvent): void => {

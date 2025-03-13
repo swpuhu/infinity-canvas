@@ -1,7 +1,5 @@
 import eventBus from '@/common/eventBus';
-import {
-    EventNames
-} from '@/common/types';
+import { EventNames } from '@/common/types';
 import { CanvasKitModule } from '@/lib/canvaskit';
 import { ResizeGizmo } from './components/ResizeGizmo';
 import { createElement } from './createElement';
@@ -89,6 +87,15 @@ export class CanvasEditor {
             eventBus.reDraw();
         });
 
+        // test moveIntoButStay
+        // setTimeout(() => {
+        //     console.log('moveIntoButStay');
+        //     moveIntoButStay(para, testPic);
+
+        //     console.log('testPic', testPic);
+        //     eventBus.reDraw();
+        // }, 1000);
+
         this._renderer.render(scene.rootNode);
     }
 
@@ -105,7 +112,6 @@ export class CanvasEditor {
         }
         return this._eventSystem;
     }
-
 
     destroy() {
         this._renderer?.destroy();

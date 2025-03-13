@@ -34,8 +34,8 @@ export function safeColor(color: number | number[]): Float32Array {
 
 export function loadImageArrayBuffer(src: string): Promise<Uint8Array> {
     return fetch(src)
-        .then(res => res.arrayBuffer())
-        .then(buffer => new Uint8Array(buffer));
+        .then((res) => res.arrayBuffer())
+        .then((buffer) => new Uint8Array(buffer));
 }
 
 export function loadImage(src: string): Promise<HTMLImageElement> {
@@ -48,7 +48,7 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 export function loadImages(srcs: string[]): Promise<HTMLImageElement[]> {
-    return Promise.all(srcs.map(src => loadImage(src)));
+    return Promise.all(srcs.map((src) => loadImage(src)));
 }
 export function findChildByUuid(container: SNode, uuid: string): SNode | null {
     if (container.uuid === uuid) {
@@ -205,4 +205,23 @@ export function isMacOS(): boolean {
         console.error('检测Mac操作系统时发生错误:', e);
         return false; // 发生任何错误时默认返回false
     }
+}
+
+export function moveIntoButStay(node: SNode, target: SNode): void {
+    // 如果节点已经在目标节点中，则不需要操作
+    if (node.parent === target) {
+        return;
+    }
+
+    // 保存节点当前的世界矩阵
+    const worldMatrix = mat3.copy(mat3.create(), node.getWorldMatrix());
+
+    // 将节点从原父节点中移除并添加到目标节点中
+    if (node.parent) {
+        node.removeFromParent();
+    }
+    target.addChild(node);
+
+    // 重新设置节点的世界矩阵，保持其在世界坐标系中的位置不变
+    node.setWorldMatrix(worldMatrix);
 }

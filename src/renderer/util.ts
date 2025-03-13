@@ -65,7 +65,7 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
     }
 
     // 处理子元素
-    config.children?.forEach(childConfig => {
+    config.children?.forEach((childConfig) => {
         const childNode = createNodeFromConfig(childConfig);
         node.addChild(childNode);
     });
@@ -105,10 +105,9 @@ export function changeAnchorButStay(node: SNode, anchor: IPointData) {
     node.anchor.set(anchor.x, anchor.y);
 }
 
-
 export function getWorldRect(nodes: SNode[]): number[] {
-    const worldRects = nodes.map(node => node.getWorldPoints());
-    const allPoints = worldRects.flatMap(rect => rect);
+    const worldRects = nodes.map((node) => node.getWorldPoints());
+    const allPoints = worldRects.flatMap((rect) => rect);
 
     const allX = allPoints.map(([x, y]) => x);
     const allY = allPoints.map(([x, y]) => y);

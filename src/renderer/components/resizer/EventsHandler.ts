@@ -35,17 +35,24 @@ export class EventsHandler extends EventEmitter {
         this._editEventsHandler = new EditEventsHandler(_editor, _resizerUI);
 
         this._selectEventsHandler = new SelectEventsHandler(_editor);
-        this._dragEventsHandler.on(EventNames.DRAG_SELECT_NODE, (node: SNode) => {
-            this._resizeEventsHandler.setCurrentNode([node]);
-            this._rotateEventsHandler.setCurrentNode([node]);
-            this._editEventsHandler.setCurrentNode(node);
-        });
+        this._dragEventsHandler.on(
+            EventNames.DRAG_SELECT_NODE,
+            (node: SNode) => {
+                this._resizeEventsHandler.setCurrentNode([node]);
+                this._rotateEventsHandler.setCurrentNode([node]);
+                this._editEventsHandler.setCurrentNode(node);
+            }
+        );
 
-        this._selectEventsHandler.on(EventNames.DRAG_SELECT_END, (nodes: SNode[]) => {
-            this._resizeEventsHandler.setCurrentNode(nodes);
-            this._rotateEventsHandler.setCurrentNode(nodes);
-            this.emit(EventNames.DRAG_SELECT_END, nodes);
-        });
+        this._selectEventsHandler.on(
+            EventNames.DRAG_SELECT_END,
+            (nodes: SNode[]) => {
+                this._resizeEventsHandler.setCurrentNode(nodes);
+                this._rotateEventsHandler.setCurrentNode(nodes);
+                this._dragEventsHandler.setCurrentNode(nodes);
+                this.emit(EventNames.DRAG_SELECT_END, nodes);
+            }
+        );
 
         this._editor.eventSystem.addEventListener(
             this._editor.scene.canvasLayer,
@@ -110,7 +117,7 @@ export class EventsHandler extends EventEmitter {
 
     protected _collectAllNodes(): SNode[] {
         const nodes: SNode[] = [];
-        visitNodeRecursive(this._editor.scene.canvasLayer, node => {
+        visitNodeRecursive(this._editor.scene.canvasLayer, (node) => {
             if (node !== this._editor.scene.canvasLayer) {
                 nodes.unshift(node);
             }
@@ -119,7 +126,7 @@ export class EventsHandler extends EventEmitter {
     }
     private _collectTextNodes(): SNode[] {
         const nodes: SNode[] = [];
-        visitNodeRecursive(this._editor.scene.canvasLayer, node => {
+        visitNodeRecursive(this._editor.scene.canvasLayer, (node) => {
             if (node !== this._editor.scene.canvasLayer && isText(node)) {
                 nodes.unshift(node);
             }

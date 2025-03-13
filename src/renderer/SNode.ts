@@ -1,20 +1,23 @@
 import { SRenderComponent } from './RenderComponents/SRenderComponent';
 
-import { mat3, ReadonlyVec2, vec2 } from 'gl-matrix';
 import {
     EnumAspectKeepMode,
     EnumRenderComponentType,
-    EventNames,
     IPoint,
     IPointData,
     SNodeEvents,
     TransformOptions,
 } from '@/common/types';
-import { Vec2 } from '@/common/Vec2';
+import {
+    angleToRadians,
+    decomposeMatrix,
+    moveIntoButStay,
+} from '@/common/util';
 import { createUUID } from '@/common/uuid';
+import { Vec2 } from '@/common/Vec2';
 import { autobind } from 'core-decorators';
 import EventEmitter from 'eventemitter3';
-import { angleToRadians, decomposeMatrix } from '@/common/util';
+import { mat3, ReadonlyVec2, vec2 } from 'gl-matrix';
 import { alignToNode } from './util';
 
 class SNode extends EventEmitter {
@@ -231,6 +234,10 @@ class SNode extends EventEmitter {
         return this._parent;
     }
 
+    public get worldPosition(): ReadonlyVec2 {
+        return this.toGlobal([0, 0]);
+    }
+
     public setSize(width: number, height: number) {
         this._width = width;
         this._height = height;
@@ -263,9 +270,9 @@ class SNode extends EventEmitter {
     }
 
     public addChild(...child: SNode[]) {
-        child.forEach(c => c.removeFromParent());
+        child.forEach((c) => c.removeFromParent());
         this._children.push(...child);
-        child.forEach(c => {
+        child.forEach((c) => {
             c._parent = this;
             c.updateWorldMatrix();
             c.emit(SNodeEvents.HIERARCHY_CHANGE);
@@ -276,7 +283,7 @@ class SNode extends EventEmitter {
         if (typeof child === 'number') {
             this._children.splice(child, 1);
         } else {
-            this._children = this._children.filter(c => c !== child);
+            this._children = this._children.filter((c) => c !== child);
         }
     }
 
@@ -309,11 +316,11 @@ class SNode extends EventEmitter {
     public getComponent<T extends SRenderComponent>(
         compCtr: new () => T
     ): T | null {
-        return this._renderComps.find(comp => comp instanceof compCtr) as T;
+        return this._renderComps.find((comp) => comp instanceof compCtr) as T;
     }
 
     public removeChildren(): void {
-        this._children.forEach(item => item.destroy());
+        this._children.forEach((item) => item.destroy());
         this._children = [];
     }
 
@@ -406,13 +413,17 @@ class SNode extends EventEmitter {
     }
 
     public destroy(): void {
-        this._renderComps.forEach(renderComp => {
+        this._renderComps.forEach((renderComp) => {
             renderComp.destroy();
         });
     }
 
     public alignTo(target: SNode): void {
         alignToNode(this, target);
+    }
+
+    public moveInto(target: SNode): void {
+        moveIntoButStay(this, target);
     }
 }
 
