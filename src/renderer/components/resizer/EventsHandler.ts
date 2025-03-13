@@ -37,19 +37,15 @@ export class EventsHandler extends EventEmitter {
         this._selectEventsHandler = new SelectEventsHandler(_editor);
         this._dragEventsHandler.on(
             EventNames.DRAG_SELECT_NODE,
-            (node: SNode) => {
-                this._resizeEventsHandler.setCurrentNode([node]);
-                this._rotateEventsHandler.setCurrentNode([node]);
-                this._editEventsHandler.setCurrentNode(node);
+            (nodes: SNode[]) => {
+                this.setCurrentNodes(nodes);
             }
         );
 
         this._selectEventsHandler.on(
             EventNames.DRAG_SELECT_END,
             (nodes: SNode[]) => {
-                this._resizeEventsHandler.setCurrentNode(nodes);
-                this._rotateEventsHandler.setCurrentNode(nodes);
-                this._dragEventsHandler.setCurrentNode(nodes);
+                this.setCurrentNodes(nodes);
                 this.emit(EventNames.DRAG_SELECT_END, nodes);
             }
         );
@@ -65,6 +61,13 @@ export class EventsHandler extends EventEmitter {
             SNodeEvents.DB_CLICK,
             this._handleCanvasLayerDBClick
         );
+    }
+
+    private setCurrentNodes(nodes: SNode[]): void {
+        this._resizeEventsHandler.setCurrentNode(nodes);
+        this._rotateEventsHandler.setCurrentNodes(nodes);
+        this._editEventsHandler.setCurrentNode(nodes[0]);
+        this._dragEventsHandler.setCurrentNodes(nodes);
     }
 
     private _handleCanvasLayerDBClick = (event: SNodeEvents.IPointerEvent) => {
@@ -107,7 +110,8 @@ export class EventsHandler extends EventEmitter {
         if (hitNode) {
             if (isText(hitNode)) {
             }
-            event.setCurrentTarget(hitNode);
+            this.setCurrentNodes([hitNode]);
+
             this._dragEventsHandler.dragStart(event);
         } else {
             this._editEventsHandler.exitEditMode();

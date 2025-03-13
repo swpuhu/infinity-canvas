@@ -425,6 +425,22 @@ class SNode extends EventEmitter {
     public moveInto(target: SNode): void {
         moveIntoButStay(this, target);
     }
+
+    public reset(): void {
+        this.removeFromParent();
+        this._localMatrix = mat3.identity(this._localMatrix);
+        this._worldMatrix = mat3.identity(this._worldMatrix);
+        this._worldMatrixInv = mat3.identity(this._worldMatrixInv);
+        this._rotation = 0;
+        this._scale.set(1, 1);
+        this._position.set(0, 0);
+        this._anchor.set(0.5, 0.5);
+        this._width = 0;
+        this._height = 0;
+        this._renderComps = [];
+        this._renderComp = null;
+        this._eventPhase = '';
+    }
 }
 
 export default SNode;

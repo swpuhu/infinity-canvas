@@ -1,8 +1,10 @@
+import { nodePool } from '@/common/NodePool';
+import { Pool } from '@/common/Pool';
 import { SNodeEvents } from '@/common/types';
 import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
-import { changeAnchorButStay } from '@/renderer/util';
+import { changeAnchorButStay, cloneNodesAndMoveIn } from '@/renderer/util';
 import EventEmitter from 'eventemitter3';
 import { ResizerUI } from './ResizerUI';
 
@@ -15,6 +17,10 @@ export class RotateEventsHandler extends EventEmitter {
 
     private _currentNodes: SNode[] = [];
 
+    private _pool: Pool<SNode> = nodePool;
+
+    protected _dummyNodes: SNode[] = [];
+
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         super();
         this._enableRotate();
@@ -25,7 +31,7 @@ export class RotateEventsHandler extends EventEmitter {
             this._onRotatePointerDown
         );
     }
-    public setCurrentNode(nodes: SNode[]): void {
+    public setCurrentNodes(nodes: SNode[]): void {
         this._currentNodes = nodes;
     }
 
@@ -45,17 +51,22 @@ export class RotateEventsHandler extends EventEmitter {
     private _onRotatePointerDown = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
         this._isRotating = true;
-        this._rotateStartRootNodePos.set(
-            this._resizerUI.node.position.x,
-            this._resizerUI.node.position.y
-        );
-        const hostNode = this._resizerUI.node.parent;
-        const localPos = hostNode!.toLocal(event.getWorldPosition());
-        this._rotateStartPos.set(localPos[0], localPos[1]);
         changeAnchorButStay(this._resizerUI.node, {
             x: 0.5,
             y: 0.5,
         });
+        const worldPos = this._resizerUI.node.worldPosition;
+        this._rotateStartRootNodePos.set(worldPos[0], worldPos[1]);
+
+        // const hostNode = this._resizerUI.node.parent;
+        const eventWorldPos = event.getWorldPosition();
+        this._rotateStartPos.set(eventWorldPos[0], eventWorldPos[1]);
+        this._dummyNodes = cloneNodesAndMoveIn(
+            this._currentNodes,
+            this._resizerUI.node,
+            this._pool
+        );
+
         this._resizerUI.updateHandlerNodes();
     };
 
@@ -64,21 +75,29 @@ export class RotateEventsHandler extends EventEmitter {
         if (!this._isRotating) {
             return;
         }
-        const hostNode = this._resizerUI.node.parent;
-        const moveLocalPos = hostNode!.toLocal(event.getWorldPosition());
+
+        const moveWorldPos = event.getWorldPosition();
         const startVec = this._rotateStartPos.sub(this._rotateStartRootNodePos);
-        const dragVec = new Vec2(moveLocalPos[0], moveLocalPos[1]).sub(
+        const dragVec = new Vec2(moveWorldPos[0], moveWorldPos[1]).sub(
             this._rotateStartRootNodePos
         );
         const diffRad = dragVec.signRad(startVec);
         const angle = (diffRad * 180) / Math.PI;
         this._resizerUI.node.rotation = angle;
+
+        this._dummyNodes.forEach((dummyNode, i) => {
+            const pairNode = this._currentNodes[i];
+            pairNode.alignTo(dummyNode);
+        });
         // this._currentNodes!.alignTo(this._resizerUI.node!);
-        this._resizerUI.updateHandlerNodes();
+        // this._resizerUI.updateHandlerNodes();
     };
 
     private _onRotatePointerUp = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
+        this._dummyNodes.forEach((dummyNode) => {
+            this._pool.put(dummyNode);
+        });
         this._isRotating = false;
     };
 }

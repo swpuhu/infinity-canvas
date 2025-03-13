@@ -6,7 +6,13 @@ export class Pool<T, Args extends any[] = any[]> {
     private cont: ContFunc<T, Args>;
     private constructorArgs: Args;
 
-    constructor(initNum: number, cont: ContFunc<T, Args>, ...args: Args) {
+    constructor(
+        initNum: number,
+        cont: ContFunc<T, Args>,
+        private _afterGet?: (item: T) => void,
+        private _beforePut?: (item: T) => void,
+        ...args: Args
+    ) {
         this.cont = cont;
         this.constructorArgs = args;
 
@@ -16,14 +22,19 @@ export class Pool<T, Args extends any[] = any[]> {
     }
 
     public get(...args: Args): T {
+        let item: T;
         if (this._pool.length > 0) {
-            return this._pool.pop()!;
+            item = this._pool.pop()!;
         } else {
-            return new this.cont(...args);
+            item = new this.cont(...args);
         }
+        this._afterGet?.(item);
+
+        return item;
     }
 
     public put(item: T): void {
+        this._beforePut?.(item);
         this._pool.push(item);
     }
 }

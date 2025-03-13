@@ -6,6 +6,7 @@ import { SGeoRect } from './Geometry/SGeoRect';
 import { SParagraph } from './RenderComponents/SParagraph';
 import { SSprite } from './RenderComponents/SSprite';
 import SNode from './SNode';
+import { Pool } from '@/common/Pool';
 const nodeNameRefMap = new Map<string, SNode>();
 
 export function refSNode(v?: SNode): SNodeConfig.IRefSNode {
@@ -117,4 +118,20 @@ export function getWorldRect(nodes: SNode[]): number[] {
     const maxY = Math.max(...allY);
 
     return [minX, minY, maxX, maxY];
+}
+
+export function cloneNodesAndMoveIn(
+    srcs: SNode[],
+    target: SNode,
+    pool: Pool<SNode>
+): SNode[] {
+    return srcs.map((node) => {
+        const dummyNode = pool.get();
+        dummyNode.width = node.width;
+        dummyNode.height = node.height;
+        dummyNode.anchor.set(node.anchor.x, node.anchor.y);
+        dummyNode.setParent(node);
+        dummyNode.moveInto(target);
+        return dummyNode;
+    });
 }
