@@ -66,8 +66,10 @@ export class EventsHandler extends EventEmitter {
     private setCurrentNodes(nodes: SNode[]): void {
         this._resizeEventsHandler.setCurrentNode(nodes);
         this._rotateEventsHandler.setCurrentNodes(nodes);
-        this._editEventsHandler.setCurrentNode(nodes[0]);
         this._dragEventsHandler.setCurrentNodes(nodes);
+        if (nodes.length === 1) {
+            this._editEventsHandler.setCurrentNode(nodes[0]);
+        }
     }
 
     private _handleCanvasLayerDBClick = (event: SNodeEvents.IPointerEvent) => {

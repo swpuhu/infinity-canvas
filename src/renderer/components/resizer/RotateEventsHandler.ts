@@ -95,9 +95,11 @@ export class RotateEventsHandler extends EventEmitter {
 
     private _onRotatePointerUp = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
-        this._dummyNodes.forEach((dummyNode) => {
-            this._pool.put(dummyNode);
-        });
-        this._isRotating = false;
+        if (this._isRotating) {
+            this._isRotating = false;
+            this._dummyNodes.forEach((dummyNode) => {
+                this._pool.put(dummyNode);
+            });
+        }
     };
 }

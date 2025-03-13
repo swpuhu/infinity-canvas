@@ -1,3 +1,4 @@
+import { Pool } from '@/common/Pool';
 import { IPointData, SNodeConfig } from '@/common/types';
 import { InputRect } from 'canvaskit-wasm';
 import { vec2 } from 'gl-matrix';
@@ -6,7 +7,6 @@ import { SGeoRect } from './Geometry/SGeoRect';
 import { SParagraph } from './RenderComponents/SParagraph';
 import { SSprite } from './RenderComponents/SSprite';
 import SNode from './SNode';
-import { Pool } from '@/common/Pool';
 const nodeNameRefMap = new Map<string, SNode>();
 
 export function refSNode(v?: SNode): SNodeConfig.IRefSNode {
@@ -83,8 +83,14 @@ export function getRectByNode(node: SNode): InputRect {
     ];
 }
 
-export function alignToNode(srcNode: SNode, targetNode: SNode) {
-    srcNode.setSize(targetNode.width, targetNode.height);
+export function alignToNode(
+    srcNode: SNode,
+    targetNode: SNode,
+    alignSize = false
+) {
+    if (alignSize) {
+        srcNode.setSize(targetNode.width, targetNode.height);
+    }
     srcNode.anchor.set(targetNode.anchor.x, targetNode.anchor.y);
 
     const targetNodeMat = targetNode.getWorldMatrix();
@@ -127,8 +133,7 @@ export function cloneNodesAndMoveIn(
 ): SNode[] {
     return srcs.map((node) => {
         const dummyNode = pool.get();
-        dummyNode.width = node.width;
-        dummyNode.height = node.height;
+
         dummyNode.anchor.set(node.anchor.x, node.anchor.y);
         dummyNode.setParent(node);
         dummyNode.moveInto(target);

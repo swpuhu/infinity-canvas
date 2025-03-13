@@ -97,11 +97,14 @@ export class DragEventsHandler extends EventEmitter {
 
     private _onDragPointerUp = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
-        this._isDragging = false;
+        if (this._isDragging) {
+            this._isDragging = false;
+            this._dummyNodes.forEach((dummyNode) => {
+                this._pool.put(dummyNode);
+            });
+            return;
+        }
 
-        this._dummyNodes.forEach((dummyNode) => {
-            this._pool.put(dummyNode);
-        });
         // this._disableDrag();
     };
 }

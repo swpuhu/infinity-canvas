@@ -138,7 +138,7 @@ export class ResizerUI {
                     />
                 </container>
                 <container name="resize-points">
-                    {controlPoints.map(p => (
+                    {controlPoints.map((p) => (
                         <CommonResizePoint name={p.name} ref={p.ref} />
                     ))}
                 </container>
@@ -155,7 +155,7 @@ export class ResizerUI {
         this._root = createNodeFromConfig(rootConfig);
 
         // 收集引用节点
-        this._resizeHandlerNodes = controlPoints.map(p => p.ref.value!);
+        this._resizeHandlerNodes = controlPoints.map((p) => p.ref.value!);
         // this._lineNodes = [
         //     this._leftLineRef.value!,
         //     this._rightLineRef.value!,
@@ -172,7 +172,7 @@ export class ResizerUI {
         const handlerHeight = RESIZE_GIZMO_SIZE / scale.y;
         const lineWidth = GIZMO_LINE_WIDTH / scale.x;
 
-        this._resizeHandlerNodes.forEach(node => {
+        this._resizeHandlerNodes.forEach((node) => {
             node.width = handlerWidth;
             node.height = handlerHeight;
         });
@@ -200,7 +200,7 @@ export class ResizerUI {
         if (!this._root) {
             return;
         }
-        this._root.alignTo(node);
+        this._root.alignTo(node, true);
     }
 
     public updateHandlerNodes(): void {
@@ -222,7 +222,7 @@ export class ResizerUI {
         const rotateHandlerSize = ROTATE_GIZMO_SIZE / scaleX;
 
         const lineWidth = GIZMO_LINE_WIDTH / scaleX;
-        this._resizeHandlerNodes.forEach(node => {
+        this._resizeHandlerNodes.forEach((node) => {
             node.width = handlerWidth;
             node.height = handlerHeight;
         });

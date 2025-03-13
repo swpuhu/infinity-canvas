@@ -33,7 +33,7 @@ class SNode extends EventEmitter {
         this.updateWorldMatrix();
     });
     private _scale: IPoint = new Vec2(1, 1, this.updateWorldMatrix);
-    private _anchor: IPoint = new Vec2(0.5, 0.5, this.updateWorldMatrix);
+    private _anchor: IPoint = new Vec2(0.5, 0.5);
     private _rotation: number = 0;
     private _localMatrix: mat3 = mat3.create();
     private _worldMatrix: mat3 = mat3.create();
@@ -187,7 +187,6 @@ class SNode extends EventEmitter {
     }
 
     public set anchor(value: IPoint) {
-        value.observeFunc = this.updateWorldMatrix;
         this._anchor = value;
     }
 
@@ -418,8 +417,8 @@ class SNode extends EventEmitter {
         });
     }
 
-    public alignTo(target: SNode): void {
-        alignToNode(this, target);
+    public alignTo(target: SNode, alignSize = false): void {
+        alignToNode(this, target, alignSize);
     }
 
     public moveInto(target: SNode): void {
@@ -428,18 +427,16 @@ class SNode extends EventEmitter {
 
     public reset(): void {
         this.removeFromParent();
-        this._localMatrix = mat3.identity(this._localMatrix);
-        this._worldMatrix = mat3.identity(this._worldMatrix);
-        this._worldMatrixInv = mat3.identity(this._worldMatrixInv);
+        this._position.set(0, 0, false);
+        this._scale.set(1, 1, false);
         this._rotation = 0;
-        this._scale.set(1, 1);
-        this._position.set(0, 0);
-        this._anchor.set(0.5, 0.5);
         this._width = 0;
         this._height = 0;
         this._renderComps = [];
         this._renderComp = null;
         this._eventPhase = '';
+        this._worldMatrixInv = mat3.identity(this._worldMatrixInv);
+        this.updateWorldMatrix();
     }
 }
 

@@ -53,6 +53,7 @@ export class CanvasEditor {
 
         const testPicConfig = (
             <sprite
+                name="test pic"
                 url={'r2.png'}
                 transform={{
                     scale: { x: 1, y: 1 },
@@ -66,6 +67,7 @@ export class CanvasEditor {
 
         const paraConfig = (
             <para
+                name="text"
                 text="懒羊羊组长赛高！"
                 fontSize={50}
                 transform={{

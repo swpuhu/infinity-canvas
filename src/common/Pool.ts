@@ -23,6 +23,7 @@ export class Pool<T, Args extends any[] = any[]> {
 
     public get(...args: Args): T {
         let item: T;
+        console.log('this._pool.length', this._pool.length);
         if (this._pool.length > 0) {
             item = this._pool.pop()!;
         } else {
@@ -34,7 +35,12 @@ export class Pool<T, Args extends any[] = any[]> {
     }
 
     public put(item: T): void {
-        this._beforePut?.(item);
-        this._pool.push(item);
+        const index = this._pool.indexOf(item);
+        if (index < 0) {
+            this._beforePut?.(item);
+            this._pool.push(item);
+        } else {
+            throw new Error('item already in pool');
+        }
     }
 }
