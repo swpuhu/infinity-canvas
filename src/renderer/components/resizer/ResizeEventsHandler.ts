@@ -6,6 +6,7 @@ import {
     IPointData,
     SNodeEvents,
 } from '@/common/types';
+import { isText } from '@/common/util';
 import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
@@ -108,6 +109,7 @@ export class ResizeEventsHandler extends EventEmitter {
             this._resizerUI.dummyNode,
             this._pool
         );
+        this._currentNodes.forEach((item) => item.showFrame());
         this._resizerUI.updateHandlerNodes();
     };
 
@@ -140,6 +142,12 @@ export class ResizeEventsHandler extends EventEmitter {
         let isLockAspect = this._isLockAspect;
         if (this._currentNodes.length > 1) {
             isLockAspect = true;
+        } else if (
+            this._currentNodes.length === 1 &&
+            isText(this._currentNodes[0])
+        ) {
+            isLockAspect = true;
+            aspectKeepMode = EnumAspectKeepMode.HEIGHT;
         }
         if (aspectKeepMode === EnumAspectKeepMode.NONE && isLockAspect) {
             if (nextWidth > keepHeightWidth) {
@@ -209,5 +217,6 @@ export class ResizeEventsHandler extends EventEmitter {
             SNodeEvents.POINTER_UP,
             this._onResizePointerUp
         );
+        this._currentNodes.forEach((item) => item.showFrame());
     }
 }

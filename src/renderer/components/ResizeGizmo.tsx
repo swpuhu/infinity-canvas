@@ -39,14 +39,19 @@ export class ResizeGizmo {
             this.unMount();
             return;
         }
-        const worldRect = getWorldRect(targetNodes);
-        const dummyNode = new SNode();
-        dummyNode.position.set(worldRect[0], worldRect[1]);
-        dummyNode.width = worldRect[2] - worldRect[0];
-        dummyNode.height = worldRect[3] - worldRect[1];
-        dummyNode.anchor.set(0, 0);
+        if (targetNodes.length === 1) {
+            this._uiComponent.alignToNode(targetNodes[0]);
+        } else {
+            const worldRect = getWorldRect(targetNodes);
+            const dummyNode = new SNode();
+            dummyNode.position.set(worldRect[0], worldRect[1]);
+            dummyNode.width = worldRect[2] - worldRect[0];
+            dummyNode.height = worldRect[3] - worldRect[1];
+            dummyNode.anchor.set(0, 0);
 
-        this._uiComponent.alignToNode(dummyNode);
+            this._uiComponent.alignToNode(dummyNode);
+        }
+
         this._uiComponent.show();
         this._uiComponent.updateHandlerNodes();
     }

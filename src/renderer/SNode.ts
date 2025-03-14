@@ -23,6 +23,7 @@ import { alignToNode } from './util';
 class SNode extends EventEmitter {
     private _children: SNode[] = [];
     private _parent: SNode | null = null;
+    private _needDrawFrame: boolean = false;
     private _position: IPoint = new Vec2(0, 0, () => {
         // console.log(
         //     this.name,
@@ -437,6 +438,14 @@ class SNode extends EventEmitter {
         this._eventPhase = '';
         this._worldMatrixInv = mat3.identity(this._worldMatrixInv);
         this.updateWorldMatrix();
+    }
+
+    public showFrame(): void {
+        this._needDrawFrame = true;
+    }
+
+    public hideFrame(): void {
+        this._needDrawFrame = false;
     }
 }
 
