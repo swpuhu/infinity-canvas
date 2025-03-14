@@ -53,6 +53,7 @@ export class ResizerUI {
     private _ltNodeRef: SNodeConfig.IRefSNode = refSNode();
     private _rbNodeRef: SNodeConfig.IRefSNode = refSNode();
     private _rtNodeRef: SNodeConfig.IRefSNode = refSNode();
+    private _dummyRef: SNodeConfig.IRefSNode = refSNode();
 
     private _leftLineRef: SNodeConfig.IRefSNode = refSNode();
     private _rightLineRef: SNodeConfig.IRefSNode = refSNode();
@@ -104,6 +105,13 @@ export class ResizerUI {
         return this._root;
     }
 
+    get dummyNode(): SNode {
+        if (!this._dummyRef.value) {
+            throw new Error('dummyNode is not initialized');
+        }
+        return this._dummyRef.value;
+    }
+
     private _createHandler(): void {
         // 创建控制点
         const controlPoints = [
@@ -149,6 +157,14 @@ export class ResizerUI {
                     height={ROTATE_GIZMO_SIZE}
                     style={blockStyle}
                 />
+                <container name="dummy" ref={this._dummyRef}>
+                    {/* <rect
+                        name="dummy-rect"
+                        width={100}
+                        height={100}
+                        style={blockStyle}
+                    /> */}
+                </container>
             </container>
         );
 

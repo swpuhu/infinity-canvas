@@ -63,7 +63,7 @@ export class RotateEventsHandler extends EventEmitter {
         this._rotateStartPos.set(eventWorldPos[0], eventWorldPos[1]);
         this._dummyNodes = cloneNodesAndMoveIn(
             this._currentNodes,
-            this._resizerUI.node,
+            this._resizerUI.dummyNode,
             this._pool
         );
 
@@ -100,6 +100,7 @@ export class RotateEventsHandler extends EventEmitter {
             this._dummyNodes.forEach((dummyNode) => {
                 this._pool.put(dummyNode);
             });
+            this._resizerUI.dummyNode.rotation = 0;
         }
     };
 }

@@ -133,6 +133,20 @@ export function cloneNodesAndMoveIn(
 ): SNode[] {
     return srcs.map((node) => {
         const dummyNode = pool.get();
+        dummyNode.width = node.width;
+        dummyNode.height = node.height;
+        // Debug
+        // const rect = dummyNode.addComponent(SGeoRect);
+        // rect.applyStyle({
+        //     props: {
+        //         width: node.width,
+        //         height: node.height,
+        //     },
+
+        //     style: {
+        //         fill: 0xffbbcc,
+        //     },
+        // });
 
         dummyNode.anchor.set(node.anchor.x, node.anchor.y);
         dummyNode.setParent(node);

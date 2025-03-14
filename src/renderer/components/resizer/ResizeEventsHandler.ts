@@ -1,3 +1,5 @@
+import { nodePool } from '@/common/NodePool';
+import { Pool } from '@/common/Pool';
 import {
     EnumAspectKeepMode,
     EventNames,
@@ -7,7 +9,7 @@ import {
 import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
-import { changeAnchorButStay } from '@/renderer/util';
+import { changeAnchorButStay, cloneNodesAndMoveIn } from '@/renderer/util';
 import EventEmitter from 'eventemitter3';
 import { ResizerUI } from './ResizerUI';
 
@@ -29,10 +31,17 @@ export class ResizeEventsHandler extends EventEmitter {
     private _currentNodes: SNode[] = [];
     private _isResizing: boolean = false;
 
+    private _currentWidth: number = 0;
+    private _currentHeight: number = 0;
+
+    protected _pool: Pool<SNode> = nodePool;
+
+    protected _dummyNodes: SNode[] = [];
+
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         super();
         this._enableResize();
-        this._resizerUI.resizeHandlerNodes.forEach(node => {
+        this._resizerUI.resizeHandlerNodes.forEach((node) => {
             this._editor.eventSystem.addEventListener(
                 node,
                 SNodeEvents.POINTER_DOWN,
@@ -56,34 +65,49 @@ export class ResizeEventsHandler extends EventEmitter {
         this._isResizing = true;
         this._currentHandleNode = event.target;
 
-        // this._originAspect = this._currentNodes.width / this._currentNodes.height;
+        this._originAspect =
+            this._resizerUI.node.width / this._resizerUI.node.height;
 
         if (event.target === this._resizerUI.lbNode) {
             changeAnchorButStay(this._resizerUI.node, {
                 x: 1,
                 y: 1,
             });
+            this._resizerUI.dummyNode.anchor.set(1, 1);
         } else if (event.target === this._resizerUI.ltNode) {
             changeAnchorButStay(this._resizerUI.node, {
                 x: 1,
                 y: 0,
             });
+            this._resizerUI.dummyNode.anchor.set(1, 0);
         } else if (event.target === this._resizerUI.rbNode) {
             changeAnchorButStay(this._resizerUI.node, {
                 x: 0,
                 y: 1,
             });
+            this._resizerUI.dummyNode.anchor.set(0, 1);
         } else if (event.target === this._resizerUI.rtNode) {
             changeAnchorButStay(this._resizerUI.node, {
                 x: 0,
                 y: 0,
             });
+            this._resizerUI.dummyNode.anchor.set(0, 0);
         }
         const hostNode = this._resizerUI.node;
         const localPos = hostNode!.toLocal(event.getWorldPosition());
         this._resizeStartNodeSize.set(hostNode!.width, hostNode!.height);
         this._resizeStartPos.set(localPos[0], localPos[1]);
 
+        this._currentWidth = this._resizerUI.node.width;
+        this._currentHeight = this._resizerUI.node.height;
+        console.log('this._currentWidth', this._currentWidth);
+        console.log('this._currentHeight', this._currentHeight);
+
+        this._dummyNodes = cloneNodesAndMoveIn(
+            this._currentNodes,
+            this._resizerUI.dummyNode,
+            this._pool
+        );
         this._resizerUI.updateHandlerNodes();
     };
 
@@ -113,7 +137,11 @@ export class ResizeEventsHandler extends EventEmitter {
         const keepHeightWidth = nextHeight * this._originAspect;
 
         let aspectKeepMode = EnumAspectKeepMode.NONE;
-        if (aspectKeepMode === EnumAspectKeepMode.NONE && this._isLockAspect) {
+        let isLockAspect = this._isLockAspect;
+        if (this._currentNodes.length > 1) {
+            isLockAspect = true;
+        }
+        if (aspectKeepMode === EnumAspectKeepMode.NONE && isLockAspect) {
             if (nextWidth > keepHeightWidth) {
                 aspectKeepMode = EnumAspectKeepMode.WIDTH;
             } else {
@@ -128,6 +156,28 @@ export class ResizeEventsHandler extends EventEmitter {
         }
         this._resizerUI.node!.width = nextWidth;
         this._resizerUI.node!.height = nextHeight;
+        const scaleX = nextWidth / this._currentWidth;
+        const scaleY = nextHeight / this._currentHeight;
+        console.log('scaleX', scaleX);
+        console.log('scaleY', scaleY);
+
+        // const dummyNodeWorldMat = this._resizerUI.dummyNode.getWorldMatrix();
+        // const { scale, position, rotation } =
+        //     decomposeMatrix(dummyNodeWorldMat);
+        // console.table({
+        //     name: this._resizerUI.dummyNode.name,
+        //     x: position.x,
+        //     y: position.y,
+        //     scaleX: scale.x,
+        //     scaleY: scale.y,
+        //     rotation,
+        // });
+        this._resizerUI.dummyNode.scale.set(scaleX, scaleY);
+
+        this._dummyNodes.forEach((dummyNode, i) => {
+            const pairNode = this._currentNodes[i];
+            pairNode.alignTo(dummyNode);
+        });
         // this._currentNodes!.alignTo(this._resizerUI.node!);
         this._resizerUI.updateHandlerNodes();
     };
@@ -136,9 +186,16 @@ export class ResizeEventsHandler extends EventEmitter {
         if (!this._currentNodes || !this._isResizing) {
             return;
         }
+        if (this._isResizing) {
+            this._isResizing = false;
+            this._currentHandleNode = null;
+            this._dummyNodes.forEach((dummyNode) => {
+                this._pool.put(dummyNode);
+            });
+            this._resizerUI.dummyNode.scale.set(1, 1);
+            return;
+        }
         // changeAnchorButStay(this._currentNodes!, this._originAnchor);
-        this._isResizing = false;
-        this._currentHandleNode = null;
     };
 
     private _enableResize(): void {

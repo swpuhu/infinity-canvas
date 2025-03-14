@@ -1,6 +1,4 @@
-import {
-    EventNames,
-} from '@/common/types';
+import { EventNames } from '@/common/types';
 import { CanvasEditor } from '../Editor';
 import SNode from '../SNode';
 import { getWorldRect } from '../util';
@@ -49,7 +47,6 @@ export class ResizeGizmo {
         dummyNode.anchor.set(0, 0);
 
         this._uiComponent.alignToNode(dummyNode);
-        console.log(this._uiComponent.node);
         this._uiComponent.show();
         this._uiComponent.updateHandlerNodes();
     }
@@ -58,5 +55,5 @@ export class ResizeGizmo {
         this._uiComponent.hide();
     }
 
-    public destroy(): void { }
+    public destroy(): void {}
 }

@@ -61,7 +61,7 @@ export class DragEventsHandler extends EventEmitter {
 
         this._dummyNodes = cloneNodesAndMoveIn(
             this._currentNodes,
-            this._resizerUI.node,
+            this._resizerUI.dummyNode,
             this._pool
         );
 
