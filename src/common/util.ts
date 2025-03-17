@@ -225,3 +225,10 @@ export function moveIntoButStay(node: SNode, target: SNode): void {
     // 重新设置节点的世界矩阵，保持其在世界坐标系中的位置不变
     node.setWorldMatrix(worldMatrix);
 }
+
+export function isCtrlKey(event: KeyboardEvent | WheelEvent): boolean {
+    if (isMacOS()) {
+        return event.metaKey;
+    }
+    return event.ctrlKey;
+}

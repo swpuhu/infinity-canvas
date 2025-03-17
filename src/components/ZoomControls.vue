@@ -78,8 +78,17 @@
                 </svg>
             </button>
 
-            <!-- Zoom level display -->
-            <div class="zoom-level">{{ displayZoomPercentage }}%</div>
+            <!-- Zoom level input -->
+            <div class="zoom-level-input-container">
+                <input
+                    type="text"
+                    class="zoom-level-input"
+                    v-model="inputZoomPercentage"
+                    @blur="handleZoomInputBlur"
+                    @keyup.enter="handleZoomInputBlur"
+                />
+                <span class="zoom-level-suffix">%</span>
+            </div>
 
             <!-- Zoom in button -->
             <button class="control-button" @click="zoomIn">
@@ -125,26 +134,61 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineEmits, ref } from 'vue';
+import { computed, defineEmits, ref, watch } from 'vue';
 
 const emit = defineEmits(['zoom-change', 'zoom-value-change']);
 const zoomValue = ref(0); // Default zoom value is 0 (100% scale)
-const zoomStep = 0.25; // Step size for zoom in/out operations
+const zoomStep = 0.05; // Step size for zoom in/out operations, matching ZoomStore
 
 // Computed property to display zoom percentage
 const displayZoomPercentage = computed(() => {
     return Math.round(Math.exp(zoomValue.value) * 100);
 });
 
+// Input field for zoom percentage
+const inputZoomPercentage = ref('100');
+
+// Watch for changes in the zoom value to update the input field
+watch(displayZoomPercentage, (newPercentage) => {
+    inputZoomPercentage.value = newPercentage.toString();
+});
+
+// Handle zoom input blur or enter key press
+function handleZoomInputBlur() {
+    let percentage = parseInt(inputZoomPercentage.value);
+
+    // Validate input
+    if (isNaN(percentage) || percentage <= 0) {
+        // Reset to current zoom if invalid
+        inputZoomPercentage.value = displayZoomPercentage.value.toString();
+        return;
+    }
+
+    // Calculate min and max percentages based on zoom value limits
+    const minPercentage = Math.round(Math.exp(-2) * 100); // ~13.5%
+    const maxPercentage = Math.round(Math.exp(1.5) * 100); // ~448%
+
+    // Clamp percentage within valid range
+    percentage = Math.max(minPercentage, Math.min(percentage, maxPercentage));
+
+    // Update input field with clamped value
+    inputZoomPercentage.value = percentage.toString();
+
+    // Convert percentage to zoom value and emit change
+    const newZoomValue = Math.log(percentage / 100);
+    zoomValue.value = newZoomValue;
+    emit('zoom-value-change', newZoomValue);
+}
+
 // Zoom in by one step
 function zoomIn() {
-    zoomValue.value = Math.min(zoomValue.value + zoomStep, 3);
+    zoomValue.value = Math.min(zoomValue.value + zoomStep, 1.5);
     emit('zoom-value-change', zoomValue.value);
 }
 
 // Zoom out by one step
 function zoomOut() {
-    zoomValue.value = Math.max(zoomValue.value - zoomStep, -3);
+    zoomValue.value = Math.max(zoomValue.value - zoomStep, -2);
     emit('zoom-value-change', zoomValue.value);
 }
 
@@ -156,13 +200,14 @@ function resetZoom() {
 
 // Method to be called from parent to update zoom value
 function setZoomValue(value: number) {
-    zoomValue.value = Math.max(-3, Math.min(value, 3));
+    zoomValue.value = Math.max(-2, Math.min(value, 1.5));
 }
 
 // Method to be called from parent to update zoom percentage
 function setZoomPercentage(percentage: number) {
     // Convert percentage to zoom value using natural logarithm
     zoomValue.value = Math.log(percentage / 100);
+    inputZoomPercentage.value = percentage.toString();
 }
 
 // Expose methods to parent component
@@ -213,13 +258,37 @@ defineExpose({
     cursor: not-allowed;
 }
 
-.zoom-level {
+.zoom-level-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 60px;
+    margin: 0 8px;
+}
+
+.zoom-level-input {
+    width: 50px;
+    height: 28px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    padding: 0 20px 0 8px;
+    font-size: 14px;
+    color: #333;
+    text-align: right;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
         Helvetica, Arial, sans-serif;
+}
+
+.zoom-level-input:focus {
+    outline: none;
+    border-color: #409eff;
+}
+
+.zoom-level-suffix {
+    position: absolute;
+    right: 8px;
+    color: #606266;
     font-size: 14px;
-    padding: 0 12px;
-    min-width: 60px;
-    text-align: center;
-    color: #333;
+    pointer-events: none;
 }
 </style>

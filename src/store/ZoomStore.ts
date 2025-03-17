@@ -4,8 +4,8 @@ export const useZoomStore = defineStore('zoom', {
     state: () => ({
         // Zoom value (can be negative)
         zoomValue: 0, // Default zoom value is 0, which corresponds to 100% scale
-        minZoomValue: -2, // Minimum zoom value
-        maxZoomValue: 1.5, // Maximum zoom value
+        minZoomValue: -2, // Minimum zoom value (~13.5% scale)
+        maxZoomValue: 1.5, // Maximum zoom value (~448% scale)
         zoomStep: 0.05, // Step size for zoom in/out operations
     }),
 

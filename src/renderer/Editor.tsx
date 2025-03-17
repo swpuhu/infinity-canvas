@@ -16,8 +16,8 @@ export class CanvasEditor {
     private _scene: WhiteboardScene | null = null;
     private _resizeGizmo: ResizeGizmo | null = null;
     private _zoomValue: number = 0; // Default zoom value is 0 (100% scale)
-    private _minZoomValue: number = -3;
-    private _maxZoomValue: number = 3;
+    private _minZoomValue: number = -2; // Minimum zoom value (~13.5% scale)
+    private _maxZoomValue: number = 1.5; // Maximum zoom value (~448% scale)
 
     constructor(private _canvas: HTMLCanvasElement) {
         _canvas.tabIndex = 1;

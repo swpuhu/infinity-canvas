@@ -28,6 +28,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { isCtrlKey } from './common/util';
 import UButton from './components/UButton.vue';
 import ZoomControls from './components/ZoomControls.vue';
 import { CanvasEditor } from './renderer/Editor';
@@ -75,7 +76,7 @@ function initZoomFunctionality() {
 
 // Handle wheel events for zooming
 function handleWheel(event: WheelEvent) {
-    if (event.ctrlKey) {
+    if (isCtrlKey(event)) {
         event.preventDefault();
 
         if (event.deltaY < 0) {
