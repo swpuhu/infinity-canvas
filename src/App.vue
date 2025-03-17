@@ -19,7 +19,7 @@
                 <canvas ref="canvasRef"></canvas>
                 <ZoomControls
                     ref="zoomControlsRef"
-                    @zoom-change="handleZoomChange"
+                    @zoom-value-change="handleZoomValueChange"
                 />
             </div>
         </div>
@@ -68,16 +68,15 @@ function initZoomFunctionality() {
     // Add wheel event listener for zooming with Ctrl+Wheel
     canvasRef.value?.addEventListener('wheel', handleWheel, { passive: false });
 
-    // Set initial zoom level
-    zoomStore.setZoom(100);
-    zoomControlsRef.value?.setZoom(100);
+    // Set initial zoom value
+    zoomStore.resetZoom();
+    zoomControlsRef.value?.setZoomValue(0); // 0 corresponds to 100% scale
 }
 
 // Handle wheel events for zooming
 function handleWheel(event: WheelEvent) {
     if (event.ctrlKey) {
         event.preventDefault();
-        console.log('handleWheel', event.deltaY);
 
         if (event.deltaY < 0) {
             zoomStore.zoomIn();
@@ -89,9 +88,9 @@ function handleWheel(event: WheelEvent) {
     }
 }
 
-// Handle zoom change from the ZoomControls component
-function handleZoomChange(level: number) {
-    zoomStore.setZoom(level);
+// Handle zoom value change from the ZoomControls component
+function handleZoomValueChange(value: number) {
+    zoomStore.setZoomValue(value);
     applyZoom();
 }
 
@@ -99,20 +98,20 @@ function handleZoomChange(level: number) {
 function applyZoom() {
     if (!editor) return;
 
-    // Use the editor's setZoom method to apply the zoom
-    editor.setZoom(zoomStore.zoomLevel);
+    // Use the editor's setZoomValue method to apply the zoom
+    editor.setZoomValue(zoomStore.zoomValue);
 
     // Update the zoom controls display
-    zoomControlsRef.value?.setZoom(zoomStore.zoomLevel);
+    zoomControlsRef.value?.setZoomValue(zoomStore.zoomValue);
 }
 
-// Watch for changes in the zoom level
+// Watch for changes in the zoom value
 watch(
-    () => zoomStore.zoomLevel,
-    (newZoomLevel) => {
-        zoomControlsRef.value?.setZoom(newZoomLevel);
+    () => zoomStore.zoomValue,
+    (newZoomValue) => {
+        zoomControlsRef.value?.setZoomValue(newZoomValue);
         if (editor) {
-            editor.setZoom(newZoomLevel);
+            editor.setZoomValue(newZoomValue);
         }
     }
 );

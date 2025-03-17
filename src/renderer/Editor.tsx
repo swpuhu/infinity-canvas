@@ -15,7 +15,9 @@ export class CanvasEditor {
 
     private _scene: WhiteboardScene | null = null;
     private _resizeGizmo: ResizeGizmo | null = null;
-    private _zoomLevel: number = 100; // Default zoom level is 100%
+    private _zoomValue: number = 0; // Default zoom value is 0 (100% scale)
+    private _minZoomValue: number = -3;
+    private _maxZoomValue: number = 3;
 
     constructor(private _canvas: HTMLCanvasElement) {
         _canvas.tabIndex = 1;
@@ -104,19 +106,22 @@ export class CanvasEditor {
     }
 
     /**
-     * Set the zoom level of the canvas
-     * @param zoomLevel Zoom level percentage (e.g., 100 for 100%)
+     * Set the zoom value of the canvas
+     * @param zoomValue Zoom value (can be negative)
      */
-    public setZoom(zoomLevel: number): void {
+    public setZoomValue(zoomValue: number): void {
         if (!this._scene) {
             throw new Error('scene is not initialized');
         }
 
-        // Clamp zoom level between 50% and 200%
-        this._zoomLevel = Math.max(50, Math.min(zoomLevel, 200));
+        // Clamp zoom value between min and max
+        this._zoomValue = Math.max(
+            this._minZoomValue,
+            Math.min(zoomValue, this._maxZoomValue)
+        );
 
-        // Calculate scale factor
-        const scale = this._zoomLevel / 100;
+        // Calculate scale factor using exponential function
+        const scale = Math.exp(this._zoomValue);
 
         // Get the canvas container node
         const canvasContainer =
@@ -137,11 +142,29 @@ export class CanvasEditor {
     }
 
     /**
-     * Get the current zoom level
-     * @returns Current zoom level percentage
+     * Set the zoom percentage of the canvas
+     * @param percentage Zoom percentage (e.g., 100 for 100%)
      */
-    public getZoom(): number {
-        return this._zoomLevel;
+    public setZoomPercentage(percentage: number): void {
+        // Convert percentage to zoom value using natural logarithm
+        const zoomValue = Math.log(percentage / 100);
+        this.setZoomValue(zoomValue);
+    }
+
+    /**
+     * Get the current zoom value
+     * @returns Current zoom value
+     */
+    public getZoomValue(): number {
+        return this._zoomValue;
+    }
+
+    /**
+     * Get the current zoom percentage
+     * @returns Current zoom percentage
+     */
+    public getZoomPercentage(): number {
+        return Math.round(Math.exp(this._zoomValue) * 100);
     }
 
     public saveToImage() {

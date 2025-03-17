@@ -79,7 +79,7 @@
             </button>
 
             <!-- Zoom level display -->
-            <div class="zoom-level">{{ zoomLevel }}%</div>
+            <div class="zoom-level">{{ displayZoomPercentage }}%</div>
 
             <!-- Zoom in button -->
             <button class="control-button" @click="zoomIn">
@@ -125,37 +125,50 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, ref } from 'vue';
+import { computed, defineEmits, ref } from 'vue';
 
-const emit = defineEmits(['zoom-change']);
-const zoomLevel = ref(100);
+const emit = defineEmits(['zoom-change', 'zoom-value-change']);
+const zoomValue = ref(0); // Default zoom value is 0 (100% scale)
+const zoomStep = 0.25; // Step size for zoom in/out operations
 
-// Zoom in by 10%
+// Computed property to display zoom percentage
+const displayZoomPercentage = computed(() => {
+    return Math.round(Math.exp(zoomValue.value) * 100);
+});
+
+// Zoom in by one step
 function zoomIn() {
-    zoomLevel.value = Math.min(zoomLevel.value + 10, 200);
-    emit('zoom-change', zoomLevel.value);
+    zoomValue.value = Math.min(zoomValue.value + zoomStep, 3);
+    emit('zoom-value-change', zoomValue.value);
 }
 
-// Zoom out by 10%
+// Zoom out by one step
 function zoomOut() {
-    zoomLevel.value = Math.max(zoomLevel.value - 10, 50);
-    emit('zoom-change', zoomLevel.value);
+    zoomValue.value = Math.max(zoomValue.value - zoomStep, -3);
+    emit('zoom-value-change', zoomValue.value);
 }
 
-// Reset zoom to 100%
+// Reset zoom to 100% (zoom value = 0)
 function resetZoom() {
-    zoomLevel.value = 100;
-    emit('zoom-change', zoomLevel.value);
+    zoomValue.value = 0;
+    emit('zoom-value-change', zoomValue.value);
 }
 
-// Method to be called from parent to update zoom level
-function setZoom(level: number) {
-    zoomLevel.value = Math.max(50, Math.min(level, 200));
+// Method to be called from parent to update zoom value
+function setZoomValue(value: number) {
+    zoomValue.value = Math.max(-3, Math.min(value, 3));
+}
+
+// Method to be called from parent to update zoom percentage
+function setZoomPercentage(percentage: number) {
+    // Convert percentage to zoom value using natural logarithm
+    zoomValue.value = Math.log(percentage / 100);
 }
 
 // Expose methods to parent component
 defineExpose({
-    setZoom,
+    setZoomValue,
+    setZoomPercentage,
 });
 </script>
 
