@@ -1,5 +1,6 @@
 import eventBus from '@/common/eventBus';
 import { EventNames } from '@/common/types';
+import { Vec2 } from '@/common/Vec2';
 import { CanvasKitModule } from '@/lib/canvaskit';
 import { ResizeGizmo } from './components/ResizeGizmo';
 import { createElement } from './createElement';
@@ -14,6 +15,7 @@ export class CanvasEditor {
 
     private _scene: WhiteboardScene | null = null;
     private _resizeGizmo: ResizeGizmo | null = null;
+    private _zoomLevel: number = 100; // Default zoom level is 100%
 
     constructor(private _canvas: HTMLCanvasElement) {
         _canvas.tabIndex = 1;
@@ -99,6 +101,47 @@ export class CanvasEditor {
         // }, 1000);
 
         this._renderer.render(scene.rootNode);
+    }
+
+    /**
+     * Set the zoom level of the canvas
+     * @param zoomLevel Zoom level percentage (e.g., 100 for 100%)
+     */
+    public setZoom(zoomLevel: number): void {
+        if (!this._scene) {
+            throw new Error('scene is not initialized');
+        }
+
+        // Clamp zoom level between 50% and 200%
+        this._zoomLevel = Math.max(50, Math.min(zoomLevel, 200));
+
+        // Calculate scale factor
+        const scale = this._zoomLevel / 100;
+
+        // Get the canvas container node
+        const canvasContainer =
+            this._scene.rootNode.getNodeByName('canvas-container');
+
+        if (canvasContainer) {
+            // Get the base scale from the virtual canvas scale
+            const baseScale = this._scene.getVirtualCanvasScale();
+
+            // Apply the zoom scale on top of the base scale
+            canvasContainer.setTransform({
+                scale: new Vec2(baseScale.x * scale, baseScale.y * scale),
+            });
+
+            // Trigger a redraw
+            eventBus.reDraw();
+        }
+    }
+
+    /**
+     * Get the current zoom level
+     * @returns Current zoom level percentage
+     */
+    public getZoom(): number {
+        return this._zoomLevel;
     }
 
     public saveToImage() {
