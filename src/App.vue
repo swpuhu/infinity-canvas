@@ -79,13 +79,23 @@ function handleWheel(event: WheelEvent) {
     if (isCtrlKey(event)) {
         event.preventDefault();
 
+        // Get mouse position relative to the canvas
+        const rect = canvasRef.value!.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+
+        // Store the old zoom value
+        const oldZoomValue = zoomStore.zoomValue;
+
+        // Update zoom value in the store
         if (event.deltaY < 0) {
             zoomStore.zoomIn();
         } else {
             zoomStore.zoomOut();
         }
 
-        applyZoom();
+        // Apply zoom centered around mouse position
+        applyZoomWithCenter(mouseX, mouseY);
     }
 }
 
@@ -95,7 +105,7 @@ function handleZoomValueChange(value: number) {
     applyZoom();
 }
 
-// Apply zoom to the canvas
+// Apply zoom to the canvas (without specifying a center point)
 function applyZoom() {
     if (!editor) return;
 
@@ -106,14 +116,22 @@ function applyZoom() {
     zoomControlsRef.value?.setZoomValue(zoomStore.zoomValue);
 }
 
+// Apply zoom to the canvas with a specific center point
+function applyZoomWithCenter(centerX: number, centerY: number) {
+    if (!editor) return;
+
+    // Use the editor's setZoomValue method to apply the zoom centered around the specified point
+    editor.setZoomValue(zoomStore.zoomValue, centerX, centerY);
+
+    // Update the zoom controls display
+    zoomControlsRef.value?.setZoomValue(zoomStore.zoomValue);
+}
+
 // Watch for changes in the zoom value
 watch(
     () => zoomStore.zoomValue,
     (newZoomValue) => {
         zoomControlsRef.value?.setZoomValue(newZoomValue);
-        if (editor) {
-            editor.setZoomValue(newZoomValue);
-        }
     }
 );
 

@@ -51,7 +51,7 @@ export class EventsHandler extends EventEmitter {
         );
 
         this._editor.eventSystem.addEventListener(
-            this._editor.scene.canvasLayer,
+            this._editor.scene.rootNode,
             SNodeEvents.POINTER_DOWN,
             this._handleCanvasLayerPointerDown
         );
