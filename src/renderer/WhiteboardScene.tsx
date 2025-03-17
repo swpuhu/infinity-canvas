@@ -1,11 +1,10 @@
 import { EventNames, ISize, SceneOptions, SNodeConfig } from '@/common/types';
-import SNode from './SNode';
-import { createNodeFromConfig, refSNode } from './util';
 import { Vec2 } from '@/common/Vec2';
 import EventEmitter from 'eventemitter3';
 import { createElement } from './createElement';
-import { SceneX } from './UIComponent/SceneX';
+import SNode from './SNode';
 import { WhiteboardSceneX } from './UIComponent/WhiteboardSceneX';
+import { createNodeFromConfig, refSNode } from './util';
 
 export class WhiteboardScene extends EventEmitter {
     public rootNode: SNode;
@@ -30,6 +29,10 @@ export class WhiteboardScene extends EventEmitter {
 
     get canvasLayer(): SNode {
         return this.virtualCanvasRef.value!;
+    }
+
+    get canvasContainer(): SNode {
+        return this.canvasContainerRef.value!;
     }
 
     constructor(option: SceneOptions) {

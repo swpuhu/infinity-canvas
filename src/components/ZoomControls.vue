@@ -37,8 +37,12 @@
                 </svg>
             </button>
 
-            <!-- Hand tool (UI only) -->
-            <button class="control-button" disabled>
+            <!-- Hand tool -->
+            <button
+                class="control-button"
+                :class="{ active: isHandToolActive }"
+                @click="toggleHandTool"
+            >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -134,11 +138,36 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineEmits, ref, watch } from 'vue';
+import { Vec2 } from '@/common/Vec2';
+import { computed, defineEmits, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useEditorModeStore } from '../store/EditorModeStore';
 
-const emit = defineEmits(['zoom-change', 'zoom-value-change']);
+const emit = defineEmits([
+    'zoom-change',
+    'zoom-value-change',
+    'hand-tool-change',
+    'canvas-drag',
+    'canvas-drag-start',
+]);
 const zoomValue = ref(0); // Default zoom value is 0 (100% scale)
 const zoomStep = 0.05; // Step size for zoom in/out operations, matching ZoomStore
+
+// Get the editor mode store
+const editorModeStore = useEditorModeStore();
+
+// Hand tool state
+const isSpaceKeyPressed = ref(false);
+const isDragging = ref(false);
+const startPos = new Vec2(0);
+const dragPos = new Vec2(0);
+
+// Computed property for hand tool active state from the store
+const isHandToolActive = computed(() => editorModeStore.isHandToolActive);
+
+// Computed property to check if hand tool mode is active (either by button click or space key)
+const isHandToolMode = computed(() => {
+    return isHandToolActive.value || isSpaceKeyPressed.value;
+});
 
 // Computed property to display zoom percentage
 const displayZoomPercentage = computed(() => {
@@ -151,6 +180,113 @@ const inputZoomPercentage = ref('100');
 // Watch for changes in the zoom value to update the input field
 watch(displayZoomPercentage, (newPercentage) => {
     inputZoomPercentage.value = newPercentage.toString();
+});
+
+// Toggle hand tool mode
+function toggleHandTool() {
+    const newState = !editorModeStore.isHandToolActive;
+    editorModeStore.setHandToolActive(newState);
+    emit('hand-tool-change', newState);
+}
+
+// Handle space key press
+function handleKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Space' && !event.repeat && !isSpaceKeyPressed.value) {
+        isSpaceKeyPressed.value = true;
+
+        // Update cursor immediately
+        updateCursor();
+
+        emit('hand-tool-change', true);
+        // Prevent default space behavior (like scrolling the page)
+        event.preventDefault();
+    }
+}
+
+// Handle space key release
+function handleKeyUp(event: KeyboardEvent) {
+    if (event.code === 'Space' && isSpaceKeyPressed.value) {
+        isSpaceKeyPressed.value = false;
+
+        // If we're currently dragging, end the drag operation
+        if (isDragging.value) {
+            isDragging.value = false;
+        }
+
+        // Update cursor based on current state
+
+        // Only emit hand-tool-change event if the hand tool isn't active from button click
+
+        emit('hand-tool-change', false);
+        updateCursor();
+    }
+}
+
+// Handle mouse down in hand tool mode
+function handleMouseDown(event: MouseEvent) {
+    if (isHandToolMode.value) {
+        isDragging.value = true;
+        startPos.set(event.offsetX, event.offsetY);
+        console.log('startPos', startPos);
+        document.body.style.cursor = 'grabbing';
+        event.preventDefault();
+        emit('canvas-drag-start', { x: startPos.x, y: startPos.y });
+    }
+}
+
+// Handle mouse move for canvas dragging
+function handleMouseMove(event: MouseEvent) {
+    if (isDragging.value) {
+        const offsetX = event.offsetX;
+        const offsetY = event.offsetY;
+        const deltaX = offsetX - startPos.x;
+        const deltaY = offsetY - startPos.y;
+        console.log(deltaX, deltaY);
+        emit('canvas-drag', { deltaX, deltaY });
+
+        event.preventDefault();
+    }
+}
+
+// Handle mouse up to end dragging
+function handleMouseUp() {
+    if (isDragging.value) {
+        isDragging.value = false;
+        document.body.style.cursor = isHandToolMode.value ? 'grab' : 'default';
+    }
+}
+
+// Update cursor based on hand tool mode
+function updateCursor() {
+    document.body.style.cursor = isHandToolMode.value ? 'grab' : 'default';
+}
+
+// Watch for changes in hand tool mode to update cursor
+watch(isHandToolMode, (newValue) => {
+    updateCursor();
+});
+
+// Set up event listeners on component mount
+onMounted(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    // Also handle case when mouse leaves the window
+    window.addEventListener('mouseleave', handleMouseUp);
+});
+
+// Clean up event listeners on component unmount
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeyDown);
+    window.removeEventListener('keyup', handleKeyUp);
+    window.removeEventListener('mousedown', handleMouseDown);
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+    window.removeEventListener('mouseleave', handleMouseUp);
+    // Reset cursor
+    document.body.style.cursor = 'default';
 });
 
 // Handle zoom input blur or enter key press
@@ -210,10 +346,17 @@ function setZoomPercentage(percentage: number) {
     inputZoomPercentage.value = percentage.toString();
 }
 
+// Method to be called from parent to set hand tool state
+function setHandToolActive(active: boolean) {
+    editorModeStore.setHandToolActive(active);
+    updateCursor();
+}
+
 // Expose methods to parent component
 defineExpose({
     setZoomValue,
     setZoomPercentage,
+    setHandToolActive,
 });
 </script>
 
@@ -256,6 +399,11 @@ defineExpose({
 .control-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.control-button.active {
+    background-color: #e6f7ff;
+    color: #1890ff;
 }
 
 .zoom-level-input-container {

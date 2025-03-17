@@ -20,6 +20,9 @@
                 <ZoomControls
                     ref="zoomControlsRef"
                     @zoom-value-change="handleZoomValueChange"
+                    @hand-tool-change="handleHandToolChange"
+                    @canvas-drag="handleCanvasDrag"
+                    @canvas-drag-start="handleCanvasDragStart"
                 />
             </div>
         </div>
@@ -28,10 +31,14 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { Vec2 } from './common/Vec2';
+import eventBus from './common/eventBus';
+import { IPoint } from './common/types';
 import { isCtrlKey } from './common/util';
 import UButton from './components/UButton.vue';
 import ZoomControls from './components/ZoomControls.vue';
 import { CanvasEditor } from './renderer/Editor';
+import { useEditorModeStore } from './store/EditorModeStore';
 import { useUIStore } from './store/UIStore';
 import { useZoomStore } from './store/ZoomStore';
 
@@ -40,6 +47,7 @@ const zoomControlsRef = ref<InstanceType<typeof ZoomControls> | null>(null);
 
 const uiStore = useUIStore();
 const zoomStore = useZoomStore();
+const editorModeStore = useEditorModeStore();
 
 let editor: CanvasEditor | null = null;
 onMounted(async () => {
@@ -76,6 +84,9 @@ function initZoomFunctionality() {
 
 // Handle wheel events for zooming
 function handleWheel(event: WheelEvent) {
+    // If hand tool is active, don't zoom
+    if (editorModeStore.isHandToolMode) return;
+
     if (isCtrlKey(event)) {
         event.preventDefault();
 
@@ -125,6 +136,55 @@ function applyZoomWithCenter(centerX: number, centerY: number) {
 
     // Update the zoom controls display
     zoomControlsRef.value?.setZoomValue(zoomStore.zoomValue);
+}
+
+// Handle hand tool mode change
+function handleHandToolChange(active: boolean) {
+    // Update the editor mode store
+    editorModeStore.setHandToolActive(active);
+
+    // Update the ZoomControls component state if needed
+    if (zoomControlsRef.value) {
+        zoomControlsRef.value.setHandToolActive(active);
+    }
+}
+
+let editorStartPos: IPoint = new Vec2(0);
+
+function handleCanvasDragStart(startPos: { x: number; y: number }) {
+    if (!editor || !editorModeStore.isHandToolMode) return;
+
+    // Get the current canvas position
+    editorStartPos = editor.getCanvasPosition().clone();
+}
+
+// Handle canvas drag event
+function handleCanvasDrag(dragData: { deltaX: number; deltaY: number }) {
+    if (!editor || !editorModeStore.isHandToolMode) return;
+
+    // Get the current canvas position
+
+    // Calculate the new position by adding the delta values
+    const newX = editorStartPos.x + dragData.deltaX;
+    const newY = editorStartPos.y + dragData.deltaY;
+
+    // Apply the new position to the canvas container
+    const scene = editor.scene;
+    const canvasContainer = scene.rootNode.getNodeByName('canvas-container');
+
+    if (canvasContainer) {
+        // Get current scale to maintain it
+        const scale = canvasContainer.scale;
+
+        // Set the new position while keeping the same scale
+        canvasContainer.setTransform({
+            position: new Vec2(newX, newY),
+            scale: scale,
+        });
+
+        // Trigger a redraw
+        eventBus.reDraw();
+    }
 }
 
 // Watch for changes in the zoom value

@@ -2,6 +2,7 @@ import { EventNames, SNodeEvents } from '@/common/types';
 import { isText, visitNodeRecursive } from '@/common/util';
 import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
+import { useEditorModeStore } from '@/store/EditorModeStore';
 import EventEmitter from 'eventemitter3';
 import { DragEventsHandler } from './DragEventsHandler';
 import { EditEventsHandler } from './EditEventsHandler';
@@ -20,6 +21,9 @@ export class EventsHandler extends EventEmitter {
     private _editEventsHandler: EditEventsHandler;
 
     private _selectEventsHandler: SelectEventsHandler;
+
+    // Get the editor mode store
+    private _editorModeStore = useEditorModeStore();
 
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         super();
@@ -73,6 +77,9 @@ export class EventsHandler extends EventEmitter {
     }
 
     private _handleCanvasLayerDBClick = (event: SNodeEvents.IPointerEvent) => {
+        // Skip if in hand tool mode
+        if (this._editorModeStore.isHandToolMode) return;
+
         const textNodes = this._collectTextNodes();
         let hasHit = false;
         let hitNode: SNode | null = null;
@@ -96,6 +103,9 @@ export class EventsHandler extends EventEmitter {
     private _handleCanvasLayerPointerDown = (
         event: SNodeEvents.IPointerEvent
     ) => {
+        // Skip if in hand tool mode
+        if (this._editorModeStore.isHandToolMode) return;
+
         let hitNode: SNode | null = null;
         const allNodes = this._collectAllNodes();
         let hasHit = false;

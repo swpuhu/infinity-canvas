@@ -1,5 +1,5 @@
 import eventBus from '@/common/eventBus';
-import { EventNames } from '@/common/types';
+import { EventNames, IPoint } from '@/common/types';
 import { Vec2 } from '@/common/Vec2';
 import { CanvasKitModule } from '@/lib/canvaskit';
 import { ResizeGizmo } from './components/ResizeGizmo';
@@ -177,9 +177,6 @@ export class CanvasEditor {
                     position: new Vec2(newX, newY),
                     scale: new Vec2(newScaleX, newScaleY),
                 });
-
-                // Store the new position
-                this._canvasPosition = new Vec2(newX, newY);
             } else {
                 // Just update the scale without changing position
                 canvasContainer.setTransform({
@@ -228,8 +225,8 @@ export class CanvasEditor {
      * Get the canvas position in screen coordinates
      * @returns Canvas position
      */
-    public getCanvasPosition(): Vec2 {
-        return this._canvasPosition.clone();
+    public getCanvasPosition(): IPoint {
+        return this._scene!.canvasContainer.position;
     }
 
     /**
