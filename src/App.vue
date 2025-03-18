@@ -24,6 +24,10 @@
                     @canvas-drag="handleCanvasDrag"
                     @canvas-drag-start="handleCanvasDragStart"
                 />
+                <VerticalToolbar
+                    ref="verticalToolbarRef"
+                    @tool-selected="handleToolSelected"
+                />
             </div>
         </div>
     </div>
@@ -36,18 +40,24 @@ import eventBus from './common/eventBus';
 import { IPoint } from './common/types';
 import { isCtrlKey } from './common/util';
 import UButton from './components/UButton.vue';
+import VerticalToolbar from './components/VerticalToolbar.vue';
 import ZoomControls from './components/ZoomControls.vue';
 import { CanvasEditor } from './renderer/Editor';
 import { useEditorModeStore } from './store/EditorModeStore';
+import { ToolType, useToolStore } from './store/ToolStore';
 import { useUIStore } from './store/UIStore';
 import { useZoomStore } from './store/ZoomStore';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const zoomControlsRef = ref<InstanceType<typeof ZoomControls> | null>(null);
+const verticalToolbarRef = ref<InstanceType<typeof VerticalToolbar> | null>(
+    null
+);
 
 const uiStore = useUIStore();
 const zoomStore = useZoomStore();
 const editorModeStore = useEditorModeStore();
+const toolStore = useToolStore();
 
 let editor: CanvasEditor | null = null;
 onMounted(async () => {
@@ -210,6 +220,18 @@ const handleAddText = () => {
         uiStore.setWillAddText(true);
     }
 };
+
+// Handle tool selection from the vertical toolbar
+function handleToolSelected(tool: ToolType) {
+    console.log('Tool selected:', tool);
+
+    // Handle specific tool functionalities
+    if (tool === ToolType.TEXT) {
+        handleAddText();
+    } else if (tool === ToolType.HAND) {
+        // Hand tool is handled by the EditorModeStore via the VerticalToolbar
+    }
+}
 </script>
 
 <style>
