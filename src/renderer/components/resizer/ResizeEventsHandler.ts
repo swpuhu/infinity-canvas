@@ -173,7 +173,12 @@ export class ResizeEventsHandler extends EventEmitter {
         const scaleY = nextHeight / this._currentHeight;
         console.log('scaleX', scaleX);
         console.log('scaleY', scaleY);
-
+        if (this._snapGuide && this._currentNodes.length === 1) {
+            this._snapGuide.calculateSnapLines(
+                this._resizerUI.node,
+                this._currentNodes
+            );
+        }
         // const dummyNodeWorldMat = this._resizerUI.dummyNode.getWorldMatrix();
         // const { scale, position, rotation } =
         //     decomposeMatrix(dummyNodeWorldMat);

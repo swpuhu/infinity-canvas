@@ -43,7 +43,8 @@ export class EventsHandler extends EventEmitter {
         );
         this._rotateEventsHandler = new RotateEventsHandler(
             _editor,
-            _resizerUI
+            _resizerUI,
+            _snapGuide
         );
         this._editEventsHandler = new EditEventsHandler(_editor, _resizerUI);
 

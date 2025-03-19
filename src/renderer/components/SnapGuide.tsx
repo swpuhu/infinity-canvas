@@ -126,7 +126,11 @@ export class SnapGuide {
     public calculateSnapLines(
         srcNode: SNode,
         excludeNodes: SNode[] = []
-    ): IPointData {
+    ): {
+        position: IPointData;
+        width: number;
+        height: number;
+    } {
         const allNodes = this._editor.scene.getAllNodes();
         // Threshold for snapping (distance in pixels)
         const SNAP_THRESHOLD = 10;
@@ -346,5 +350,28 @@ export class SnapGuide {
         }
 
         return newPosition;
+    }
+
+    public calculateSnapRotation(srcNode: SNode): number {
+        // 获取当前角度
+        const currentRotation = srcNode.rotation;
+
+        // 定义吸附阈值（角度）
+        const ROTATION_SNAP_THRESHOLD = 5; // 5度阈值
+
+        // 计算最接近的90度倍数
+        const nearestMultipleOf90 = Math.round(currentRotation / 90) * 90;
+
+        // 检查是否在阈值范围内
+        if (
+            Math.abs(currentRotation - nearestMultipleOf90) <
+            ROTATION_SNAP_THRESHOLD
+        ) {
+            // 如果在阈值内，返回吸附后的角度
+            return nearestMultipleOf90;
+        }
+
+        // 如果不在阈值内，返回原始角度
+        return currentRotation;
     }
 }
