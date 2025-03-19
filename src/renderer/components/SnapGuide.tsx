@@ -123,7 +123,6 @@ export class SnapGuide {
         root.active = true;
     }
 
-    // ... existing code ...
     public calculateSnapLines(
         srcNode: SNode,
         excludeNodes: SNode[] = []
@@ -154,177 +153,188 @@ export class SnapGuide {
         // Array to store guide lines to display
         const guideLines: ILine[] = [];
 
-        // Check each node for potential snapping
+        // 定义对齐检查的配置数组，每个配置包含:
+        // - 源边缘值
+        // - 目标边缘获取函数
+        // - 是否为水平对齐
+        // - 线条构建函数
+        interface SnapCheck {
+            sourceProp: number;
+            targetProp: (targetAABB: number[]) => number;
+            isHorizontal: boolean;
+            createLine: (
+                srcAABB: number[],
+                targetAABB: number[],
+                value: number
+            ) => ILine;
+        }
+
+        // 定义所有需要检查的对齐情况
+        const snapChecks: SnapCheck[] = [
+            // 左边缘对齐
+            {
+                sourceProp: srcLeft,
+                targetProp: (targetAABB) => targetAABB[0], // targetLeft
+                isHorizontal: false,
+                createLine: (srcAABB, targetAABB, value) => ({
+                    start: {
+                        x: value,
+                        y: Math.min(srcAABB[1], targetAABB[1]) - 20, // min top
+                    },
+                    end: {
+                        x: value,
+                        y: Math.max(srcAABB[3], targetAABB[3]) + 20, // max bottom
+                    },
+                }),
+            },
+            // 右边缘对齐
+            {
+                sourceProp: srcRight,
+                targetProp: (targetAABB) => targetAABB[2], // targetRight
+                isHorizontal: false,
+                createLine: (srcAABB, targetAABB, value) => ({
+                    start: {
+                        x: value,
+                        y: Math.min(srcAABB[1], targetAABB[1]) - 20,
+                    },
+                    end: {
+                        x: value,
+                        y: Math.max(srcAABB[3], targetAABB[3]) + 20,
+                    },
+                }),
+            },
+            // 顶部对齐
+            {
+                sourceProp: srcTop,
+                targetProp: (targetAABB) => targetAABB[1], // targetTop
+                isHorizontal: true,
+                createLine: (srcAABB, targetAABB, value) => ({
+                    start: {
+                        x: Math.min(srcAABB[0], targetAABB[0]) - 20, // min left
+                        y: value,
+                    },
+                    end: {
+                        x: Math.max(srcAABB[2], targetAABB[2]) + 20, // max right
+                        y: value,
+                    },
+                }),
+            },
+            // 底部对齐
+            {
+                sourceProp: srcBottom,
+                targetProp: (targetAABB) => targetAABB[3], // targetBottom
+                isHorizontal: true,
+                createLine: (srcAABB, targetAABB, value) => ({
+                    start: {
+                        x: Math.min(srcAABB[0], targetAABB[0]) - 20,
+                        y: value,
+                    },
+                    end: {
+                        x: Math.max(srcAABB[2], targetAABB[2]) + 20,
+                        y: value,
+                    },
+                }),
+            },
+            // 左边缘到右边缘对齐
+            {
+                sourceProp: srcLeft,
+                targetProp: (targetAABB) => targetAABB[2], // targetRight
+                isHorizontal: false,
+                createLine: (srcAABB, targetAABB, value) => ({
+                    start: {
+                        x: value,
+                        y: Math.min(srcAABB[1], targetAABB[1]) - 20,
+                    },
+                    end: {
+                        x: value,
+                        y: Math.max(srcAABB[3], targetAABB[3]) + 20,
+                    },
+                }),
+            },
+            // 右边缘到左边缘对齐
+            {
+                sourceProp: srcRight,
+                targetProp: (targetAABB) => targetAABB[0], // targetLeft
+                isHorizontal: false,
+                createLine: (srcAABB, targetAABB, value) => ({
+                    start: {
+                        x: value,
+                        y: Math.min(srcAABB[1], targetAABB[1]) - 20,
+                    },
+                    end: {
+                        x: value,
+                        y: Math.max(srcAABB[3], targetAABB[3]) + 20,
+                    },
+                }),
+            },
+            // 顶部到底部对齐
+            {
+                sourceProp: srcTop,
+                targetProp: (targetAABB) => targetAABB[3], // targetBottom
+                isHorizontal: true,
+                createLine: (srcAABB, targetAABB, value) => ({
+                    start: {
+                        x: Math.min(srcAABB[0], targetAABB[0]) - 20,
+                        y: value,
+                    },
+                    end: {
+                        x: Math.max(srcAABB[2], targetAABB[2]) + 20,
+                        y: value,
+                    },
+                }),
+            },
+            // 底部到顶部对齐
+            {
+                sourceProp: srcBottom,
+                targetProp: (targetAABB) => targetAABB[1], // targetTop
+                isHorizontal: true,
+                createLine: (srcAABB, targetAABB, value) => ({
+                    start: {
+                        x: Math.min(srcAABB[0], targetAABB[0]) - 20,
+                        y: value,
+                    },
+                    end: {
+                        x: Math.max(srcAABB[2], targetAABB[2]) + 20,
+                        y: value,
+                    },
+                }),
+            },
+        ];
+
+        // 检查每个节点
         for (const node of allNodes) {
             // Skip the source node itself
             if (node === srcNode || excludeNodes.includes(node)) continue;
 
             // Get the target node's AABB in world coordinates
             const targetAABB = node.getWorldAABB();
-            const targetLeft = targetAABB[0];
-            const targetTop = targetAABB[1];
-            const targetRight = targetAABB[2];
-            const targetBottom = targetAABB[3];
 
-            // Check horizontal alignment (left edges)
-            if (Math.abs(srcLeft - targetLeft) < SNAP_THRESHOLD) {
-                const offset = targetLeft - srcLeft;
-                newPosition.x += offset;
+            // 检查每种对齐情况
+            for (const check of snapChecks) {
+                const targetValue = check.targetProp(targetAABB);
 
-                // Add vertical guide line
-                guideLines.push({
-                    start: {
-                        x: targetLeft,
-                        y: Math.min(srcTop, targetTop) - 20,
-                    },
-                    end: {
-                        x: targetLeft,
-                        y: Math.max(srcBottom, targetBottom) + 20,
-                    },
-                });
+                // 检查距离是否在阈值内
+                if (Math.abs(check.sourceProp - targetValue) < SNAP_THRESHOLD) {
+                    // 计算偏移
+                    const offset = targetValue - check.sourceProp;
 
-                hasSnapped = true;
+                    // 应用偏移
+                    if (check.isHorizontal) {
+                        newPosition.y += offset;
+                    } else {
+                        newPosition.x += offset;
+                    }
+
+                    // 添加指引线
+                    guideLines.push(
+                        check.createLine(srcAABB, targetAABB, targetValue)
+                    );
+
+                    hasSnapped = true;
+                }
             }
 
-            // Check horizontal alignment (right edges)
-            if (Math.abs(srcRight - targetRight) < SNAP_THRESHOLD) {
-                const offset = targetRight - srcRight;
-                newPosition.x += offset;
-
-                // Add vertical guide line
-                guideLines.push({
-                    start: {
-                        x: targetRight,
-                        y: Math.min(srcTop, targetTop) - 20,
-                    },
-                    end: {
-                        x: targetRight,
-                        y: Math.max(srcBottom, targetBottom) + 20,
-                    },
-                });
-
-                hasSnapped = true;
-            }
-
-            // Check vertical alignment (top edges)
-            if (Math.abs(srcTop - targetTop) < SNAP_THRESHOLD) {
-                const offset = targetTop - srcTop;
-                newPosition.y += offset;
-
-                // Add horizontal guide line
-                guideLines.push({
-                    start: {
-                        x: Math.min(srcLeft, targetLeft) - 20,
-                        y: targetTop,
-                    },
-                    end: {
-                        x: Math.max(srcRight, targetRight) + 20,
-                        y: targetTop,
-                    },
-                });
-
-                hasSnapped = true;
-            }
-
-            // Check vertical alignment (bottom edges)
-            if (Math.abs(srcBottom - targetBottom) < SNAP_THRESHOLD) {
-                const offset = targetBottom - srcBottom;
-                newPosition.y += offset;
-
-                // Add horizontal guide line
-                guideLines.push({
-                    start: {
-                        x: Math.min(srcLeft, targetLeft) - 20,
-                        y: targetBottom,
-                    },
-                    end: {
-                        x: Math.max(srcRight, targetRight) + 20,
-                        y: targetBottom,
-                    },
-                });
-
-                hasSnapped = true;
-            }
-
-            // Check horizontal alignment (right to left)
-            if (Math.abs(srcLeft - targetRight) < SNAP_THRESHOLD) {
-                const offset = targetRight - srcLeft;
-                newPosition.x += offset;
-
-                // Add vertical guide line
-                guideLines.push({
-                    start: {
-                        x: targetRight,
-                        y: Math.min(srcTop, targetTop) - 20,
-                    },
-                    end: {
-                        x: targetRight,
-                        y: Math.max(srcBottom, targetBottom) + 20,
-                    },
-                });
-
-                hasSnapped = true;
-            }
-
-            // Check horizontal alignment (left to right)
-            if (Math.abs(srcRight - targetLeft) < SNAP_THRESHOLD) {
-                const offset = targetLeft - srcRight;
-                newPosition.x += offset;
-
-                // Add vertical guide line
-                guideLines.push({
-                    start: {
-                        x: targetLeft,
-                        y: Math.min(srcTop, targetTop) - 20,
-                    },
-                    end: {
-                        x: targetLeft,
-                        y: Math.max(srcBottom, targetBottom) + 20,
-                    },
-                });
-
-                hasSnapped = true;
-            }
-
-            // Check vertical alignment (bottom to top)
-            if (Math.abs(srcTop - targetBottom) < SNAP_THRESHOLD) {
-                const offset = targetBottom - srcTop;
-                newPosition.y += offset;
-
-                // Add horizontal guide line
-                guideLines.push({
-                    start: {
-                        x: Math.min(srcLeft, targetLeft) - 20,
-                        y: targetBottom,
-                    },
-                    end: {
-                        x: Math.max(srcRight, targetRight) + 20,
-                        y: targetBottom,
-                    },
-                });
-
-                hasSnapped = true;
-            }
-
-            // Check vertical alignment (top to bottom)
-            if (Math.abs(srcBottom - targetTop) < SNAP_THRESHOLD) {
-                const offset = targetTop - srcBottom;
-                newPosition.y += offset;
-
-                // Add horizontal guide line
-                guideLines.push({
-                    start: {
-                        x: Math.min(srcLeft, targetLeft) - 20,
-                        y: targetTop,
-                    },
-                    end: {
-                        x: Math.max(srcRight, targetRight) + 20,
-                        y: targetTop,
-                    },
-                });
-
-                hasSnapped = true;
-            }
+            if (hasSnapped) break; // 找到一个对齐点就跳出外循环
         }
 
         // Show guide lines if snapping occurred
@@ -337,5 +347,4 @@ export class SnapGuide {
 
         return newPosition;
     }
-    // ... existing code ...
 }
