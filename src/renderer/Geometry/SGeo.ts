@@ -1,6 +1,3 @@
-import { Canvas, Paint } from 'canvaskit-wasm';
-import { SRenderComponent } from '../RenderComponents/SRenderComponent';
-import { CanvasKitModule } from '@/lib/canvaskit';
 import {
     FillOptions,
     ShadowOptions,
@@ -8,21 +5,24 @@ import {
     StrokeOptions,
 } from '@/common/types';
 import { safeColor } from '@/common/util';
+import { CanvasKitModule } from '@/lib/canvaskit';
+import { Canvas, Paint } from 'canvaskit-wasm';
+import { SRenderComponent } from '../RenderComponents/SRenderComponent';
 
 export class SGeo extends SRenderComponent {
     protected fillPaint!: Paint;
     protected strokePaint!: Paint;
     protected shadowPaint!: Paint;
-    protected onCreated(): void { }
+    protected onCreated(): void {}
 
-    private _getShadowPaint(): Paint {
+    protected _getShadowPaint(): Paint {
         if (!this.shadowPaint) {
             this.shadowPaint = new CanvasKitModule.CanvasKit.Paint();
         }
         return this.shadowPaint;
     }
 
-    private _getFillPaint(): Paint {
+    protected _getFillPaint(): Paint {
         if (!this.fillPaint) {
             this.fillPaint = new CanvasKitModule.CanvasKit.Paint();
             this.fillPaint.setStyle(CanvasKitModule.CanvasKit.PaintStyle.Fill);
@@ -31,7 +31,7 @@ export class SGeo extends SRenderComponent {
         return this.fillPaint;
     }
 
-    private _getStrokePaint(): Paint {
+    protected _getStrokePaint(): Paint {
         if (!this.strokePaint) {
             this.strokePaint = new CanvasKitModule.CanvasKit.Paint();
             this.strokePaint.setStyle(
@@ -54,9 +54,9 @@ export class SGeo extends SRenderComponent {
         }
     }
 
-    public drawShape(_canvas: Canvas, _paint: Paint): void { }
+    public drawShape(_canvas: Canvas, _paint: Paint): void {}
 
-    public drawShadow(_canvas: Canvas, _paint: Paint): void { }
+    public drawShadow(_canvas: Canvas, _paint: Paint): void {}
 
     public fill(options?: FillOptions): void {
         const paint = this._getFillPaint();
@@ -79,6 +79,9 @@ export class SGeo extends SRenderComponent {
         if (options?.alpha) {
             paint.setAlphaf(options?.alpha);
         }
+        if (options?.width) {
+            paint.setStrokeWidth(options.width);
+        }
     }
 
     public applyStyle(options: SNodeConfig.SGraphicsPropsAndStyle): void {
@@ -90,7 +93,11 @@ export class SGeo extends SRenderComponent {
             this.fill({ color: options.style.fill, alpha });
         }
         if (options.style?.stroke) {
-            this.stroke({ color: options.style.stroke, alpha });
+            this.stroke({
+                color: options.style.stroke,
+                alpha,
+                width: options.style.strokeWidth,
+            });
         }
         if (options.style?.shadow) {
             this.shadow(options.style.shadow);

@@ -42,14 +42,14 @@ export function WhiteboardSceneX(option: {
                     width={option.designSize.width}
                     height={option.designSize.height}
                 ></rect>
-                <container
-                    name="top-layer"
-                    ref={option.topLayerRef}
-                    transform={{
-                        position: new Vec2(0, 0),
-                    }}
-                ></container>
             </container>
+            <container
+                name="top-layer"
+                ref={option.topLayerRef}
+                transform={{
+                    position: new Vec2(0, 0),
+                }}
+            ></container>
         </container>
     );
 }

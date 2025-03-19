@@ -262,11 +262,24 @@ class SNode extends EventEmitter {
         return [wLB, wLT, wRB, wRT];
     }
 
-    public getWorldRect(): number[] {
-        const [l, b, r, t] = this.getLocalRect();
-        const [wl, wb] = this.toGlobal([l, b]);
-        const [wr, wt] = this.toGlobal([r, t]);
-        return [wl, wb, wr, wt];
+    public getWorldAABB(): number[] {
+        // Calculate the Axis-Aligned Bounding Box (AABB) in world coordinates
+        const worldPoints = this.getWorldPoints();
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
+        // Find the min and max coordinates from all corner points
+        for (const point of worldPoints) {
+            minX = Math.min(minX, point[0]);
+            minY = Math.min(minY, point[1]);
+            maxX = Math.max(maxX, point[0]);
+            maxY = Math.max(maxY, point[1]);
+        }
+
+        // Return the AABB as [left, top, right, bottom]
+        return [minX, minY, maxX, maxY];
     }
 
     public addChild(...child: SNode[]) {

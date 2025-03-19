@@ -8,6 +8,11 @@ export interface IPoint extends IPointData {
     observeFunc?: () => void;
 }
 
+export interface ILine {
+    start: IPointData;
+    end: IPointData;
+}
+
 export interface IPointData {
     x: number;
     y: number;
@@ -77,6 +82,7 @@ export namespace SNodeConfig {
         SPRITE = 'sprite',
         CIRCLE = 'circle',
         PARAGRAPH = 'para',
+        DASH_LINE = 'dash-line',
     }
 
     export type SGraphicsPropsConfig = {
@@ -119,6 +125,11 @@ export namespace SNodeConfig {
     export type RectConfig = BaseConfig &
         SGraphicsPropsAndStyle & {
             type: NodeType.RECT;
+        };
+
+    export type DashLineConfig = BaseConfig &
+        SGraphicsPropsAndStyle & {
+            type: NodeType.DASH_LINE;
         };
 
     export type CircleConfig = BaseConfig &

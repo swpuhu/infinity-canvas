@@ -3,6 +3,7 @@ import { IPointData, SNodeConfig } from '@/common/types';
 import { InputRect } from 'canvaskit-wasm';
 import { vec2 } from 'gl-matrix';
 import { SGeoCircle } from './Geometry/SGeoCircle';
+import { SGeoDashLine } from './Geometry/SGeoDashLine';
 import { SGeoRect } from './Geometry/SGeoRect';
 import { SParagraph } from './RenderComponents/SParagraph';
 import { SSprite } from './RenderComponents/SSprite';
@@ -52,6 +53,10 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
         const rectConfig = config as SNodeConfig.RectConfig;
         const rect = node.addComponent(SGeoRect);
         rect.applyStyle(rectConfig);
+    } else if (config.type === SNodeConfig.NodeType.DASH_LINE) {
+        const dashLineConfig = config as SNodeConfig.DashLineConfig;
+        const dashLine = node.addComponent(SGeoDashLine);
+        dashLine.applyStyle(dashLineConfig);
     } else if (config.type === SNodeConfig.NodeType.CIRCLE) {
         const circleConfig = config as SNodeConfig.CircleConfig;
         const circle = node.addComponent(SGeoCircle);

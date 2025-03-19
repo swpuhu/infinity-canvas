@@ -11,6 +11,7 @@ declare global {
             rect: Omit<SNodeConfig.RectConfig, 'type'>;
             circle: Omit<SNodeConfig.CircleConfig, 'type'>;
             para: Omit<SNodeConfig.ParagraphConfig, 'type'>;
+            'dash-line': Omit<SNodeConfig.DashLineConfig, 'type'>;
         }
     }
 }
