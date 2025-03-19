@@ -380,7 +380,7 @@ class SNode extends EventEmitter {
         if (options.scale) {
             this._scale.set(options.scale.x, options.scale.y);
         }
-        if (options.rotation) {
+        if (options.rotation !== void 0) {
             this._rotation = options.rotation;
         }
         if (options.anchor) {

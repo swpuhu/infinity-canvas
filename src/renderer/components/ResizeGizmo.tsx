@@ -5,6 +5,7 @@ import { getWorldRect } from '../util';
 import { WhiteboardScene } from '../WhiteboardScene';
 import { EventsHandler } from './resizer/EventsHandler';
 import { ResizerUI } from './resizer/ResizerUI';
+import { SnapGuide } from './SnapGuide';
 
 export class ResizeGizmo {
     private _scene: WhiteboardScene;
@@ -14,14 +15,18 @@ export class ResizeGizmo {
 
     private _eventsHandler: EventsHandler;
 
-    constructor(editor: CanvasEditor) {
+    constructor(editor: CanvasEditor, snapGuide: SnapGuide) {
         this._editor = editor;
         this._scene = editor.scene;
 
         this._uiComponent = new ResizerUI(this._scene);
 
         this._scene.topLayer.addChild(this._uiComponent.node!);
-        this._eventsHandler = new EventsHandler(editor, this._uiComponent);
+        this._eventsHandler = new EventsHandler(
+            editor,
+            this._uiComponent,
+            snapGuide
+        );
         this._eventsHandler.on(EventNames.POINTER_DOWN_NODE, (node?: SNode) => {
             if (!node) {
                 this.unMount();

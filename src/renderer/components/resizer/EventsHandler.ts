@@ -4,13 +4,13 @@ import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
 import { useEditorModeStore } from '@/store/EditorModeStore';
 import EventEmitter from 'eventemitter3';
+import { SnapGuide } from '../SnapGuide';
 import { DragEventsHandler } from './DragEventsHandler';
 import { EditEventsHandler } from './EditEventsHandler';
 import { ResizeEventsHandler } from './ResizeEventsHandler';
 import { ResizerUI } from './ResizerUI';
 import { RotateEventsHandler } from './RotateEventsHandler';
 import { SelectEventsHandler } from './SelectEventsHandler';
-
 export class EventsHandler extends EventEmitter {
     private _dragEventsHandler: DragEventsHandler;
 
@@ -25,12 +25,21 @@ export class EventsHandler extends EventEmitter {
     // Get the editor mode store
     private _editorModeStore = useEditorModeStore();
 
-    constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
+    constructor(
+        private _editor: CanvasEditor,
+        private _resizerUI: ResizerUI,
+        _snapGuide: SnapGuide
+    ) {
         super();
-        this._dragEventsHandler = new DragEventsHandler(_editor, _resizerUI);
+        this._dragEventsHandler = new DragEventsHandler(
+            _editor,
+            _resizerUI,
+            _snapGuide
+        );
         this._resizeEventsHandler = new ResizeEventsHandler(
             _editor,
-            _resizerUI
+            _resizerUI,
+            _snapGuide
         );
         this._rotateEventsHandler = new RotateEventsHandler(
             _editor,

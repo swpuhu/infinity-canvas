@@ -12,6 +12,7 @@ import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
 import { changeAnchorButStay, cloneNodesAndMoveIn } from '@/renderer/util';
 import EventEmitter from 'eventemitter3';
+import { SnapGuide } from '../SnapGuide';
 import { ResizerUI } from './ResizerUI';
 
 export class ResizeEventsHandler extends EventEmitter {
@@ -39,7 +40,11 @@ export class ResizeEventsHandler extends EventEmitter {
 
     protected _dummyNodes: SNode[] = [];
 
-    constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
+    constructor(
+        private _editor: CanvasEditor,
+        private _resizerUI: ResizerUI,
+        private _snapGuide: SnapGuide
+    ) {
         super();
         this._enableResize();
         this._resizerUI.resizeHandlerNodes.forEach((node) => {

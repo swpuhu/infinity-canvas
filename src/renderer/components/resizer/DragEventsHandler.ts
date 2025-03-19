@@ -7,6 +7,7 @@ import { CanvasEventSystem } from '@/renderer/SEventManager';
 import SNode from '@/renderer/SNode';
 import { cloneNodesAndMoveIn } from '@/renderer/util';
 import EventEmitter from 'eventemitter3';
+import { SnapGuide } from '../SnapGuide';
 import { ResizerUI } from './ResizerUI';
 
 export class DragEventsHandler extends EventEmitter {
@@ -22,7 +23,11 @@ export class DragEventsHandler extends EventEmitter {
 
     protected _dummyNodes: SNode[] = [];
 
-    constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
+    constructor(
+        private _editor: CanvasEditor,
+        private _resizerUI: ResizerUI,
+        private _snapGuide: SnapGuide
+    ) {
         super();
         this._enableDrag();
     }
@@ -88,6 +93,15 @@ export class DragEventsHandler extends EventEmitter {
             this._originPos.x + diff.x,
             this._originPos.y + diff.y
         );
+        if (this._snapGuide) {
+            const newPos = this._snapGuide.calculateSnapLines(
+                this._resizerUI.node,
+                this._currentNodes
+            );
+            console.log('newPos', newPos);
+            this._resizerUI.node.position.set(newPos.x, newPos.y);
+        }
+
         this._dummyNodes.forEach((dummyNode, i) => {
             const pairNode = this._currentNodes[i];
             pairNode.alignTo(dummyNode);

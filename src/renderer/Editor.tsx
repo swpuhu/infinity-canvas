@@ -89,8 +89,8 @@ export class CanvasEditor {
 
         scene.stage.addChild(para);
 
-        this._resizeGizmo = new ResizeGizmo(this);
         this._snapGuide = new SnapGuide(this);
+        this._resizeGizmo = new ResizeGizmo(this, this._snapGuide);
 
         this._renderer.on(EventNames.RESIZE, (width, height) => {
             scene.resizeCanvasSize({ width, height });
