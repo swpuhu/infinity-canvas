@@ -140,6 +140,15 @@ export class ResizeEventsHandler extends EventEmitter {
         }
         let nextWidth = this._resizeStartNodeSize.x + diff.x;
         let nextHeight = this._resizeStartNodeSize.y + diff.y;
+
+        if (this._snapGuide && this._currentNodes.length === 1) {
+            const snapInfo = this._snapGuide.calculateSnapLines(
+                this._resizerUI.node,
+                this._currentNodes
+            );
+            if (snapInfo.hasSnapped) {
+            }
+        }
         const keepWidthHeight = nextWidth / this._originAspect;
         const keepHeightWidth = nextHeight * this._originAspect;
 
@@ -173,12 +182,6 @@ export class ResizeEventsHandler extends EventEmitter {
         const scaleY = nextHeight / this._currentHeight;
         console.log('scaleX', scaleX);
         console.log('scaleY', scaleY);
-        if (this._snapGuide && this._currentNodes.length === 1) {
-            this._snapGuide.calculateSnapLines(
-                this._resizerUI.node,
-                this._currentNodes
-            );
-        }
         // const dummyNodeWorldMat = this._resizerUI.dummyNode.getWorldMatrix();
         // const { scale, position, rotation } =
         //     decomposeMatrix(dummyNodeWorldMat);

@@ -61,7 +61,6 @@ export class SnapGuide {
     }
 
     public showGuides(lines: ILine[]): void {
-        console.log('showGuides', lines);
         const root = this._rootRef.value;
         if (!root) {
             return;
@@ -99,7 +98,6 @@ export class SnapGuide {
             // 根据线条类型设置正确的变换
             if (isHorizontal) {
                 // 水平线，确保正确显示
-                console.log('水平线', startLocal, angle);
                 dashLine.setTransform({
                     position: { x: startLocal[0], y: startLocal[1] },
                     rotation: 0,
@@ -108,7 +106,7 @@ export class SnapGuide {
                 eventBus.reDraw();
             } else {
                 // 垂直线
-                console.log('垂直线', startLocal, angle);
+
                 dashLine.setTransform({
                     position: { x: startLocal[0], y: startLocal[1] },
                     rotation: 90,
@@ -130,6 +128,13 @@ export class SnapGuide {
         position: IPointData;
         width: number;
         height: number;
+        hasSnapped: boolean;
+        snapInfos: Array<{
+            targetNode: SNode;
+            sourceEdge: 'left' | 'right' | 'top' | 'bottom';
+            targetEdge: 'left' | 'right' | 'top' | 'bottom';
+            offset: number;
+        }>;
     } {
         const allNodes = this._editor.scene.getAllNodes();
         // Threshold for snapping (distance in pixels)
@@ -141,9 +146,6 @@ export class SnapGuide {
         const srcTop = srcAABB[1];
         const srcRight = srcAABB[2];
         const srcBottom = srcAABB[3];
-
-        // Current position of the source node in world coordinates
-        const srcWorldPos = srcNode.worldPosition;
 
         // Initialize the new position as the current position
         const newPosition: IPointData = {
@@ -157,12 +159,25 @@ export class SnapGuide {
         // Array to store guide lines to display
         const guideLines: ILine[] = [];
 
+        // 存储吸附信息数组
+        const snapInfos: Array<{
+            targetNode: SNode;
+            sourceEdge: 'left' | 'right' | 'top' | 'bottom';
+            targetEdge: 'left' | 'right' | 'top' | 'bottom';
+            offset: number;
+        }> = [];
+
+        // 跟踪已经处理过的边缘，避免一条边有多个吸附
+        const processedEdges = new Set<'left' | 'right' | 'top' | 'bottom'>();
+
         // 定义对齐检查的配置数组，每个配置包含:
         // - 源边缘值
         // - 目标边缘获取函数
         // - 是否为水平对齐
         // - 线条构建函数
         interface SnapCheck {
+            sourceEdge: 'left' | 'right' | 'top' | 'bottom';
+            targetEdge: 'left' | 'right' | 'top' | 'bottom';
             sourceProp: number;
             targetProp: (targetAABB: number[]) => number;
             isHorizontal: boolean;
@@ -175,8 +190,10 @@ export class SnapGuide {
 
         // 定义所有需要检查的对齐情况
         const snapChecks: SnapCheck[] = [
-            // 左边缘对齐
+            // 左边缘对齐到左边缘
             {
+                sourceEdge: 'left',
+                targetEdge: 'left',
                 sourceProp: srcLeft,
                 targetProp: (targetAABB) => targetAABB[0], // targetLeft
                 isHorizontal: false,
@@ -191,8 +208,10 @@ export class SnapGuide {
                     },
                 }),
             },
-            // 右边缘对齐
+            // 右边缘对齐到右边缘
             {
+                sourceEdge: 'right',
+                targetEdge: 'right',
                 sourceProp: srcRight,
                 targetProp: (targetAABB) => targetAABB[2], // targetRight
                 isHorizontal: false,
@@ -207,8 +226,10 @@ export class SnapGuide {
                     },
                 }),
             },
-            // 顶部对齐
+            // 顶部对齐到顶部
             {
+                sourceEdge: 'top',
+                targetEdge: 'top',
                 sourceProp: srcTop,
                 targetProp: (targetAABB) => targetAABB[1], // targetTop
                 isHorizontal: true,
@@ -223,8 +244,10 @@ export class SnapGuide {
                     },
                 }),
             },
-            // 底部对齐
+            // 底部对齐到底部
             {
+                sourceEdge: 'bottom',
+                targetEdge: 'bottom',
                 sourceProp: srcBottom,
                 targetProp: (targetAABB) => targetAABB[3], // targetBottom
                 isHorizontal: true,
@@ -239,8 +262,10 @@ export class SnapGuide {
                     },
                 }),
             },
-            // 左边缘到右边缘对齐
+            // 左边缘对齐到右边缘
             {
+                sourceEdge: 'left',
+                targetEdge: 'right',
                 sourceProp: srcLeft,
                 targetProp: (targetAABB) => targetAABB[2], // targetRight
                 isHorizontal: false,
@@ -255,8 +280,10 @@ export class SnapGuide {
                     },
                 }),
             },
-            // 右边缘到左边缘对齐
+            // 右边缘对齐到左边缘
             {
+                sourceEdge: 'right',
+                targetEdge: 'left',
                 sourceProp: srcRight,
                 targetProp: (targetAABB) => targetAABB[0], // targetLeft
                 isHorizontal: false,
@@ -271,8 +298,10 @@ export class SnapGuide {
                     },
                 }),
             },
-            // 顶部到底部对齐
+            // 顶部对齐到底部
             {
+                sourceEdge: 'top',
+                targetEdge: 'bottom',
                 sourceProp: srcTop,
                 targetProp: (targetAABB) => targetAABB[3], // targetBottom
                 isHorizontal: true,
@@ -287,8 +316,10 @@ export class SnapGuide {
                     },
                 }),
             },
-            // 底部到顶部对齐
+            // 底部对齐到顶部
             {
+                sourceEdge: 'bottom',
+                targetEdge: 'top',
                 sourceProp: srcBottom,
                 targetProp: (targetAABB) => targetAABB[1], // targetTop
                 isHorizontal: true,
@@ -305,6 +336,17 @@ export class SnapGuide {
             },
         ];
 
+        let width = srcNode.width;
+        let height = srcNode.height;
+
+        // 按照水平和垂直分组检查项，以便优先处理
+        const horizontalChecks = snapChecks.filter(
+            (check) => check.isHorizontal
+        );
+        const verticalChecks = snapChecks.filter(
+            (check) => !check.isHorizontal
+        );
+
         // 检查每个节点
         for (const node of allNodes) {
             // Skip the source node itself
@@ -313,20 +355,25 @@ export class SnapGuide {
             // Get the target node's AABB in world coordinates
             const targetAABB = node.getWorldAABB();
 
-            // 检查每种对齐情况
-            for (const check of snapChecks) {
+            // 先检查水平方向的对齐
+            for (const check of horizontalChecks) {
+                // 如果这条边已经对齐过，跳过
+                if (processedEdges.has(check.sourceEdge)) continue;
+
                 const targetValue = check.targetProp(targetAABB);
 
                 // 检查距离是否在阈值内
                 if (Math.abs(check.sourceProp - targetValue) < SNAP_THRESHOLD) {
-                    // 计算偏移
                     const offset = targetValue - check.sourceProp;
 
-                    // 应用偏移
-                    if (check.isHorizontal) {
-                        newPosition.y += offset;
-                    } else {
-                        newPosition.x += offset;
+                    // 应用偏移到Y坐标
+                    newPosition.y += offset;
+
+                    // 更新高度（如果适用）
+                    if (check.sourceEdge === 'top') {
+                        height -= offset; // 顶部移动，高度相应减少
+                    } else if (check.sourceEdge === 'bottom') {
+                        height += offset; // 底部移动，高度相应增加
                     }
 
                     // 添加指引线
@@ -334,11 +381,61 @@ export class SnapGuide {
                         check.createLine(srcAABB, targetAABB, targetValue)
                     );
 
+                    // 保存吸附信息
+                    snapInfos.push({
+                        targetNode: node,
+                        sourceEdge: check.sourceEdge,
+                        targetEdge: check.targetEdge,
+                        offset,
+                    });
+
+                    // 标记这条边已处理
+                    processedEdges.add(check.sourceEdge);
+
                     hasSnapped = true;
                 }
             }
 
-            if (hasSnapped) break; // 找到一个对齐点就跳出外循环
+            // 再检查垂直方向的对齐
+            for (const check of verticalChecks) {
+                // 如果这条边已经对齐过，跳过
+                if (processedEdges.has(check.sourceEdge)) continue;
+
+                const targetValue = check.targetProp(targetAABB);
+
+                // 检查距离是否在阈值内
+                if (Math.abs(check.sourceProp - targetValue) < SNAP_THRESHOLD) {
+                    const offset = targetValue - check.sourceProp;
+
+                    // 应用偏移到X坐标
+                    newPosition.x += offset;
+
+                    // 更新宽度（如果适用）
+                    if (check.sourceEdge === 'left') {
+                        width -= offset; // 左侧移动，宽度相应减少
+                    } else if (check.sourceEdge === 'right') {
+                        width += offset; // 右侧移动，宽度相应增加
+                    }
+
+                    // 添加指引线
+                    guideLines.push(
+                        check.createLine(srcAABB, targetAABB, targetValue)
+                    );
+
+                    // 保存吸附信息
+                    snapInfos.push({
+                        targetNode: node,
+                        sourceEdge: check.sourceEdge,
+                        targetEdge: check.targetEdge,
+                        offset,
+                    });
+
+                    // 标记这条边已处理
+                    processedEdges.add(check.sourceEdge);
+
+                    hasSnapped = true;
+                }
+            }
         }
 
         // Show guide lines if snapping occurred
@@ -349,7 +446,17 @@ export class SnapGuide {
             this.showGuides([]);
         }
 
-        return newPosition;
+        // 确保尺寸不为负
+        width = Math.max(1, width);
+        height = Math.max(1, height);
+
+        return {
+            position: newPosition,
+            width,
+            height,
+            hasSnapped,
+            snapInfos, // 返回所有吸附信息
+        };
     }
 
     public calculateSnapRotation(srcNode: SNode): number {

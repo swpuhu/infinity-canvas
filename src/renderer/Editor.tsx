@@ -52,7 +52,7 @@ export class CanvasEditor {
         // 创建基础布局
         const scene = new WhiteboardScene({
             canvasSize,
-            designSize: canvasSize,
+            designSize: { width: 1920, height: 1080 },
             sideWidth: 0,
         });
 

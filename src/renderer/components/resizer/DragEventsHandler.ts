@@ -94,12 +94,16 @@ export class DragEventsHandler extends EventEmitter {
             this._originPos.y + diff.y
         );
         if (this._snapGuide && this._currentNodes.length === 1) {
-            const newPos = this._snapGuide.calculateSnapLines(
+            const snapInfo = this._snapGuide.calculateSnapLines(
                 this._resizerUI.node,
                 this._currentNodes
             );
-            console.log('newPos', newPos);
-            this._resizerUI.node.position.set(newPos.x, newPos.y);
+            if (snapInfo.hasSnapped) {
+                this._resizerUI.node.position.set(
+                    snapInfo.position.x,
+                    snapInfo.position.y
+                );
+            }
         }
 
         this._dummyNodes.forEach((dummyNode, i) => {
