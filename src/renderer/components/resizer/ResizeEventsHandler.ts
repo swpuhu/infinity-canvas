@@ -198,6 +198,7 @@ export class ResizeEventsHandler extends EventEmitter {
         this._dummyNodes.forEach((dummyNode, i) => {
             const pairNode = this._currentNodes[i];
             pairNode.alignTo(dummyNode);
+            pairNode.removeScale(dummyNode.width, dummyNode.height);
         });
         // this._currentNodes!.alignTo(this._resizerUI.node!);
         this._resizerUI.updateHandlerNodes();

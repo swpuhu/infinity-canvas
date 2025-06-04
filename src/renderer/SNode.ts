@@ -435,6 +435,13 @@ class SNode extends EventEmitter {
         alignToNode(this, target, alignSize);
     }
 
+    public removeScale(originWidth: number, originHeight: number): void {
+        const scale = this._scale.clone();
+        this._scale.set(1, 1, false);
+        this.setSize(originWidth * scale.x, originHeight * scale.y);
+        this.updateWorldMatrix();
+    }
+
     public moveInto(target: SNode): void {
         moveIntoButStay(this, target);
     }

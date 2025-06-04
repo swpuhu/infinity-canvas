@@ -1,5 +1,4 @@
 import { Canvas, Paint } from 'canvaskit-wasm';
-import { getRectByNode } from '../util';
 import { SGeo } from './SGeo';
 
 export class SGeoCircle extends SGeo {
