@@ -1,138 +1,98 @@
 <template>
     <div class="vertical-toolbar">
-        <div
-            class="toolbar-item"
-            :class="{ active: toolStore.isToolActive(ToolType.SELECT) }"
-            @click="setActiveTool(ToolType.SELECT)"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <div class="toolbar-item shape-tool" :class="{ active: toolStore.isToolActive(ToolType.SHAPE) }"
+            @click="setActiveTool(ToolType.SHAPE)" @mouseenter="handleShapeHoverEnter"
+            @mouseleave="handleShapeHoverLeave">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect v-if="toolStore.getCurrentShape === 'rectangle'" x="3" y="3" width="18" height="18" rx="2" ry="2">
+                </rect>
+                <circle v-if="toolStore.getCurrentShape === 'circle'" cx="12" cy="12" r="8"></circle>
+                <polygon v-if="toolStore.getCurrentShape === 'triangle'" points="12,2 22,20 2,20"></polygon>
+                <polygon v-if="toolStore.getCurrentShape === 'diamond'" points="12,3 21,12 12,21 3,12"></polygon>
+                <polygon v-if="toolStore.getCurrentShape === 'parallelogram'" points="4,18 8,6 20,6 16,18"></polygon>
+                <polygon v-if="toolStore.getCurrentShape === 'pentagon'" points="12,2 22,8 18,20 6,20 2,8"></polygon>
+                <polygon v-if="toolStore.getCurrentShape === 'hexagon'" points="12,2 22,7 22,17 12,22 2,17 2,7">
+                </polygon>
+                <polygon v-if="toolStore.getCurrentShape === 'star'"
+                    points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"></polygon>
+                <path v-if="toolStore.getCurrentShape === 'arrow-right'" d="M5 12h14m-7-7 7 7-7 7"></path>
+                <path v-if="toolStore.getCurrentShape === 'arrow-left'" d="M19 12H5m7-7-7 7 7 7"></path>
             </svg>
+
+            <!-- 形状选择菜单 -->
+            <div v-if="showShapeMenu" class="shape-menu" @mouseenter="handleShapeMenuEnter"
+                @mouseleave="handleShapeMenuLeave">
+                <div class="shape-menu-grid">
+                    <div v-for="shape in shapes" :key="shape.type" class="shape-menu-item" :title="shape.name"
+                        @click="handleShapeSelect(shape.type)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect v-if="shape.type === 'rectangle'" x="3" y="6" width="18" height="12" rx="2"></rect>
+                            <circle v-if="shape.type === 'circle'" cx="12" cy="12" r="8"></circle>
+                            <polygon v-if="shape.type === 'triangle'" points="12,2 22,20 2,20"></polygon>
+                            <polygon v-if="shape.type === 'diamond'" points="12,3 21,12 12,21 3,12"></polygon>
+                            <polygon v-if="shape.type === 'parallelogram'" points="4,18 8,6 20,6 16,18"></polygon>
+                            <polygon v-if="shape.type === 'pentagon'" points="12,2 22,8 18,20 6,20 2,8"></polygon>
+                            <polygon v-if="shape.type === 'hexagon'" points="12,2 22,7 22,17 12,22 2,17 2,7"></polygon>
+                            <polygon v-if="shape.type === 'star'"
+                                points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"></polygon>
+                            <path v-if="shape.type === 'arrow-right'" d="M5 12h14m-7-7 7 7-7 7"></path>
+                            <path v-if="shape.type === 'arrow-left'" d="M19 12H5m7-7-7 7 7 7"></path>
+                        </svg>
+                    </div>
+                    <div class="shape-menu-more">
+                        更多图形
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div
-            class="toolbar-item"
-            :class="{ active: toolStore.isToolActive(ToolType.TEXT) }"
-            @click="setActiveTool(ToolType.TEXT)"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <text
-                    x="6"
-                    y="16"
-                    font-family="sans-serif"
-                    font-size="14"
-                    font-weight="bold"
-                >
+        <div class="toolbar-item" :class="{ active: toolStore.isToolActive(ToolType.TEXT) }"
+            @click="setActiveTool(ToolType.TEXT)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <text x="6" y="16" font-family="sans-serif" font-size="14" font-weight="bold">
                     T
                 </text>
             </svg>
         </div>
 
-        <div
-            class="toolbar-item"
-            :class="{ active: toolStore.isToolActive(ToolType.COMMENT) }"
-            @click="setActiveTool(ToolType.COMMENT)"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path
-                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-                ></path>
+        <div class="toolbar-item" :class="{ active: toolStore.isToolActive(ToolType.COMMENT) }"
+            @click="setActiveTool(ToolType.COMMENT)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
         </div>
 
-        <div
-            class="toolbar-item"
-            :class="{ active: toolStore.isToolActive(ToolType.HAND) }"
-            @click="setActiveTool(ToolType.HAND)"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
+        <div class="toolbar-item" :class="{ active: toolStore.isToolActive(ToolType.HAND) }"
+            @click="setActiveTool(ToolType.HAND)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path>
                 <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path>
                 <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path>
                 <path
-                    d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"
-                ></path>
+                    d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15">
+                </path>
             </svg>
         </div>
 
-        <div
-            class="toolbar-item"
-            :class="{ active: toolStore.isToolActive(ToolType.IMAGE) }"
-            @click="setActiveTool(ToolType.IMAGE)"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
+        <div class="toolbar-item" :class="{ active: toolStore.isToolActive(ToolType.IMAGE) }"
+            @click="setActiveTool(ToolType.IMAGE)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                 <circle cx="8.5" cy="8.5" r="1.5"></circle>
                 <polyline points="21 15 16 10 5 21"></polyline>
             </svg>
         </div>
 
-        <div
-            class="toolbar-item"
-            :class="{ active: toolStore.isToolActive(ToolType.GRID) }"
-            @click="setActiveTool(ToolType.GRID)"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
+        <div class="toolbar-item" :class="{ active: toolStore.isToolActive(ToolType.GRID) }"
+            @click="setActiveTool(ToolType.GRID)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="7" height="7"></rect>
                 <rect x="14" y="3" width="7" height="7"></rect>
                 <rect x="14" y="14" width="7" height="7"></rect>
@@ -140,22 +100,10 @@
             </svg>
         </div>
 
-        <div
-            class="toolbar-item"
-            :class="{ active: toolStore.isToolActive(ToolType.PEN) }"
-            @click="setActiveTool(ToolType.PEN)"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
+        <div class="toolbar-item" :class="{ active: toolStore.isToolActive(ToolType.PEN) }"
+            @click="setActiveTool(ToolType.PEN)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
                 <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
                 <path d="M2 2l7.586 7.586"></path>
@@ -163,22 +111,10 @@
             </svg>
         </div>
 
-        <div
-            class="toolbar-item"
-            :class="{ active: toolStore.isToolActive(ToolType.SETTINGS) }"
-            @click="setActiveTool(ToolType.SETTINGS)"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
+        <div class="toolbar-item" :class="{ active: toolStore.isToolActive(ToolType.SETTINGS) }"
+            @click="setActiveTool(ToolType.SETTINGS)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="4" y1="9" x2="20" y2="9"></line>
                 <line x1="4" y1="15" x2="20" y2="15"></line>
                 <line x1="10" y1="3" x2="8" y2="21"></line>
@@ -186,43 +122,19 @@
             </svg>
         </div>
 
-        <div
-            class="toolbar-item"
-            :class="{ active: toolStore.isToolActive(ToolType.SEARCH) }"
-            @click="setActiveTool(ToolType.SEARCH)"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
+        <div class="toolbar-item" :class="{ active: toolStore.isToolActive(ToolType.SEARCH) }"
+            @click="setActiveTool(ToolType.SEARCH)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
         </div>
 
-        <div
-            class="toolbar-item"
-            :class="{ active: toolStore.isToolActive(ToolType.MENU) }"
-            @click="setActiveTool(ToolType.MENU)"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
+        <div class="toolbar-item" :class="{ active: toolStore.isToolActive(ToolType.MENU) }"
+            @click="setActiveTool(ToolType.MENU)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="1"></circle>
                 <circle cx="12" cy="5" r="1"></circle>
                 <circle cx="12" cy="19" r="1"></circle>
@@ -232,13 +144,79 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useEditorModeStore } from '../store/EditorModeStore';
 import { ToolType, useToolStore } from '../store/ToolStore';
 
-const emit = defineEmits(['tool-selected']);
+const emit = defineEmits(['tool-selected', 'shape-selected']);
 const editorModeStore = useEditorModeStore();
 const toolStore = useToolStore();
+
+// 形状菜单显示状态
+const showShapeMenu = ref(false);
+let hoverTimer: number | null = null;
+
+// 形状类型定义
+const shapes = [
+    { type: 'rectangle', name: '矩形' },
+    { type: 'circle', name: '圆形' },
+    { type: 'triangle', name: '三角形' },
+    { type: 'diamond', name: '菱形' },
+    { type: 'parallelogram', name: '平行四边形' },
+    { type: 'pentagon', name: '五边形' },
+    { type: 'hexagon', name: '六边形' },
+    { type: 'star', name: '星形' },
+    { type: 'arrow-right', name: '右箭头' },
+    { type: 'arrow-left', name: '左箭头' }
+];
+
+// 处理形状工具hover进入
+function handleShapeHoverEnter() {
+    if (hoverTimer) {
+        clearTimeout(hoverTimer);
+        hoverTimer = null;
+    }
+    showShapeMenu.value = true;
+}
+
+// 处理形状工具hover离开
+function handleShapeHoverLeave() {
+    hoverTimer = setTimeout(() => {
+        showShapeMenu.value = false;
+    }, 200);
+}
+
+// 处理形状菜单hover进入
+function handleShapeMenuEnter() {
+    if (hoverTimer) {
+        clearTimeout(hoverTimer);
+        hoverTimer = null;
+    }
+}
+
+// 处理形状菜单hover离开
+function handleShapeMenuLeave() {
+    hoverTimer = setTimeout(() => {
+        showShapeMenu.value = false;
+    }, 200);
+}
+
+// 处理形状选择
+function handleShapeSelect(shapeType: string) {
+    showShapeMenu.value = false;
+
+    // 更新store中的形状状态
+    toolStore.setShape(shapeType);
+
+    // 发射形状选择事件
+    emit('shape-selected', shapeType);
+
+    // 同时发射工具选择事件
+    emit('tool-selected', ToolType.SHAPE);
+
+    // 更新工具状态
+    toolStore.setTool(ToolType.SHAPE);
+}
 
 // Set active tool and emit event
 function setActiveTool(tool: ToolType) {
@@ -259,7 +237,7 @@ function setActiveTool(tool: ToolType) {
 // Initialize component
 onMounted(() => {
     // Set initial tool
-    toolStore.setTool(ToolType.SELECT);
+    // toolStore.setTool(ToolType.SELECT);
 });
 
 // Expose method to activate a tool programmatically
@@ -302,6 +280,77 @@ defineExpose({
 
 .toolbar-item.active {
     background-color: #e6f7ff;
+    color: #1890ff;
+}
+
+.shape-tool {
+    position: relative;
+}
+
+.shape-menu {
+    position: absolute;
+    left: 52px;
+    top: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    z-index: 1000;
+    min-width: 200px;
+    opacity: 1;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.shape-menu-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+}
+
+.shape-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #555;
+    transition: all 0.2s ease;
+}
+
+.shape-menu-item:hover {
+    background-color: #f0f0f0;
+    color: #1890ff;
+}
+
+.shape-menu-more {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    color: #888;
+    border-top: 1px solid #eee;
+    margin-top: 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.shape-menu-more:hover {
+    background-color: #f0f0f0;
     color: #1890ff;
 }
 </style>
