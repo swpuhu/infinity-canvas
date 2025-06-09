@@ -8,7 +8,7 @@
                 <rect v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.RECT" x="3" y="3" width="18"
                     height="18" rx="2" ry="2">
                 </rect>
-                <circle v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.CIRCLE" cx="12" cy="12"
+                <circle v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.ELLIPSE" cx="12" cy="12"
                     r="8"></circle>
                 <polygon v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.TRI"
                     points="12,2 22,20 2,20">
@@ -40,7 +40,7 @@
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect v-if="shape.type === SNodeConfig.NodeType.RECT" x="3" y="6" width="18" height="12"
                                 rx="2"></rect>
-                            <circle v-if="shape.type === SNodeConfig.NodeType.CIRCLE" cx="12" cy="12" r="8"></circle>
+                            <circle v-if="shape.type === SNodeConfig.NodeType.ELLIPSE" cx="12" cy="12" r="8"></circle>
                             <polygon v-if="shape.type === SNodeConfig.NodeType.TRI" points="12,2 22,20 2,20"></polygon>
                             <polygon v-if="shape.type === SNodeConfig.NodeType.DIAMOND" points="12,3 21,12 12,21 3,12">
                             </polygon>
@@ -176,7 +176,7 @@ let hoverTimer: number | null = null;
 // 形状类型定义
 const shapes: { type: SNodeConfig.NodeType, name: string }[] = [
     { type: SNodeConfig.NodeType.RECT, name: '矩形' },
-    { type: SNodeConfig.NodeType.CIRCLE, name: '圆形' },
+    { type: SNodeConfig.NodeType.ELLIPSE, name: '椭圆' },
     { type: SNodeConfig.NodeType.TRI, name: '三角形' },
     { type: SNodeConfig.NodeType.DIAMOND, name: '菱形' },
     { type: SNodeConfig.NodeType.PARALLELOGRAM, name: '平行四边形' },

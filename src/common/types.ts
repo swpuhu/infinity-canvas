@@ -80,7 +80,7 @@ export namespace SNodeConfig {
         RECT = 'rect',
         CONTAINER = 'container',
         SPRITE = 'sprite',
-        CIRCLE = 'circle',
+        ELLIPSE = 'ellipse',
         PARAGRAPH = 'para',
         DASH_LINE = 'dash-line',
         TRI = 'tri',
@@ -145,9 +145,9 @@ export namespace SNodeConfig {
             type: NodeType.DASH_LINE;
         };
 
-    export type CircleConfig = BaseConfig &
+    export type EllipseConfig = BaseConfig &
         SGraphicsPropsAndStyle & {
-            type: NodeType.CIRCLE;
+            type: NodeType.ELLIPSE;
         };
 
     export type SpriteConfig = BaseConfig & SSpritePropsConfig;
@@ -165,18 +165,11 @@ export namespace SNodeConfig {
         [NodeType.RECT]: RectConfig;
         [NodeType.CONTAINER]: ContainerConfig;
         [NodeType.SPRITE]: SpriteConfig;
-        [NodeType.CIRCLE]: CircleConfig;
+        [NodeType.ELLIPSE]: EllipseConfig;
     };
 
     export type Config = NodeTypeMap[keyof NodeTypeMap];
 }
-
-const a: SNodeConfig.Config = {
-    type: SNodeConfig.NodeType.CIRCLE,
-    style: {
-        fill: 0x000000,
-    },
-};
 export namespace SNodeEvents {
     export const MOUSE_DOWN = 'mousedown';
     export const MOUSE_MOVE = 'mousemove';

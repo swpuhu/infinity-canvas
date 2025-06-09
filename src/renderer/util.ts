@@ -2,7 +2,7 @@ import { Pool } from '@/common/Pool';
 import { IPointData, SNodeConfig } from '@/common/types';
 import { InputRect } from 'canvaskit-wasm';
 import { vec2 } from 'gl-matrix';
-import { SGeoCircle } from './Geometry/SGeoCircle';
+import { SGeoEllipse } from './Geometry/SGeoEllipse';
 import { SGeoDashLine } from './Geometry/SGeoDashLine';
 import { SGeoRect } from './Geometry/SGeoRect';
 import { SParagraph } from './RenderComponents/SParagraph';
@@ -58,10 +58,6 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
         const dashLineConfig = config as SNodeConfig.DashLineConfig;
         const dashLine = node.addComponent(SGeoDashLine);
         dashLine.applyStyle(dashLineConfig);
-    } else if (config.type === SNodeConfig.NodeType.CIRCLE) {
-        const circleConfig = config as SNodeConfig.CircleConfig;
-        const circle = node.addComponent(SGeoCircle);
-        circle.applyStyle(circleConfig);
     } else if (config.type === SNodeConfig.NodeType.SPRITE) {
         const spriteConfig = config as SNodeConfig.SpriteConfig;
         const sprite = node.addComponent(SSprite);
@@ -73,20 +69,11 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
         const triConfig = config as SNodeConfig.TriConfig;
         const tri = node.addComponent(SGeoTri);
         tri.applyStyle(triConfig);
-    } else if (config.type === SNodeConfig.NodeType.DIAMOND) {
-        const diamondConfig = config as SNodeConfig.DiamondConfig;
-        const diamond = node.addComponent(SGeoDiamond);
-        diamond.applyStyle(diamondConfig);
-    } else if (config.type === SNodeConfig.NodeType.PARALLELOGRAM) {
-        const parallelogramConfig = config as SNodeConfig.ParallelogramConfig;
-        const parallelogram = node.addComponent(SGeoParallelogram);
-        parallelogram.applyStyle(parallelogramConfig);
-    } else if (config.type === SNodeConfig.NodeType.ROUND_RECT) {
-        const roundRectConfig = config as SNodeConfig.RoundRectConfig;
-        const roundRect = node.addComponent(SGeoRoundRect);
-        roundRect.applyStyle(roundRectConfig);
+    } else if (config.type === SNodeConfig.NodeType.ELLIPSE) {
+        const ellipseConfig = config as SNodeConfig.EllipseConfig;
+        const ellipse = node.addComponent(SGeoEllipse);
+        ellipse.applyStyle(ellipseConfig);
     }
-
     // 处理子元素
     config.children?.forEach((childConfig) => {
         const childNode = createNodeFromConfig(childConfig);

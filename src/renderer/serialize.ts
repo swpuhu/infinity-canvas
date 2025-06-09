@@ -1,7 +1,7 @@
 import SNode from './SNode';
 import { SNodeConfig } from '@/common/types';
 import { SGeoRect } from './Geometry/SGeoRect';
-import { SGeoCircle } from './Geometry/SGeoCircle';
+import { SGeoEllipse } from './Geometry/SGeoEllipse';
 import { SSprite } from './RenderComponents/SSprite';
 import { SParagraph } from './RenderComponents/SParagraph';
 import { Vec2 } from '@/common/Vec2';
@@ -40,7 +40,7 @@ function serializeRecursive(node: SNode): SNodeConfig.Config {
 
     // 序列化子节点
     if (node.children && node.children.length > 0) {
-        baseConfig.children = node.children.map(child =>
+        baseConfig.children = node.children.map((child) =>
             serializeRecursive(child)
         );
     }
@@ -129,7 +129,7 @@ function deserializeFromConfig(config: SNodeConfig.Config): SNode {
             break;
         }
         case SNodeConfig.NodeType.CIRCLE: {
-            const circleComp = node.addComponent(SGeoCircle);
+            const circleComp = node.addComponent(SGeoEllipse);
             const circleConfig = config as SNodeConfig.CircleConfig;
             if (circleConfig.style) {
                 circleComp.applyStyle(circleConfig);
@@ -153,7 +153,7 @@ function deserializeFromConfig(config: SNodeConfig.Config): SNode {
 
     // 递归处理子节点
     if (config.children) {
-        config.children.forEach(childConfig => {
+        config.children.forEach((childConfig) => {
             const childNode = deserializeFromConfig(childConfig);
             node.addChild(childNode);
         });

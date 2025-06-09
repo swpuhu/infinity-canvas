@@ -9,7 +9,7 @@ declare global {
             sprite: Omit<SNodeConfig.SpriteConfig, 'type'>;
             container: Omit<SNodeConfig.ContainerConfig, 'type'>;
             rect: Omit<SNodeConfig.RectConfig, 'type'>;
-            circle: Omit<SNodeConfig.CircleConfig, 'type'>;
+            ellipse: Omit<SNodeConfig.EllipseConfig, 'type'>;
             para: Omit<SNodeConfig.ParagraphConfig, 'type'>;
             tri: Omit<SNodeConfig.TriConfig, 'type'>;
             diamond: Omit<SNodeConfig.DiamondConfig, 'type'>;

@@ -150,7 +150,7 @@ export class ResizerUI {
                         <CommonResizePoint name={p.name} ref={p.ref} />
                     ))}
                 </container>
-                <circle
+                <ellipse
                     name="rotate-point"
                     ref={this._rotateRef}
                     width={ROTATE_GIZMO_SIZE}

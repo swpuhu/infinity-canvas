@@ -1,20 +1,28 @@
-import { ShapeType, SNodeConfig, SNodeEvents } from "@/common/types";
+import { SNodeConfig, SNodeEvents } from "@/common/types";
 import { CanvasEditor } from "../Editor";
 import { EditorMode, useEditorModeStore } from "@/store/EditorModeStore";
 import { createElement } from "../createElement";
 import SNode from "../SNode";
 import { createNodeFromConfig } from "../util";
 import eventBus from "@/common/eventBus";
-import { Vec2 } from "@/common/Vec2";
 import { ReadonlyVec2 } from "gl-matrix";
 
 export class ShapeCreator {
 
-    private _presetShapes: Partial<Record<ShapeType, SNode>> = {};
-    private _presetShapeConfigs: Partial<Record<ShapeType, SNodeConfig.Config>> = {};
+    private _presetShapes: Partial<Record<SNodeConfig.NodeType, SNode>> = {};
+    private _presetShapeConfigs: Partial<Record<SNodeConfig.NodeType, SNodeConfig.Config>> = {};
     private _currentInsertShape: SNode | undefined = undefined;
     private editorModeStore: ReturnType<typeof useEditorModeStore>;
     private _canvasNode: SNode;
+
+    // 默认形状样式配置
+    private static readonly DEFAULT_SHAPE_STYLE = {
+        fill: 0xF0F4FC,
+        stroke: 0x000000,
+        strokeWidth: 2,
+        alpha: 0.5
+    } as const;
+
     constructor(private _editor: CanvasEditor) {
         this._createPresetShape();
         
@@ -43,7 +51,9 @@ export class ShapeCreator {
             if (state.currentInsertShape === SNodeConfig.NodeType.RECT) {
                 this._currentInsertShape = this._presetShapes.rect;
             } else if (state.currentInsertShape === SNodeConfig.NodeType.TRI) {
-
+                this._currentInsertShape = this._presetShapes.tri;
+            } else if (state.currentInsertShape === SNodeConfig.NodeType.ELLIPSE) {
+                this._currentInsertShape = this._presetShapes.ellipse;
             }
             if (this._currentInsertShape) {
                 canvasNode.addChild(this._currentInsertShape);
@@ -71,6 +81,10 @@ export class ShapeCreator {
             const tri = createNodeFromConfig(this._presetShapeConfigs.tri!);
             tri.position.set(localPos[0], localPos[1]);
             this._canvasNode.addChild(tri);
+        } else if (currentShape === SNodeConfig.NodeType.ELLIPSE) {
+            const ellipse = createNodeFromConfig(this._presetShapeConfigs.ellipse!);
+            ellipse.position.set(localPos[0], localPos[1]);
+            this._canvasNode.addChild(ellipse);
         }
         
         this._exitShapeInsertMode();
@@ -92,28 +106,36 @@ export class ShapeCreator {
     }
 
     private _createPresetShape() {
-        const rectConfig = <rect width={100} height={100} style={{
-            fill: 0xF0F4FC,
-            stroke: 0x000000,
-            strokeWidth: 2,
-            alpha: 0.5
-        }}></rect>
-        const triConfig = <tri props={{
-            width: 100,
-            height: 100,
-        }} width={100} height={100} style={{
-            fill: 0xF0F4FC,
-            stroke: 0x000000,
-            strokeWidth: 2,
-            alpha: 0.5
-        }}></tri>
+        // 使用统一的样式配置
+        const commonStyle = ShapeCreator.DEFAULT_SHAPE_STYLE;
+
+        const rectConfig = <rect 
+            width={100} 
+            height={100} 
+            style={commonStyle}
+        ></rect>;
+
+        const triConfig = <tri 
+            width={100} 
+            height={100} 
+            style={commonStyle}
+        ></tri>;
+
+        const ellipseConfig = <ellipse width={100} height={100} style={commonStyle}></ellipse>;
+
+        // 保存配置（只保存ShapeType支持的形状）
         this._presetShapeConfigs.rect = rectConfig;
         this._presetShapeConfigs.tri = triConfig;
+        this._presetShapeConfigs.ellipse = ellipseConfig;
+
+        // 创建预设形状实例
         const rect = createNodeFromConfig(rectConfig);
         const tri = createNodeFromConfig(triConfig);
+        const ellipse = createNodeFromConfig(ellipseConfig);
 
         this._presetShapes.rect = rect;
-        this._presetShapes.tri = tri;
+        this._presetShapes.tri = tri; 
+        this._presetShapes.ellipse = ellipse;
     }
 
     destroy() {
