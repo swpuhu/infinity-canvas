@@ -1,3 +1,4 @@
+import { SNodeConfig } from '@/common/types';
 import { defineStore } from 'pinia';
 
 // Define tool types
@@ -21,7 +22,7 @@ export const useToolStore = defineStore('tool', {
         // Current active tool
         currentTool: ToolType.NONE,
         // Current selected shape type
-        currentShape: 'rectangle' as string,
+        currentShape: SNodeConfig.NodeType.RECT,
     }),
 
     getters: {
@@ -31,7 +32,7 @@ export const useToolStore = defineStore('tool', {
         },
 
         // Get current shape type
-        getCurrentShape(): string {
+        getCurrentShape(): SNodeConfig.NodeType {
             return this.currentShape;
         },
 
@@ -48,14 +49,14 @@ export const useToolStore = defineStore('tool', {
         },
 
         // Set current shape type
-        setShape(shape: string) {
+        setShape(shape: SNodeConfig.NodeType) {
             this.currentShape = shape;
         },
 
         // Reset to default select tool
         resetToDefault() {
             this.currentTool = ToolType.SELECT;
-            this.currentShape = 'rectangle';
+            this.currentShape = SNodeConfig.NodeType.RECT;
         },
     },
 });

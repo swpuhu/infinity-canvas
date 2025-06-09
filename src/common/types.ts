@@ -87,6 +87,11 @@ export namespace SNodeConfig {
         DIAMOND = 'diamond',
         PARALLELOGRAM = 'parallelogram',
         ROUND_RECT = 'round-rect',
+        PENTAGON = 'pentagon',
+        HEXAGON = 'hexagon',
+        STAR = 'star',
+        ARROW_RIGHT = 'arrow-right',
+        ARROW_LEFT = 'arrow-left',
     }
 
     export type SGraphicsPropsConfig = {

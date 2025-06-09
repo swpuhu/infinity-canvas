@@ -1,3 +1,4 @@
+import { SNodeConfig } from '@/common/types';
 import { defineStore } from 'pinia';
 
 // Define editor mode types
@@ -15,6 +16,8 @@ export const useEditorModeStore = defineStore('editorMode', {
         currentMode: EditorMode.DEFAULT,
         // Flag to indicate if hand tool drag mode is active
         isHandToolActive: false,
+        // Current shape being inserted
+        currentInsertShape: SNodeConfig.NodeType.RECT,
     }),
 
     getters: {
@@ -29,6 +32,11 @@ export const useEditorModeStore = defineStore('editorMode', {
         // Check if the editor is in shape insert mode
         isShapeInsertMode(): boolean {
             return this.currentMode === EditorMode.SHAPE_INSERT;
+        },
+
+        // Get current insert shape
+        getCurrentInsertShape(): string {
+            return this.currentInsertShape;
         },
     },
 
@@ -52,11 +60,15 @@ export const useEditorModeStore = defineStore('editorMode', {
         },
 
         // Set shape insert mode
-        setShapeInsertMode(active: boolean) {
+        setShapeInsertMode(active: boolean, shape?: SNodeConfig.NodeType) {
             if (active) {
                 this.currentMode = EditorMode.SHAPE_INSERT;
                 // Deactivate hand tool if it was active
                 this.isHandToolActive = false;
+                // Set current insert shape if provided
+                if (shape) {
+                    this.currentInsertShape = shape;
+                }
             } else if (this.currentMode === EditorMode.SHAPE_INSERT) {
                 this.currentMode = EditorMode.DEFAULT;
             }
@@ -66,6 +78,7 @@ export const useEditorModeStore = defineStore('editorMode', {
         resetToDefault() {
             this.currentMode = EditorMode.DEFAULT;
             this.isHandToolActive = false;
+            this.currentInsertShape = SNodeConfig.NodeType.RECT;
         },
     },
 });

@@ -1,23 +1,33 @@
 <template>
     <div class="vertical-toolbar">
-        <div class="toolbar-item shape-tool" :class="{ active: toolStore.isToolActive(ToolType.SHAPE) }"
+        <div class="toolbar-item shape-tool" :class="{ active: isShapeToolActive }"
             @click="setActiveTool(ToolType.SHAPE)" @mouseenter="handleShapeHoverEnter"
             @mouseleave="handleShapeHoverLeave">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect v-if="toolStore.getCurrentShape === 'rectangle'" x="3" y="3" width="18" height="18" rx="2" ry="2">
+                <rect v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.RECT" x="3" y="3" width="18"
+                    height="18" rx="2" ry="2">
                 </rect>
-                <circle v-if="toolStore.getCurrentShape === 'circle'" cx="12" cy="12" r="8"></circle>
-                <polygon v-if="toolStore.getCurrentShape === 'triangle'" points="12,2 22,20 2,20"></polygon>
-                <polygon v-if="toolStore.getCurrentShape === 'diamond'" points="12,3 21,12 12,21 3,12"></polygon>
-                <polygon v-if="toolStore.getCurrentShape === 'parallelogram'" points="4,18 8,6 20,6 16,18"></polygon>
-                <polygon v-if="toolStore.getCurrentShape === 'pentagon'" points="12,2 22,8 18,20 6,20 2,8"></polygon>
-                <polygon v-if="toolStore.getCurrentShape === 'hexagon'" points="12,2 22,7 22,17 12,22 2,17 2,7">
+                <circle v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.CIRCLE" cx="12" cy="12"
+                    r="8"></circle>
+                <polygon v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.TRI"
+                    points="12,2 22,20 2,20">
                 </polygon>
-                <polygon v-if="toolStore.getCurrentShape === 'star'"
+                <polygon v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.DIAMOND"
+                    points="12,3 21,12 12,21 3,12"></polygon>
+                <polygon v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.PARALLELOGRAM"
+                    points="4,18 8,6 20,6 16,18"></polygon>
+                <polygon v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.PENTAGON"
+                    points="12,2 22,8 18,20 6,20 2,8"></polygon>
+                <polygon v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.HEXAGON"
+                    points="12,2 22,7 22,17 12,22 2,17 2,7">
+                </polygon>
+                <polygon v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.STAR"
                     points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"></polygon>
-                <path v-if="toolStore.getCurrentShape === 'arrow-right'" d="M5 12h14m-7-7 7 7-7 7"></path>
-                <path v-if="toolStore.getCurrentShape === 'arrow-left'" d="M19 12H5m7-7-7 7 7 7"></path>
+                <path v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.ARROW_RIGHT"
+                    d="M5 12h14m-7-7 7 7-7 7"></path>
+                <path v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.ARROW_LEFT"
+                    d="M19 12H5m7-7-7 7 7 7"></path>
             </svg>
 
             <!-- 形状选择菜单 -->
@@ -28,17 +38,23 @@
                         @click="handleShapeSelect(shape.type)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect v-if="shape.type === 'rectangle'" x="3" y="6" width="18" height="12" rx="2"></rect>
-                            <circle v-if="shape.type === 'circle'" cx="12" cy="12" r="8"></circle>
-                            <polygon v-if="shape.type === 'triangle'" points="12,2 22,20 2,20"></polygon>
-                            <polygon v-if="shape.type === 'diamond'" points="12,3 21,12 12,21 3,12"></polygon>
-                            <polygon v-if="shape.type === 'parallelogram'" points="4,18 8,6 20,6 16,18"></polygon>
-                            <polygon v-if="shape.type === 'pentagon'" points="12,2 22,8 18,20 6,20 2,8"></polygon>
-                            <polygon v-if="shape.type === 'hexagon'" points="12,2 22,7 22,17 12,22 2,17 2,7"></polygon>
-                            <polygon v-if="shape.type === 'star'"
+                            <rect v-if="shape.type === SNodeConfig.NodeType.RECT" x="3" y="6" width="18" height="12"
+                                rx="2"></rect>
+                            <circle v-if="shape.type === SNodeConfig.NodeType.CIRCLE" cx="12" cy="12" r="8"></circle>
+                            <polygon v-if="shape.type === SNodeConfig.NodeType.TRI" points="12,2 22,20 2,20"></polygon>
+                            <polygon v-if="shape.type === SNodeConfig.NodeType.DIAMOND" points="12,3 21,12 12,21 3,12">
+                            </polygon>
+                            <polygon v-if="shape.type === SNodeConfig.NodeType.PARALLELOGRAM"
+                                points="4,18 8,6 20,6 16,18"></polygon>
+                            <polygon v-if="shape.type === SNodeConfig.NodeType.PENTAGON"
+                                points="12,2 22,8 18,20 6,20 2,8"></polygon>
+                            <polygon v-if="shape.type === SNodeConfig.NodeType.HEXAGON"
+                                points="12,2 22,7 22,17 12,22 2,17 2,7"></polygon>
+                            <polygon v-if="shape.type === SNodeConfig.NodeType.STAR"
                                 points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"></polygon>
-                            <path v-if="shape.type === 'arrow-right'" d="M5 12h14m-7-7 7 7-7 7"></path>
-                            <path v-if="shape.type === 'arrow-left'" d="M19 12H5m7-7-7 7 7 7"></path>
+                            <path v-if="shape.type === SNodeConfig.NodeType.ARROW_RIGHT" d="M5 12h14m-7-7 7 7-7 7">
+                            </path>
+                            <path v-if="shape.type === SNodeConfig.NodeType.ARROW_LEFT" d="M19 12H5m7-7-7 7 7 7"></path>
                         </svg>
                     </div>
                     <div class="shape-menu-more">
@@ -144,9 +160,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { useEditorModeStore } from '../store/EditorModeStore';
+import { onMounted, ref, computed } from 'vue';
+import { useEditorModeStore, EditorMode } from '../store/EditorModeStore';
 import { ToolType, useToolStore } from '../store/ToolStore';
+import { SNodeConfig } from '@/common/types';
 
 const emit = defineEmits(['tool-selected', 'shape-selected']);
 const editorModeStore = useEditorModeStore();
@@ -157,18 +174,23 @@ const showShapeMenu = ref(false);
 let hoverTimer: number | null = null;
 
 // 形状类型定义
-const shapes = [
-    { type: 'rectangle', name: '矩形' },
-    { type: 'circle', name: '圆形' },
-    { type: 'triangle', name: '三角形' },
-    { type: 'diamond', name: '菱形' },
-    { type: 'parallelogram', name: '平行四边形' },
-    { type: 'pentagon', name: '五边形' },
-    { type: 'hexagon', name: '六边形' },
-    { type: 'star', name: '星形' },
-    { type: 'arrow-right', name: '右箭头' },
-    { type: 'arrow-left', name: '左箭头' }
+const shapes: { type: SNodeConfig.NodeType, name: string }[] = [
+    { type: SNodeConfig.NodeType.RECT, name: '矩形' },
+    { type: SNodeConfig.NodeType.CIRCLE, name: '圆形' },
+    { type: SNodeConfig.NodeType.TRI, name: '三角形' },
+    { type: SNodeConfig.NodeType.DIAMOND, name: '菱形' },
+    { type: SNodeConfig.NodeType.PARALLELOGRAM, name: '平行四边形' },
+    { type: SNodeConfig.NodeType.PENTAGON, name: '五边形' },
+    { type: SNodeConfig.NodeType.HEXAGON, name: '六边形' },
+    { type: SNodeConfig.NodeType.STAR, name: '星形' },
+    { type: SNodeConfig.NodeType.ARROW_RIGHT, name: '右箭头' },
+    { type: SNodeConfig.NodeType.ARROW_LEFT, name: '左箭头' }
 ];
+
+// 计算shape工具的激活状态 - 需要同时满足工具类型和编辑模式
+const isShapeToolActive = computed(() => {
+    return toolStore.isToolActive(ToolType.SHAPE) && editorModeStore.isShapeInsertMode;
+});
 
 // 处理形状工具hover进入
 function handleShapeHoverEnter() {
@@ -202,7 +224,7 @@ function handleShapeMenuLeave() {
 }
 
 // 处理形状选择
-function handleShapeSelect(shapeType: string) {
+function handleShapeSelect(shapeType: SNodeConfig.NodeType) {
     showShapeMenu.value = false;
 
     // 更新store中的形状状态
@@ -216,6 +238,9 @@ function handleShapeSelect(shapeType: string) {
 
     // 更新工具状态
     toolStore.setTool(ToolType.SHAPE);
+
+    // 设置形状插入模式，传递选中的形状
+    editorModeStore.setShapeInsertMode(true, shapeType);
 }
 
 // Set active tool and emit event
@@ -235,7 +260,9 @@ function setActiveTool(tool: ToolType) {
 
     // Handle shape tool activation
     if (tool === ToolType.SHAPE) {
-        editorModeStore.setShapeInsertMode(true);
+        // 获取当前选中的形状并传递给setShapeInsertMode
+        const currentShape = toolStore.getCurrentShape;
+        editorModeStore.setShapeInsertMode(true, currentShape);
     } else if (editorModeStore.isShapeInsertMode) {
         editorModeStore.setShapeInsertMode(false);
     }

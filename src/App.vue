@@ -4,12 +4,7 @@
             <div class="toolbar">
                 <div class="toolbar-head">
                     <UButton type="primary" @click="handleSave">保存</UButton>
-                    <UButton
-                        type="primary"
-                        @click="handleAddText"
-                        :selected="uiStore.willAddText"
-                        >添加文字</UButton
-                    >
+                    <UButton type="primary" @click="handleAddText" :selected="uiStore.willAddText">添加文字</UButton>
                 </div>
                 <div class="toolbar-right">
                     <!-- 右侧工具按钮预留位置 -->
@@ -17,17 +12,10 @@
             </div>
             <div class="canvas-container">
                 <canvas ref="canvasRef"></canvas>
-                <ZoomControls
-                    ref="zoomControlsRef"
-                    @zoom-value-change="handleZoomValueChange"
-                    @hand-tool-change="handleHandToolChange"
-                    @canvas-drag="handleCanvasDrag"
-                    @canvas-drag-start="handleCanvasDragStart"
-                />
-                <VerticalToolbar
-                    ref="verticalToolbarRef"
-                    @tool-selected="handleToolSelected"
-                />
+                <ZoomControls ref="zoomControlsRef" @zoom-value-change="handleZoomValueChange"
+                    @hand-tool-change="handleHandToolChange" @canvas-drag="handleCanvasDrag"
+                    @canvas-drag-start="handleCanvasDragStart" />
+                <VerticalToolbar ref="verticalToolbarRef" />
             </div>
         </div>
     </div>
@@ -57,7 +45,6 @@ const verticalToolbarRef = ref<InstanceType<typeof VerticalToolbar> | null>(
 const uiStore = useUIStore();
 const zoomStore = useZoomStore();
 const editorModeStore = useEditorModeStore();
-const toolStore = useToolStore();
 
 let editor: CanvasEditor | null = null;
 onMounted(async () => {
@@ -221,17 +208,7 @@ const handleAddText = () => {
     }
 };
 
-// Handle tool selection from the vertical toolbar
-function handleToolSelected(tool: ToolType) {
-    console.log('Tool selected:', tool);
 
-    // Handle specific tool functionalities
-    if (tool === ToolType.TEXT) {
-        handleAddText();
-    } else if (tool === ToolType.HAND) {
-        // Hand tool is handled by the EditorModeStore via the VerticalToolbar
-    }
-}
 </script>
 
 <style>
