@@ -5,6 +5,7 @@ export enum EditorMode {
     DEFAULT = 'default',
     HAND_TOOL = 'hand_tool',
     TEXT_EDIT = 'text_edit',
+    SHAPE_INSERT = 'shape_insert',
     // Add more modes as needed
 }
 
@@ -24,6 +25,11 @@ export const useEditorModeStore = defineStore('editorMode', {
                 this.isHandToolActive
             );
         },
+
+        // Check if the editor is in shape insert mode
+        isShapeInsertMode(): boolean {
+            return this.currentMode === EditorMode.SHAPE_INSERT;
+        },
     },
 
     actions: {
@@ -41,6 +47,17 @@ export const useEditorModeStore = defineStore('editorMode', {
                 this.currentMode = EditorMode.HAND_TOOL;
             } else if (this.currentMode === EditorMode.HAND_TOOL) {
                 // If deactivating and current mode is hand tool, reset to default
+                this.currentMode = EditorMode.DEFAULT;
+            }
+        },
+
+        // Set shape insert mode
+        setShapeInsertMode(active: boolean) {
+            if (active) {
+                this.currentMode = EditorMode.SHAPE_INSERT;
+                // Deactivate hand tool if it was active
+                this.isHandToolActive = false;
+            } else if (this.currentMode === EditorMode.SHAPE_INSERT) {
                 this.currentMode = EditorMode.DEFAULT;
             }
         },

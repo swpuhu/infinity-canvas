@@ -232,6 +232,13 @@ function setActiveTool(tool: ToolType) {
     } else if (editorModeStore.isHandToolActive) {
         editorModeStore.setHandToolActive(false);
     }
+
+    // Handle shape tool activation
+    if (tool === ToolType.SHAPE) {
+        editorModeStore.setShapeInsertMode(true);
+    } else if (editorModeStore.isShapeInsertMode) {
+        editorModeStore.setShapeInsertMode(false);
+    }
 }
 
 // Initialize component

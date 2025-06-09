@@ -9,6 +9,7 @@ import { Renderer } from './renderer';
 import { CanvasEventSystem } from './SEventManager';
 import { createNodeFromConfig } from './util';
 import { WhiteboardScene } from './WhiteboardScene';
+import { ShapeCreator } from './components/ShapeCreator';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
@@ -16,6 +17,7 @@ export class CanvasEditor {
 
     private _scene: WhiteboardScene | null = null;
     private _resizeGizmo: ResizeGizmo | null = null;
+    private _shapeCreator: ShapeCreator | null = null;
     private _snapGuide: SnapGuide | null = null;
     private _zoomValue: number = 0; // Default zoom value is 0 (100% scale)
     private _minZoomValue: number = -2; // Minimum zoom value (~13.5% scale)
@@ -70,7 +72,7 @@ export class CanvasEditor {
             />
         );
         const testPic = createNodeFromConfig(testPicConfig);
-        scene.stage.addChild(testPic);
+        // scene.stage.addChild(testPic);
 
         const paraConfig = (
             <para
@@ -83,14 +85,14 @@ export class CanvasEditor {
                 width={300}
             />
         );
+        // const para = createNodeFromConfig(paraConfig);
 
-        const para = createNodeFromConfig(paraConfig);
-        console.log('para', para);
-
-        scene.stage.addChild(para);
+        // scene.stage.addChild(para);
+        // scene.stage.addChild(tri);
 
         this._snapGuide = new SnapGuide(this);
         this._resizeGizmo = new ResizeGizmo(this, this._snapGuide);
+        this._shapeCreator = new ShapeCreator(this);
 
         this._renderer.on(EventNames.RESIZE, (width, height) => {
             scene.resizeCanvasSize({ width, height });
@@ -243,26 +245,21 @@ export class CanvasEditor {
             throw new Error('scene is not initialized');
         }
 
-        const canvasContainer =
-            this._scene.rootNode.getNodeByName('canvas-container');
+        const canvasContainer = this._scene.getCanvasNode();
+
+        const canvasHeight = this.canvas.height;
+
+        const worldY = canvasHeight - screenY;
+        const worldX = screenX;
         if (!canvasContainer) {
             return new Vec2(screenX, screenY);
         }
 
-        // Get current scale
-        const scale = Math.exp(this._zoomValue);
-        const baseScale = this._scene.getVirtualCanvasScale();
-        const totalScaleX = baseScale.x * scale;
-        const totalScaleY = baseScale.y * scale;
 
-        // Get canvas container position
-        const containerPos = canvasContainer.position;
+        const canvasPos = canvasContainer.toLocal([worldX, worldY]);
 
-        // Convert screen coordinates to canvas coordinates
-        const canvasX = (screenX - containerPos.x) / totalScaleX;
-        const canvasY = (screenY - containerPos.y) / totalScaleY;
 
-        return new Vec2(canvasX, canvasY);
+        return new Vec2(canvasPos[0], canvasPos[1]);
     }
 
     public saveToImage() {
@@ -284,5 +281,6 @@ export class CanvasEditor {
         this._eventSystem?.destroy();
         CanvasKitModule.destroy();
         this._resizeGizmo?.destroy();
+        this._shapeCreator?.destroy();
     }
 }

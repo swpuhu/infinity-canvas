@@ -8,6 +8,7 @@ import { SGeoRect } from './Geometry/SGeoRect';
 import { SParagraph } from './RenderComponents/SParagraph';
 import { SSprite } from './RenderComponents/SSprite';
 import SNode from './SNode';
+import { SGeoTri } from './Geometry/SGeoTri';
 const nodeNameRefMap = new Map<string, SNode>();
 
 export function refSNode(v?: SNode): SNodeConfig.IRefSNode {
@@ -68,6 +69,22 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
     } else if (config.type === SNodeConfig.NodeType.PARAGRAPH) {
         const paragraphConfig = config as SNodeConfig.ParagraphConfig;
         node.addComponent(SParagraph, paragraphConfig);
+    } else if (config.type === SNodeConfig.NodeType.TRI) {
+        const triConfig = config as SNodeConfig.TriConfig;
+        const tri = node.addComponent(SGeoTri);
+        tri.applyStyle(triConfig);
+    } else if (config.type === SNodeConfig.NodeType.DIAMOND) {
+        const diamondConfig = config as SNodeConfig.DiamondConfig;
+        const diamond = node.addComponent(SGeoDiamond);
+        diamond.applyStyle(diamondConfig);
+    } else if (config.type === SNodeConfig.NodeType.PARALLELOGRAM) {
+        const parallelogramConfig = config as SNodeConfig.ParallelogramConfig;
+        const parallelogram = node.addComponent(SGeoParallelogram);
+        parallelogram.applyStyle(parallelogramConfig);
+    } else if (config.type === SNodeConfig.NodeType.ROUND_RECT) {
+        const roundRectConfig = config as SNodeConfig.RoundRectConfig;
+        const roundRect = node.addComponent(SGeoRoundRect);
+        roundRect.applyStyle(roundRectConfig);
     }
 
     // 处理子元素

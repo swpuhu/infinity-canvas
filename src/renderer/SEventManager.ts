@@ -78,10 +78,11 @@ export class CanvasEventSystem {
         this._systemListenersMap.set(SNodeEvents.KEY_DOWN, []);
         this._systemListenersMap.set(SNodeEvents.KEY_UP, []);
         this._systemListenersMap.set(SNodeEvents.WHEEL, []);
+        this._systemListenersMap.set(SNodeEvents.POINTER_MOVE, []);
     }
 
     private _preventDefaultBehavior(): void {
-        this.canvas.addEventListener('contextmenu', event => {
+        this.canvas.addEventListener('contextmenu', (event) => {
             event.preventDefault();
             event.stopPropagation();
         });
@@ -148,8 +149,25 @@ export class CanvasEventSystem {
         }
     };
 
+    private _processSystemPointerEvent(
+        eventType: keyof SNodeEvents.EventMap,
+        nativeEvent: PointerEvent
+    ) {
+        const handlers = this._systemListenersMap.get(eventType);
+        if (!handlers || handlers.length === 0) {
+            return;
+        }
+        const pointerEvent = new SPointerEvent(eventType, nativeEvent);
+
+        for (const handler of handlers) {
+            handler(pointerEvent);
+        }
+    }
+
     private _handlePointerDown = (event: PointerEvent) => {
         this._pressed = true;
+
+        this._processSystemPointerEvent(SNodeEvents.POINTER_DOWN, event);
         this._processPointerEvent(SNodeEvents.POINTER_DOWN, event);
 
         // 处理双击事件
@@ -159,11 +177,17 @@ export class CanvasEventSystem {
         if (diff < DB_CLICK_TIME_THRESHOLD) {
             console.log('trigger dblclick');
             this._processPointerEvent(SNodeEvents.DB_CLICK, event);
+            this._prevPointerDownTime = 0;
+            return;
         }
         this._prevPointerDownTime = now;
     };
 
     private _handlePointerMove = (event: PointerEvent) => {
+        // 处理系统级的鼠标移动事件（无论是否按下）
+        this._processSystemPointerEvent(SNodeEvents.POINTER_MOVE, event);
+
+        // 原有的逻辑：只在按下状态时处理节点事件
         if (!this._pressed) {
             return;
         }
@@ -286,7 +310,7 @@ export class CanvasEventSystem {
         if (!listeners) {
             return;
         }
-        const index = listeners.findIndex(l => l === handler);
+        const index = listeners.findIndex((l) => l === handler);
         if (index !== -1) {
             listeners.splice(index, 1);
         }
@@ -303,7 +327,7 @@ export class CanvasEventSystem {
             return;
         }
         const index = listeners.findIndex(
-            l => l.node === sNode && l.type === type && l.handler === handler
+            (l) => l.node === sNode && l.type === type && l.handler === handler
         );
         if (index !== -1) {
             listeners.splice(index, 1);

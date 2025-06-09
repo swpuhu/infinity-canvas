@@ -10,7 +10,8 @@ export function WhiteboardSceneX(option: {
     virtualCanvasRef: SNodeConfig.IRefSNode;
     topLayerRef: SNodeConfig.IRefSNode;
 }) {
-    return (
+    console.log('option.designSize.height', option.designSize.height)
+    const root = (
         <container
             name="root"
             width={option.canvasSize.width}
@@ -37,7 +38,7 @@ export function WhiteboardSceneX(option: {
                     }}
                     ref={option.virtualCanvasRef}
                     style={{
-                        fill: 0xffffff,
+                        fill: 0xffffee,
                     }}
                     width={option.designSize.width}
                     height={option.designSize.height}
@@ -52,4 +53,6 @@ export function WhiteboardSceneX(option: {
             ></container>
         </container>
     );
+
+    return root;
 }

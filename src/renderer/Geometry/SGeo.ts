@@ -12,6 +12,7 @@ import { SRenderComponent } from '../RenderComponents/SRenderComponent';
 export class SGeo extends SRenderComponent {
     protected fillPaint!: Paint;
     protected strokePaint!: Paint;
+
     protected shadowPaint!: Paint;
     protected onCreated(): void {}
 
@@ -89,10 +90,10 @@ export class SGeo extends SRenderComponent {
         if (options.style?.alpha) {
             alpha = options.style.alpha;
         }
-        if (options.style?.fill) {
+        if (options.style?.fill !== undefined) {
             this.fill({ color: options.style.fill, alpha });
         }
-        if (options.style?.stroke) {
+        if (options.style?.stroke !== undefined) {
             this.stroke({
                 color: options.style.stroke,
                 alpha,

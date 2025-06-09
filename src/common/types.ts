@@ -83,6 +83,10 @@ export namespace SNodeConfig {
         CIRCLE = 'circle',
         PARAGRAPH = 'para',
         DASH_LINE = 'dash-line',
+        TRI = 'tri',
+        DIAMOND = 'diamond',
+        PARALLELOGRAM = 'parallelogram',
+        ROUND_RECT = 'round-rect',
     }
 
     export type SGraphicsPropsConfig = {
@@ -125,6 +129,10 @@ export namespace SNodeConfig {
     export type RectConfig = BaseConfig &
         SGraphicsPropsAndStyle & {
             type: NodeType.RECT;
+        };
+    export type TriConfig = BaseConfig &
+        SGraphicsPropsAndStyle & {
+            type: NodeType.TRI;
         };
 
     export type DashLineConfig = BaseConfig &
@@ -285,3 +293,5 @@ export enum EnumParaResizeMode {
     ONLY_NODE = 'onlyNode',
     RESIZE_FONT_SIZE = 'resizeFontSize',
 }
+
+export type ShapeType = 'rect' | 'round-rect' | 'tri' | 'diamond';

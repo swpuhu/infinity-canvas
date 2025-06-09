@@ -61,6 +61,7 @@ export class WhiteboardScene extends EventEmitter {
         );
 
         this.rootNode = createNodeFromConfig(rootNodeConfig);
+        console.log('rootNodeConfig', this.rootNode);
     }
 
     public getCanvasNode(): SNode {
