@@ -150,6 +150,16 @@ export namespace SNodeConfig {
             type: NodeType.ELLIPSE;
         };
 
+    export type DiamondConfig = BaseConfig &
+        SGraphicsPropsAndStyle & {
+            type: NodeType.DIAMOND;
+        };
+
+    export type ParallelogramConfig = BaseConfig &
+        SGraphicsPropsAndStyle & {
+            type: NodeType.PARALLELOGRAM;
+        };
+
     export type SpriteConfig = BaseConfig & SSpritePropsConfig;
 
     export type SParagraphPropsConfig = {

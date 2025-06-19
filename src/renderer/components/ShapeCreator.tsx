@@ -55,6 +55,10 @@ export class ShapeCreator {
                 this._currentInsertShape = this._presetShapes.tri;
             } else if (state.currentInsertShape === SNodeConfig.NodeType.ELLIPSE) {
                 this._currentInsertShape = this._presetShapes.ellipse;
+            } else if (state.currentInsertShape === SNodeConfig.NodeType.DIAMOND) {
+                this._currentInsertShape = this._presetShapes.diamond;
+            } else if (state.currentInsertShape === SNodeConfig.NodeType.PARALLELOGRAM) {
+                this._currentInsertShape = this._presetShapes.parallelogram;
             }
             if (this._currentInsertShape) {
                 canvasNode.addChild(this._currentInsertShape);
@@ -84,8 +88,13 @@ export class ShapeCreator {
         } else if (currentShape === SNodeConfig.NodeType.ELLIPSE) {
             const ellipse = createNodeFromConfig(this._presetShapeConfigs.ellipse!);
             newNode = ellipse;
+        } else if (currentShape === SNodeConfig.NodeType.DIAMOND) {
+            const diamond = createNodeFromConfig(this._presetShapeConfigs.diamond!);
+            newNode = diamond;
+        } else if (currentShape === SNodeConfig.NodeType.PARALLELOGRAM) {
+            const parallelogram = createNodeFromConfig(this._presetShapeConfigs.parallelogram!);
+            newNode = parallelogram;
         }
-
 
         if (newNode) {
             newNode.position.set(localPos[0], localPos[1]);
@@ -133,19 +142,29 @@ export class ShapeCreator {
 
         const ellipseConfig = <ellipse width={100} height={100} style={commonStyle}></ellipse>;
 
+        const diamondConfig = <diamond width={100} height={100} style={commonStyle}></diamond>;
+
+        const parallelogramConfig = <parallelogram width={100} height={100} style={commonStyle}></parallelogram>;
+
         // 保存配置（只保存ShapeType支持的形状）
         this._presetShapeConfigs.rect = rectConfig;
         this._presetShapeConfigs.tri = triConfig;
         this._presetShapeConfigs.ellipse = ellipseConfig;
+        this._presetShapeConfigs.diamond = diamondConfig;
+        this._presetShapeConfigs.parallelogram = parallelogramConfig;
 
         // 创建预设形状实例
         const rect = createNodeFromConfig(rectConfig);
         const tri = createNodeFromConfig(triConfig);
         const ellipse = createNodeFromConfig(ellipseConfig);
+        const diamond = createNodeFromConfig(diamondConfig);
+        const parallelogram = createNodeFromConfig(parallelogramConfig);
 
         this._presetShapes.rect = rect;
         this._presetShapes.tri = tri; 
         this._presetShapes.ellipse = ellipse;
+        this._presetShapes.diamond = diamond;
+        this._presetShapes.parallelogram = parallelogram;
     }
 
     destroy() {
