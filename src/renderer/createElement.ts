@@ -22,7 +22,7 @@ export function createElement<T extends keyof JSX.IntrinsicElements>(
         : T extends 'container'
         ? SNodeConfig.ContainerConfig
         : T extends 'circle'
-        ? SNodeConfig.CircleConfig
+        ? SNodeConfig.EllipseConfig
         : T extends 'dash-line'
         ? SNodeConfig.DashLineConfig
         : never;

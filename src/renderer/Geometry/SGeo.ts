@@ -14,6 +14,7 @@ export class SGeo extends SRenderComponent {
     protected strokePaint!: Paint;
 
     protected shadowPaint!: Paint;
+    public options: SNodeConfig.SGraphicsPropsAndStyle = {};
     protected onCreated(): void {}
 
     protected _getShadowPaint(): Paint {
@@ -83,6 +84,13 @@ export class SGeo extends SRenderComponent {
         if (options?.width) {
             paint.setStrokeWidth(options.width);
         }
+    }
+
+    public setAlpha(alpha: number): void {
+        const fillPaint = this._getFillPaint();
+        fillPaint.setAlphaf(alpha);
+        const strokePaint = this._getStrokePaint();
+        strokePaint.setAlphaf(alpha);
     }
 
     public applyStyle(options: SNodeConfig.SGraphicsPropsAndStyle): void {

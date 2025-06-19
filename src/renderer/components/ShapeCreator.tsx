@@ -6,6 +6,7 @@ import SNode from "../SNode";
 import { createNodeFromConfig } from "../util";
 import eventBus from "@/common/eventBus";
 import { ReadonlyVec2 } from "gl-matrix";
+import { SGeo } from "../Geometry/SGeo";
 
 export class ShapeCreator {
 
@@ -73,18 +74,27 @@ export class ShapeCreator {
 
     private insertShape(localPos: ReadonlyVec2) {
         const currentShape = this.editorModeStore.currentInsertShape;
+        let newNode: SNode | undefined = undefined;
         if (currentShape === SNodeConfig.NodeType.RECT) {
             const rect = createNodeFromConfig(this._presetShapeConfigs.rect!);
-            rect.position.set(localPos[0], localPos[1]);
-            this._canvasNode.addChild(rect);
+            newNode = rect;
         } else if (currentShape === SNodeConfig.NodeType.TRI) {
             const tri = createNodeFromConfig(this._presetShapeConfigs.tri!);
-            tri.position.set(localPos[0], localPos[1]);
-            this._canvasNode.addChild(tri);
+            newNode = tri;
         } else if (currentShape === SNodeConfig.NodeType.ELLIPSE) {
             const ellipse = createNodeFromConfig(this._presetShapeConfigs.ellipse!);
-            ellipse.position.set(localPos[0], localPos[1]);
-            this._canvasNode.addChild(ellipse);
+            newNode = ellipse;
+        }
+
+
+        if (newNode) {
+            newNode.position.set(localPos[0], localPos[1]);
+            this._canvasNode.addChild(newNode);
+            
+            const geoComp = newNode.getComponent(SGeo);
+            if (geoComp) {
+                geoComp.setAlpha(1);
+            }
         }
         
         this._exitShapeInsertMode();
