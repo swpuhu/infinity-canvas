@@ -31,16 +31,6 @@ export class ShapeCreator {
         this.editorModeStore = editorModeStore;
         const canvasNode = _editor.scene.getCanvasNode();
         this._canvasNode = canvasNode;
-        _editor.eventSystem.addSystemEventListener(SNodeEvents.POINTER_MOVE, (event) => {
-            if (editorModeStore.isShapeInsertMode) {
-                const worldPos = event.getWorldPosition();
-                const localPos = canvasNode.toLocal(worldPos);
-                if (this._currentInsertShape) {
-                    this._currentInsertShape.position.set(localPos[0], localPos[1]);
-                    eventBus.reDraw();
-                }
-            }
-        });
         editorModeStore.$subscribe((mutation, state) => {
             // mutation包含变化的详细信息
             // console.log('Store发生变化:', mutation);
@@ -74,6 +64,10 @@ export class ShapeCreator {
                 this.insertShape(localPos);
             }
         });
+    }
+
+    public getShadowShape(): SNode | undefined {
+        return this._currentInsertShape;
     }
 
     private insertShape(localPos: ReadonlyVec2) {

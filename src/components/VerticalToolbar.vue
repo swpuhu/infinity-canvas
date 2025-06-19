@@ -263,6 +263,8 @@ function setActiveTool(tool: ToolType) {
         // 获取当前选中的形状并传递给setShapeInsertMode
         const currentShape = toolStore.getCurrentShape;
         editorModeStore.setShapeInsertMode(true, currentShape);
+    } else if (tool === ToolType.TEXT) {
+        editorModeStore.setTextInsertMode(true);
     } else if (editorModeStore.isShapeInsertMode) {
         editorModeStore.setShapeInsertMode(false);
     }

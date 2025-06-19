@@ -1,5 +1,5 @@
 import eventBus from '@/common/eventBus';
-import { EventNames, IPoint } from '@/common/types';
+import { EventNames, IPoint, SNodeEvents } from '@/common/types';
 import { Vec2 } from '@/common/Vec2';
 import { CanvasKitModule } from '@/lib/canvaskit';
 import { ResizeGizmo } from './components/ResizeGizmo';
@@ -10,6 +10,7 @@ import { CanvasEventSystem } from './SEventManager';
 import { createNodeFromConfig } from './util';
 import { WhiteboardScene } from './WhiteboardScene';
 import { ShapeCreator } from './components/ShapeCreator';
+import { useEditorModeStore } from '@/store/EditorModeStore';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
@@ -93,6 +94,23 @@ export class CanvasEditor {
         this._snapGuide = new SnapGuide(this);
         this._resizeGizmo = new ResizeGizmo(this, this._snapGuide);
         this._shapeCreator = new ShapeCreator(this);
+
+
+        const editorModeStore = useEditorModeStore();
+        
+        this.eventSystem.addSystemEventListener(SNodeEvents.POINTER_MOVE, (event) => {
+            if (editorModeStore.isShapeInsertMode) {
+                const worldPos = event.getWorldPosition();
+                const canvasNode = this.scene.getCanvasNode();
+                const localPos = canvasNode.toLocal(worldPos);
+                const shadowShape = this._shapeCreator?.getShadowShape();
+                if (shadowShape) {
+                    shadowShape.position.set(localPos[0], localPos[1]);
+                    eventBus.reDraw();
+                }
+            } else if (editorModeStore.isTextInsertMode) {
+            }
+        });
 
         this._renderer.on(EventNames.RESIZE, (width, height) => {
             scene.resizeCanvasSize({ width, height });
