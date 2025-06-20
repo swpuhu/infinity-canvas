@@ -14,6 +14,7 @@ import {
     EnumParaResizeMode,
     EnumRenderComponentType,
     SNodeConfig,
+    SNodeEvents,
 } from '@/common/types';
 import { ReadonlyVec2 } from 'gl-matrix';
 
@@ -101,6 +102,7 @@ export class SParagraph extends SRenderComponent {
         const height = this._paragraph.getHeight();
         this.node.width = width;
         this.node.height = height;
+        this.node.emit(SNodeEvents.TEXT_SIZE_CHANGED);
     }
 
     private _nodeSizeChanged = (width: number, height: number) => {

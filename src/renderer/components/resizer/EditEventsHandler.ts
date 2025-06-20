@@ -250,7 +250,17 @@ export class EditEventsHandler {
             this._cursorDiv!.style.width = 1 / globalScale.x + 'px';
             if (worldPos) {
                 setTimeout(() => {
-                    this._hideTextArea!.style.left = worldPos[0] + 50 + 'px';
+                    const textAreaWidth = this._hideTextArea!.offsetWidth;
+                    // 如果textAreaWidth + worldPos[0] > 画布宽度，则将textArea的right设为 0，不设置left
+                    if (
+                        textAreaWidth + worldPos[0] >
+                        this._editor.canvas.parentElement!.offsetWidth
+                    ) {
+                        this._hideTextArea!.style.right = '0px';
+                    } else {
+                        this._hideTextArea!.style.left =
+                            worldPos[0] + 50 + 'px';
+                    }
                     this._hideTextArea!.style.top = worldPos[1] + 'px';
                 }, 100);
             }
