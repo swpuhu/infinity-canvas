@@ -82,6 +82,10 @@ export const useEditorModeStore = defineStore('editorMode', {
             }
         },
 
+        isToolActive(tool: EditorMode): boolean {
+            return this.currentMode === tool;
+        },
+
         setTextInsertMode(active: boolean) {
             if (active) {
                 this.isHandToolActive = false;
