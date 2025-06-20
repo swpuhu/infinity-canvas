@@ -100,7 +100,12 @@ export class EditEventsHandler {
         this._setCursorAndFocusTextArea(node, event);
     }
 
+    private _onTextChanged = (): void => {
+        this._resizerUI.alignToNode(this._currentText!.node!);
+    };
+
     private _addTextEvents(node: SNode): void {
+        node.on(SNodeEvents.TEXT_CHANGED, this._onTextChanged);
         CanvasEventSystem.instance.addEventListener(
             node,
             SNodeEvents.POINTER_DOWN,
@@ -120,6 +125,7 @@ export class EditEventsHandler {
     }
 
     private _removeTextEvents(node: SNode): void {
+        node.off(SNodeEvents.TEXT_CHANGED, this._onTextChanged);
         CanvasEventSystem.instance.removeEventListener(
             node,
             SNodeEvents.POINTER_DOWN,
@@ -257,6 +263,7 @@ export class EditEventsHandler {
                         this._editor.canvas.parentElement!.offsetWidth
                     ) {
                         this._hideTextArea!.style.right = '0px';
+                        this._hideTextArea!.style.left = 'auto';
                     } else {
                         this._hideTextArea!.style.left =
                             worldPos[0] + 50 + 'px';

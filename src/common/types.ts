@@ -211,7 +211,7 @@ export namespace SNodeEvents {
     export const HIERARCHY_CHANGE = 'hierarchyChange';
     export const SIZE_CHANGE = 'sizeChange';
 
-    export const TEXT_SIZE_CHANGED = 'textSizeChanged';
+    export const TEXT_CHANGED = 'textChanged';
 
     export type IEvent = {
         target: SNode | null;

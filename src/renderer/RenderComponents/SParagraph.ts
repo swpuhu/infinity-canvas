@@ -102,7 +102,7 @@ export class SParagraph extends SRenderComponent {
         const height = this._paragraph.getHeight();
         this.node.width = width;
         this.node.height = height;
-        this.node.emit(SNodeEvents.TEXT_SIZE_CHANGED);
+        this.node.emit(SNodeEvents.TEXT_CHANGED);
     }
 
     private _nodeSizeChanged = (width: number, height: number) => {
