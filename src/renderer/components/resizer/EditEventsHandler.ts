@@ -8,6 +8,7 @@ import eventBus from '@/common/eventBus';
 import { alignToNode } from '@/renderer/util';
 import { isText } from '@/common/util';
 import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
+import { CanvasEventSystem } from '@/renderer/SEventManager';
 
 export class EditEventsHandler {
     private _hideTextArea: HTMLTextAreaElement | null = null;
@@ -63,7 +64,6 @@ export class EditEventsHandler {
 
     private _focusTextArea(
         textComp: SParagraph,
-        worldPos: ReadonlyVec2,
         startIndex: number,
         endIndex: number
     ): void {
@@ -76,7 +76,10 @@ export class EditEventsHandler {
         }, 100);
     }
 
-    public enterEditMode(node: SNode, event: SNodeEvents.IPointerEvent): void {
+    private _setCursorAndFocusTextArea(
+        node: SNode,
+        event: SNodeEvents.IPointerEvent
+    ): number {
         const textComp = node.getComponent(SParagraph);
         this._editorModeStore.setMode(EditorMode.TEXT_EDIT);
         if (textComp) {
@@ -86,23 +89,94 @@ export class EditEventsHandler {
                 eventLocalPos[1]
             );
             this._currentText = textComp;
-            const worldPos = this._setCursorDivPositionByIndex(cursorIndex);
-            if (worldPos) {
-                this._focusTextArea(
-                    textComp,
-                    worldPos,
-                    cursorIndex,
-                    cursorIndex
-                );
-            }
+            this._focusTextArea(textComp, cursorIndex, cursorIndex);
+            return cursorIndex;
         }
+        return -1;
     }
+
+    public enterEditMode(node: SNode, event: SNodeEvents.IPointerEvent): void {
+        this._addTextEvents(node);
+        this._setCursorAndFocusTextArea(node, event);
+    }
+
+    private _addTextEvents(node: SNode): void {
+        CanvasEventSystem.instance.addEventListener(
+            node,
+            SNodeEvents.POINTER_DOWN,
+            this._onTextTouchStart
+        );
+
+        CanvasEventSystem.instance.addEventListener(
+            this._editor.scene.rootNode,
+            SNodeEvents.POINTER_MOVE,
+            this._onTextTouchMove
+        );
+        CanvasEventSystem.instance.addEventListener(
+            this._editor.scene.rootNode,
+            SNodeEvents.POINTER_UP,
+            this._onTextTouchUp
+        );
+    }
+
+    private _removeTextEvents(node: SNode): void {
+        CanvasEventSystem.instance.removeEventListener(
+            node,
+            SNodeEvents.POINTER_DOWN,
+            this._onTextTouchStart
+        );
+        CanvasEventSystem.instance.removeEventListener(
+            this._editor.scene.rootNode,
+            SNodeEvents.POINTER_MOVE,
+            this._onTextTouchMove
+        );
+        CanvasEventSystem.instance.removeEventListener(
+            this._editor.scene.rootNode,
+            SNodeEvents.POINTER_UP,
+            this._onTextTouchUp
+        );
+    }
+
+    private _touchStartCursorIndex: number = -1;
+
+    private _onTextTouchStart = (event: SNodeEvents.IPointerEvent): void => {
+        console.log('onTextTouchStart');
+        if (!this._currentText) {
+            return;
+        }
+        const node = this._currentText.node!;
+        const cursorIndex = this._setCursorAndFocusTextArea(node, event);
+        if (cursorIndex !== -1) {
+            this._touchStartCursorIndex = cursorIndex;
+        }
+    };
+
+    private _onTextTouchMove = (event: SNodeEvents.IPointerEvent): void => {
+        if (!this._currentText) {
+            return;
+        }
+        const localPos = event.getLocalPosition(this._currentText.node!);
+        const touchMoveCursorIndex = this._currentText.getCursorIndex(
+            localPos[0],
+            localPos[1]
+        );
+        if (touchMoveCursorIndex !== -1 && this._touchStartCursorIndex !== -1) {
+            this.selectText(this._touchStartCursorIndex, touchMoveCursorIndex);
+        }
+    };
+    private _onTextTouchUp = (event: SNodeEvents.IPointerEvent): void => {
+        console.log('onTextTouchUp', event);
+    };
 
     public exitEditMode(): void {
         const currentMode = this._editorModeStore.currentMode;
         if (currentMode !== EditorMode.TEXT_EDIT) {
             return;
         }
+        if (!this._currentText) {
+            return;
+        }
+        this._removeTextEvents(this._currentText.node!);
         this._editorModeStore.setMode(EditorMode.DEFAULT);
         this._hideCursor();
         this._currentText!.unSelect();
