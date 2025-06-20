@@ -11,6 +11,7 @@ import { createNodeFromConfig } from './util';
 import { WhiteboardScene } from './WhiteboardScene';
 import { ShapeCreator } from './components/ShapeCreator';
 import { useEditorModeStore } from '@/store/EditorModeStore';
+import { TextCreator } from './components/TextCreator';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
@@ -19,6 +20,7 @@ export class CanvasEditor {
     private _scene: WhiteboardScene | null = null;
     private _resizeGizmo: ResizeGizmo | null = null;
     private _shapeCreator: ShapeCreator | null = null;
+    private _textCreator: TextCreator | null = null;
     private _snapGuide: SnapGuide | null = null;
     private _zoomValue: number = 0; // Default zoom value is 0 (100% scale)
     private _minZoomValue: number = -2; // Minimum zoom value (~13.5% scale)
@@ -94,21 +96,26 @@ export class CanvasEditor {
         this._snapGuide = new SnapGuide(this);
         this._resizeGizmo = new ResizeGizmo(this, this._snapGuide);
         this._shapeCreator = new ShapeCreator(this);
-
+        this._textCreator = new TextCreator(this);
 
         const editorModeStore = useEditorModeStore();
         
         this.eventSystem.addSystemEventListener(SNodeEvents.POINTER_MOVE, (event) => {
+            const worldPos = event.getWorldPosition();
+            const canvasNode = this.scene.getCanvasNode();
+            const localPos = canvasNode.toLocal(worldPos);
             if (editorModeStore.isShapeInsertMode) {
-                const worldPos = event.getWorldPosition();
-                const canvasNode = this.scene.getCanvasNode();
-                const localPos = canvasNode.toLocal(worldPos);
                 const shadowShape = this._shapeCreator?.getShadowShape();
                 if (shadowShape) {
                     shadowShape.position.set(localPos[0], localPos[1]);
                     eventBus.reDraw();
                 }
             } else if (editorModeStore.isTextInsertMode) {
+                const shadowText = this._textCreator?.getShadowText();
+                if (shadowText) {
+                    shadowText.position.set(localPos[0], localPos[1]);
+                    eventBus.reDraw();
+                }
             }
         });
 

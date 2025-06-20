@@ -66,7 +66,7 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
         sprite.setImageByUrl(spriteConfig.url || '');
     } else if (config.type === SNodeConfig.NodeType.PARAGRAPH) {
         const paragraphConfig = config as SNodeConfig.ParagraphConfig;
-        node.addComponent(SParagraph, paragraphConfig);
+        const paraComp = node.addComponent(SParagraph, paragraphConfig);
     } else if (config.type === SNodeConfig.NodeType.TRI) {
         const triConfig = config as SNodeConfig.TriConfig;
         const tri = node.addComponent(SGeoTri);

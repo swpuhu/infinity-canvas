@@ -1,5 +1,6 @@
 import {
     Canvas,
+    InputColor,
     Paragraph,
     ParagraphBuilder,
     ParagraphStyle,
@@ -26,6 +27,8 @@ export class SParagraph extends SRenderComponent {
     private _paraStyle: ParagraphStyle | null = null;
 
     private _fontSize: number = 50;
+
+    private _color: InputColor = CanvasKitModule.CanvasKit.BLACK;
 
     private _heightMultiplier: number = 1.4;
 
@@ -58,6 +61,7 @@ export class SParagraph extends SRenderComponent {
         this._layoutMode = props?.layoutMode || EnumParaLayoutMode.AUTO;
         this._resizeMode =
             props?.resizeMode || EnumParaResizeMode.RESIZE_FONT_SIZE;
+        this._color = props?.color || CanvasKitModule.CanvasKit.BLACK;
     }
 
     public setFontSize(size: number) {
@@ -78,6 +82,7 @@ export class SParagraph extends SRenderComponent {
             const textStyle = new CanvasKitModule.CanvasKit.TextStyle({
                 fontSize: this._fontSize,
                 heightMultiplier: this._heightMultiplier,
+                color: this._color,
             });
             this._paragraphBuilder.pushStyle(textStyle);
         }
@@ -133,7 +138,7 @@ export class SParagraph extends SRenderComponent {
     protected onCreated(): void {
         const paraStyle = new CanvasKitModule.CanvasKit.ParagraphStyle({
             textStyle: {
-                color: CanvasKitModule.CanvasKit.BLACK,
+                color: this._color,
                 fontSize: this._fontSize,
                 heightMultiplier: this._heightMultiplier,
             },
@@ -175,13 +180,13 @@ export class SParagraph extends SRenderComponent {
         const isLastChar =
             cursorIndex === lineMetrics[lineMetrics.length - 1].endIndex;
 
-        let currentLine = lineMetrics[0];
+        // let currentLine = lineMetrics[0];
         for (let i = 1; i < lineMetrics.length; i++) {
             if (
                 cursorIndex >= lineMetrics[i].startIndex &&
                 cursorIndex <= lineMetrics[i].endIndex
             ) {
-                currentLine = lineMetrics[i];
+                // currentLine = lineMetrics[i];
                 break;
             }
         }

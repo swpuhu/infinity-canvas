@@ -74,18 +74,21 @@ export const useEditorModeStore = defineStore('editorMode', {
                 if (shape) {
                     this.currentInsertShape = shape;
                 }
-            } else if (this.currentMode === EditorMode.SHAPE_INSERT) {
+            } else if (
+                !active ||
+                this.currentMode === EditorMode.SHAPE_INSERT
+            ) {
                 this.currentMode = EditorMode.DEFAULT;
             }
         },
 
         setTextInsertMode(active: boolean) {
             if (active) {
+                this.isHandToolActive = false;
                 this.currentMode = EditorMode.TEXT_INSERT;
-            } else if (this.currentMode === EditorMode.TEXT_INSERT) {
+            } else if (!active || this.currentMode === EditorMode.TEXT_INSERT) {
                 this.currentMode = EditorMode.DEFAULT;
             }
-            this.isHandToolActive = false;
         },
 
         // Reset to default mode

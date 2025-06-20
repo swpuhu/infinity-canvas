@@ -1,4 +1,5 @@
 import SNode from '@/renderer/SNode';
+import { InputColor } from 'canvaskit-wasm';
 import { ReadonlyVec2 } from 'gl-matrix';
 
 export interface IPoint extends IPointData {
@@ -167,6 +168,7 @@ export namespace SNodeConfig {
         fontSize?: number;
         layoutMode?: EnumParaLayoutMode;
         resizeMode?: EnumParaResizeMode;
+        color: InputColor;
     };
 
     export type ParagraphConfig = BaseConfig & SParagraphPropsConfig;
