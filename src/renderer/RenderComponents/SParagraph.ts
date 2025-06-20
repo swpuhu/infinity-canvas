@@ -4,7 +4,6 @@ import {
     Paragraph,
     ParagraphBuilder,
     ParagraphStyle,
-    Rect,
 } from 'canvaskit-wasm';
 import { SRenderComponent } from './SRenderComponent';
 import { CanvasKitModule } from '@/lib/canvaskit';
@@ -255,6 +254,12 @@ export class SParagraph extends SRenderComponent {
 
     public drawSelectionBlock(canvas: Canvas): void {
         if (!this._paragraph || !this.node) {
+            return;
+        }
+        if (
+            this._selectedRange.startIndex === -1 ||
+            this._selectedRange.endIndex === -1
+        ) {
             return;
         }
         const rects = this._paragraph.getRectsForRange(

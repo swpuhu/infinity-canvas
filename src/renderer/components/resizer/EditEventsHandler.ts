@@ -22,7 +22,22 @@ export class EditEventsHandler {
     private _editorModeStore = useEditorModeStore();
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         this._initHideTextArea();
+
+        CanvasEventSystem.instance.addEventListener(
+            this._resizerUI.node,
+            SNodeEvents.DB_CLICK,
+            this._onTextDBClick
+        );
     }
+
+    private _onTextDBClick = (event: SNodeEvents.IPointerEvent): void => {
+        const isEditMode =
+            this._editorModeStore.currentMode === EditorMode.TEXT_EDIT;
+        if (!isEditMode) {
+            return;
+        }
+        this.selectText(0, this._currentText!.text.length);
+    };
 
     public setCurrentNode(node: SNode): void {
         if (isText(node)) {
@@ -96,6 +111,11 @@ export class EditEventsHandler {
     }
 
     public enterEditMode(node: SNode, event: SNodeEvents.IPointerEvent): void {
+        const isEditMode =
+            this._editorModeStore.currentMode === EditorMode.TEXT_EDIT;
+        if (isEditMode) {
+            return;
+        }
         this._addTextEvents(node);
         this._setCursorAndFocusTextArea(node, event);
     }
@@ -187,6 +207,7 @@ export class EditEventsHandler {
         this._hideCursor();
         this._currentText!.unSelect();
         this._hideTextArea!.classList.add('hide');
+        this._currentText.setSelectionRange(-1, -1);
         this._currentText = null;
     }
 
