@@ -179,6 +179,11 @@ export class SParagraph extends SRenderComponent {
         if (!lineMetrics.length) {
             return null;
         }
+        if (!this.node) {
+            return null;
+        }
+        const anchorOffsetX = this.node.width * this.node.anchor.x;
+        const anchorOffsetY = this.node.height * this.node.anchor.y;
         const isLastChar =
             cursorIndex === lineMetrics[lineMetrics.length - 1].endIndex;
 
@@ -192,7 +197,6 @@ export class SParagraph extends SRenderComponent {
                 break;
             }
         }
-
         const rects = this._paragraph.getRectsForRange(
             isLastChar ? cursorIndex - 1 : cursorIndex,
             isLastChar ? cursorIndex : cursorIndex + 1,
@@ -203,7 +207,10 @@ export class SParagraph extends SRenderComponent {
         console.log('isLastChar', isLastChar);
         if (isLastChar) {
             const info = {
-                pos: [rects[0].rect[2], rects[0].rect[1]],
+                pos: [
+                    rects[0].rect[2] - anchorOffsetX,
+                    rects[0].rect[1] - anchorOffsetY,
+                ],
                 size: rects[0].rect[3] - rects[0].rect[1],
                 endPos: [rects[0].rect[2], rects[0].rect[3]],
                 startIndex: cursorIndex,
@@ -225,7 +232,10 @@ export class SParagraph extends SRenderComponent {
         }
 
         return {
-            pos: [rects[0].rect[0], rects[0].rect[1]],
+            pos: [
+                rects[0].rect[0] - anchorOffsetX,
+                rects[0].rect[1] - anchorOffsetY,
+            ],
             size: rects[0].rect[3] - rects[0].rect[1],
             endPos: [rects[0].rect[0], rects[0].rect[3]],
             startIndex: cursorIndex,
@@ -234,15 +244,17 @@ export class SParagraph extends SRenderComponent {
     }
 
     public getCursorIndex(dx: number, dy: number): number {
-        if (!this._paragraph) {
+        if (!this._paragraph || !this.node) {
             return -1;
         }
-        const info = this._paragraph.getGlyphPositionAtCoordinate(dx, dy);
+        const newDx = dx + this.node.width * this.node.anchor.x;
+        const newDy = dy + this.node.height * this.node.anchor.y;
+        const info = this._paragraph.getGlyphPositionAtCoordinate(newDx, newDy);
         return info.pos;
     }
 
     public drawSelectionBlock(canvas: Canvas): void {
-        if (!this._paragraph) {
+        if (!this._paragraph || !this.node) {
             return;
         }
         const rects = this._paragraph.getRectsForRange(
@@ -252,8 +264,14 @@ export class SParagraph extends SRenderComponent {
             CanvasKitModule.CanvasKit.RectWidthStyle.Tight
         );
 
+        const anchorOffsetX = this.node.width * this.node.anchor.x;
+        const anchorOffsetY = this.node.height * this.node.anchor.y;
         for (let i = 0; i < rects.length; i++) {
             const rect = rects[i];
+            rect.rect[0] -= anchorOffsetX;
+            rect.rect[1] -= anchorOffsetY;
+            rect.rect[2] -= anchorOffsetX;
+            rect.rect[3] -= anchorOffsetY;
             canvas.drawRect(rect.rect, CanvasKitModule.getTextSelectionPaint());
         }
     }

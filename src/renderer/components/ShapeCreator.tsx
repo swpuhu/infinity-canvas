@@ -7,6 +7,7 @@ import { createNodeFromConfig } from "../util";
 import eventBus from "@/common/eventBus";
 import { ReadonlyVec2 } from "gl-matrix";
 import { SGeo } from "../Geometry/SGeo";
+import { CanvasEventSystem } from "../SEventManager";
 
 export class ShapeCreator {
 
@@ -66,6 +67,38 @@ export class ShapeCreator {
         });
     }
 
+    private _addEventsToShapeNode(node: SNode) {
+
+        CanvasEventSystem.instance.addEventListener(
+            node,
+            SNodeEvents.DB_CLICK,
+            (event: SNodeEvents.IPointerEvent) => {
+                console.log('shape db click');
+                this._insertTextToShapeNode(node);
+            })
+    }
+
+    private _insertTextToShapeNode(shapeNode: SNode) {
+        const hasText = !!shapeNode.children[0];
+        if (hasText) {
+            return;
+        }
+        const textConfig = 
+            <para
+                name="text"
+                text="Text"
+                fontSize={30}
+                transform={{
+                    anchor: { x: 0.5, y: 0.5 },
+                }}
+                width={300}
+                color={[0, 0, 0, 1]}
+            />
+        const textNode = createNodeFromConfig(textConfig);
+        shapeNode.addChild(textNode)
+
+    }
+
     public getShadowShape(): SNode | undefined {
         return this._currentInsertShape;
     }
@@ -98,6 +131,7 @@ export class ShapeCreator {
             if (geoComp) {
                 geoComp.setAlpha(1);
             }
+            this._addEventsToShapeNode(newNode);
         }
         
         this._exitShapeInsertMode();

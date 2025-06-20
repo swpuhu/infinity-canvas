@@ -1,4 +1,4 @@
-import { ResizeGizmoMode, SNodeEvents } from '@/common/types';
+import { SNodeEvents } from '@/common/types';
 import { CanvasEditor } from '@/renderer/Editor';
 import { SParagraph } from '@/renderer/RenderComponents/SParagraph';
 import SNode from '@/renderer/SNode';

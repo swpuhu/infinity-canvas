@@ -93,7 +93,7 @@ export class TextCreator {
                 text="Text"
                 fontSize={50}
                 transform={{
-                    anchor: { x: 0, y: 0 },
+                    anchor: { x: 0.5, y: 0.5 },
                 }}
                 width={300}
                 color={[0, 0, 0, 0.5]}
@@ -105,7 +105,7 @@ export class TextCreator {
                 text="Text"
                 fontSize={50}
                 transform={{
-                    anchor: { x: 0, y: 0 },
+                    anchor: { x: 0.5, y: 0.5 },
                 }}
                 width={300}
                 color={[0, 0, 0, 1]}
