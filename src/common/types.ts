@@ -200,6 +200,10 @@ export namespace SNodeEvents {
     export const TOUCH_END = 'touchend';
     export const TOUCH_CANCEL = 'touchcancel';
 
+    export const DRAGGING = 'dragging';
+    export const RESIZING = 'resizing';
+    export const ROTATING = 'rotating';
+
     export const DB_CLICK = 'dblclick';
 
     export const WHEEL = 'wheel';

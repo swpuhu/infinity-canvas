@@ -49,6 +49,11 @@ export class EventsHandler extends EventEmitter {
         this._editEventsHandler = new EditEventsHandler(_editor, _resizerUI);
 
         this._selectEventsHandler = new SelectEventsHandler(_editor);
+
+        this._bindEvents();
+    }
+
+    private _bindEvents(): void {
         this._dragEventsHandler.on(
             EventNames.DRAG_SELECT_NODE,
             (nodes: SNode[]) => {
@@ -75,6 +80,18 @@ export class EventsHandler extends EventEmitter {
             SNodeEvents.DB_CLICK,
             this._handleCanvasLayerDBClick
         );
+
+        this._dragEventsHandler.on(SNodeEvents.DRAGGING, () => {
+            this._editEventsHandler.exitEditMode();
+        });
+
+        this._resizeEventsHandler.on(SNodeEvents.RESIZING, () => {
+            this._editEventsHandler.exitEditMode();
+        });
+
+        this._rotateEventsHandler.on(SNodeEvents.ROTATING, () => {
+            this._editEventsHandler.exitEditMode();
+        });
     }
 
     private setCurrentNodes(nodes: SNode[]): void {
@@ -130,8 +147,6 @@ export class EventsHandler extends EventEmitter {
         }
         this.emit(EventNames.POINTER_DOWN_NODE, hitNode);
         if (hitNode) {
-            if (isText(hitNode)) {
-            }
             this.setCurrentNodes([hitNode]);
 
             this._dragEventsHandler.dragStart(event);

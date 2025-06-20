@@ -90,7 +90,7 @@ export class TextCreator {
         const paraConfig = (
             <para
                 name="text"
-                text="懒羊羊组长赛高！"
+                text="Text"
                 fontSize={50}
                 transform={{
                     anchor: { x: 0, y: 0 },
@@ -102,7 +102,7 @@ export class TextCreator {
         const paraConfig2 = (
             <para
                 name="text"
-                text="懒羊羊组长赛高！"
+                text="Text"
                 fontSize={50}
                 transform={{
                     anchor: { x: 0, y: 0 },

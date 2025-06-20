@@ -32,7 +32,6 @@ import VerticalToolbar from './components/VerticalToolbar.vue';
 import ZoomControls from './components/ZoomControls.vue';
 import { CanvasEditor } from './renderer/Editor';
 import { useEditorModeStore } from './store/EditorModeStore';
-import { ToolType, useToolStore } from './store/ToolStore';
 import { useUIStore } from './store/UIStore';
 import { useZoomStore } from './store/ZoomStore';
 

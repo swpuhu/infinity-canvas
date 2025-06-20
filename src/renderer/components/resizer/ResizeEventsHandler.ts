@@ -202,6 +202,7 @@ export class ResizeEventsHandler extends EventEmitter {
         });
         // this._currentNodes!.alignTo(this._resizerUI.node!);
         this._resizerUI.updateHandlerNodes();
+        this.emit(SNodeEvents.RESIZING);
     };
 
     private _onResizePointerUp = (event: SNodeEvents.IPointerEvent): void => {

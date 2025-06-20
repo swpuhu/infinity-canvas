@@ -7,6 +7,7 @@ import { ResizerUI } from './ResizerUI';
 import eventBus from '@/common/eventBus';
 import { alignToNode } from '@/renderer/util';
 import { isText } from '@/common/util';
+import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 
 export class EditEventsHandler {
     private _hideTextArea: HTMLTextAreaElement | null = null;
@@ -17,7 +18,7 @@ export class EditEventsHandler {
 
     private _dummyCursorNode = new SNode();
 
-    private _currentMode: ResizeGizmoMode = ResizeGizmoMode.NONE;
+    private _editorModeStore = useEditorModeStore();
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         this._initHideTextArea();
     }
@@ -77,7 +78,7 @@ export class EditEventsHandler {
 
     public enterEditMode(node: SNode, event: SNodeEvents.IPointerEvent): void {
         const textComp = node.getComponent(SParagraph);
-        this._currentMode = ResizeGizmoMode.EDIT;
+        this._editorModeStore.setMode(EditorMode.TEXT_EDIT);
         if (textComp) {
             const eventLocalPos = event.getLocalPosition(node);
             const cursorIndex = textComp.getCursorIndex(
@@ -98,10 +99,11 @@ export class EditEventsHandler {
     }
 
     public exitEditMode(): void {
-        if (this._currentMode !== ResizeGizmoMode.EDIT) {
+        const currentMode = this._editorModeStore.currentMode;
+        if (currentMode !== EditorMode.TEXT_EDIT) {
             return;
         }
-        this._currentMode = ResizeGizmoMode.NONE;
+        this._editorModeStore.setMode(EditorMode.DEFAULT);
         this._hideCursor();
         this._currentText!.unSelect();
         this._hideTextArea!.classList.add('hide');

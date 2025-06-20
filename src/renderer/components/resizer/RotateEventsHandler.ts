@@ -103,6 +103,7 @@ export class RotateEventsHandler extends EventEmitter {
         });
         // this._currentNodes!.alignTo(this._resizerUI.node!);
         // this._resizerUI.updateHandlerNodes();
+        this.emit(SNodeEvents.ROTATING);
     };
 
     private _onRotatePointerUp = (event: SNodeEvents.IPointerEvent): void => {
