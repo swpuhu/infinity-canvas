@@ -1,4 +1,4 @@
-import { SNodeConfig, SNodeEvents } from "@/common/types";
+import { EnumParaLayoutMode, EnumParaResizeMode, SNodeConfig, SNodeEvents } from "@/common/types";
 import { CanvasEditor } from "../Editor";
 import { EditorMode, useEditorModeStore } from "@/store/EditorModeStore";
 import { createElement } from "../createElement";
@@ -7,6 +7,7 @@ import { createNodeFromConfig } from "../util";
 import eventBus from "@/common/eventBus";
 import { ReadonlyVec2 } from "gl-matrix";
 import { SGeo } from "../Geometry/SGeo";
+import { CanvasKitModule } from "@/lib/canvaskit";
 
 export class TextCreator {
 
@@ -22,7 +23,7 @@ export class TextCreator {
 
     constructor(private _editor: CanvasEditor) {
         this._createPresetText();
-        
+
         const editorModeStore = useEditorModeStore();
         this.editorModeStore = editorModeStore;
         const canvasNode = _editor.scene.getCanvasNode();
@@ -58,12 +59,11 @@ export class TextCreator {
 
 
         const newNode: SNode = createNodeFromConfig(this._presetTextConfig);
-
         if (newNode) {
             newNode.position.set(localPos[0], localPos[1]);
             this._canvasNode.addChild(newNode);
         }
-        
+
         this._exitTextInsertMode();
         eventBus.reDraw();
     }

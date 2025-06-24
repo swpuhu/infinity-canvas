@@ -54,7 +54,17 @@ export class SParagraph extends SRenderComponent {
         this.resetBuilder();
     }
 
-    constructor(props?: SNodeConfig.SParagraphPropsConfig) {
+    constructor(
+        private props: SNodeConfig.SParagraphPropsConfig = {
+            text: '',
+            color: CanvasKitModule.CanvasKit.BLACK,
+            fontSize: 50,
+            layoutMode: EnumParaLayoutMode.AUTO,
+            resizeMode: EnumParaResizeMode.RESIZE_FONT_SIZE,
+            textAlign: CanvasKitModule.CanvasKit.TextAlign.Center,
+            textDirection: CanvasKitModule.CanvasKit.TextDirection.LTR,
+        }
+    ) {
         super();
         this._text = props?.text || '';
         this._fontSize = props?.fontSize || 50;
@@ -93,8 +103,9 @@ export class SParagraph extends SRenderComponent {
 
         let width = this.node.width;
         if (this._layoutMode === EnumParaLayoutMode.AUTO) {
-            this._paragraph.layout(10000);
+            this._paragraph.layout(width);
             width = this._paragraph.getMaxIntrinsicWidth();
+            this._paragraph.layout(width + 2);
         } else {
             this._paragraph.layout(this.node.width);
         }
@@ -143,6 +154,12 @@ export class SParagraph extends SRenderComponent {
                 fontSize: this._fontSize,
                 heightMultiplier: this._heightMultiplier,
             },
+            textAlign:
+                this.props.textAlign ||
+                CanvasKitModule.CanvasKit.TextAlign.Center,
+            textDirection:
+                this.props.textDirection ||
+                CanvasKitModule.CanvasKit.TextDirection.LTR,
         });
         const paragraphBuilder =
             CanvasKitModule.CanvasKit.ParagraphBuilder.Make(

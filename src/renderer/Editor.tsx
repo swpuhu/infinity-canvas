@@ -7,7 +7,6 @@ import { SnapGuide } from './components/SnapGuide';
 import { createElement } from './createElement';
 import { Renderer } from './renderer';
 import { CanvasEventSystem } from './SEventManager';
-import { createNodeFromConfig } from './util';
 import { WhiteboardScene } from './WhiteboardScene';
 import { ShapeCreator } from './components/ShapeCreator';
 import { useEditorModeStore } from '@/store/EditorModeStore';
@@ -62,36 +61,6 @@ export class CanvasEditor {
         });
 
         this._scene = scene;
-
-        const testPicConfig = (
-            <sprite
-                name="test pic"
-                url={'r2.png'}
-                transform={{
-                    scale: { x: 1, y: 1 },
-                    anchor: { x: 0, y: 0 },
-                    position: { x: -100, y: -200 },
-                }}
-            />
-        );
-        const testPic = createNodeFromConfig(testPicConfig);
-        // scene.stage.addChild(testPic);
-
-        const paraConfig = (
-            <para
-                name="text"
-                text="懒羊羊组长赛高！"
-                fontSize={50}
-                transform={{
-                    anchor: { x: 0, y: 0 },
-                }}
-                width={300}
-            />
-        );
-        // const para = createNodeFromConfig(paraConfig);
-
-        // scene.stage.addChild(para);
-        // scene.stage.addChild(tri);
 
         this._snapGuide = new SnapGuide(this);
         this._resizeGizmo = new ResizeGizmo(this, this._snapGuide);

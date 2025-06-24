@@ -1,4 +1,4 @@
-import { SNodeConfig, SNodeEvents } from "@/common/types";
+import { EnumParaLayoutMode, EnumParaResizeMode, SNodeConfig, SNodeEvents } from "@/common/types";
 import { CanvasEditor } from "../Editor";
 import { EditorMode, useEditorModeStore } from "@/store/EditorModeStore";
 import { createElement } from "../createElement";
@@ -91,8 +91,10 @@ export class ShapeCreator {
                 transform={{
                     anchor: { x: 0.5, y: 0.5 },
                 }}
-                width={300}
+                width={shapeNode.width}
                 color={[0, 0, 0, 1]}
+                layoutMode={EnumParaLayoutMode.DEPEND_PARENT}
+                resizeMode={EnumParaResizeMode.ONLY_NODE}
             />
         const textNode = createNodeFromConfig(textConfig);
         shapeNode.addChild(textNode)

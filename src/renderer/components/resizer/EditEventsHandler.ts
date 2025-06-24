@@ -31,11 +31,17 @@ export class EditEventsHandler {
     }
 
     private _onTextDBClick = (event: SNodeEvents.IPointerEvent): void => {
-        const isEditMode =
-            this._editorModeStore.currentMode === EditorMode.TEXT_EDIT;
-        if (!isEditMode) {
+        if (!this._currentText) {
             return;
         }
+        const isEditMode =
+            this._editorModeStore.currentMode === EditorMode.TEXT_EDIT;
+        if (isEditMode) {
+            this.selectText(0, this._currentText!.text.length);
+            return;
+        }
+        this.setCurrentNode(this._currentText!.node!);
+        this.enterEditMode(this._currentText!.node!, event);
         this.selectText(0, this._currentText!.text.length);
     };
 
@@ -84,10 +90,9 @@ export class EditEventsHandler {
     ): void {
         this._hideTextArea!.classList.remove('hide');
         this._hideTextArea!.textContent = textComp.text;
-
+        this._hideTextArea!.setSelectionRange(startIndex, endIndex);
         setTimeout(() => {
             this._hideTextArea!.focus();
-            this._hideTextArea!.setSelectionRange(startIndex, endIndex);
         }, 100);
     }
 

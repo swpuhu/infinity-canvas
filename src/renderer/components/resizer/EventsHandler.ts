@@ -1,5 +1,5 @@
 import { EventNames, SNodeEvents } from '@/common/types';
-import { isText, visitNodeRecursive } from '@/common/util';
+import { visitNodeRecursive } from '@/common/util';
 import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
 import { useEditorModeStore } from '@/store/EditorModeStore';
@@ -75,12 +75,6 @@ export class EventsHandler extends EventEmitter {
             this._handleCanvasLayerPointerDown
         );
 
-        this._editor.eventSystem.addEventListener(
-            this._editor.scene.canvasLayer,
-            SNodeEvents.DB_CLICK,
-            this._handleCanvasLayerDBClick
-        );
-
         this._dragEventsHandler.on(SNodeEvents.DRAGGING, () => {
             this._editEventsHandler.exitEditMode();
         });
@@ -102,30 +96,6 @@ export class EventsHandler extends EventEmitter {
             this._editEventsHandler.setCurrentNode(nodes[0]);
         }
     }
-
-    private _handleCanvasLayerDBClick = (event: SNodeEvents.IPointerEvent) => {
-        // Skip if in hand tool mode
-        if (this._editorModeStore.isHandToolMode) return;
-
-        const textNodes = this._collectTextNodes();
-        let hasHit = false;
-        let hitNode: SNode | null = null;
-        for (let i = 0; i < textNodes.length; i++) {
-            const node = textNodes[i];
-            const hit = node.hitTest(event.getWorldPosition());
-            if (hit) {
-                // this._enterEditMode(node, event);
-                hasHit = true;
-                hitNode = node;
-                break;
-            }
-        }
-        this.emit(EventNames.DB_CLICK_NODE, hitNode);
-        if (hitNode) {
-            this._editEventsHandler.setCurrentNode(hitNode);
-            this._editEventsHandler.enterEditMode(hitNode, event);
-        }
-    };
 
     private _handleCanvasLayerPointerDown = (
         event: SNodeEvents.IPointerEvent
@@ -160,15 +130,6 @@ export class EventsHandler extends EventEmitter {
         const nodes: SNode[] = [];
         visitNodeRecursive(this._editor.scene.canvasLayer, (node) => {
             if (node !== this._editor.scene.canvasLayer) {
-                nodes.unshift(node);
-            }
-        });
-        return nodes;
-    }
-    private _collectTextNodes(): SNode[] {
-        const nodes: SNode[] = [];
-        visitNodeRecursive(this._editor.scene.canvasLayer, (node) => {
-            if (node !== this._editor.scene.canvasLayer && isText(node)) {
                 nodes.unshift(node);
             }
         });

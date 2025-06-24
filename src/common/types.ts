@@ -1,5 +1,5 @@
 import SNode from '@/renderer/SNode';
-import { InputColor } from 'canvaskit-wasm';
+import { InputColor, TextAlign, TextDirection } from 'canvaskit-wasm';
 import { ReadonlyVec2 } from 'gl-matrix';
 
 export interface IPoint extends IPointData {
@@ -169,6 +169,8 @@ export namespace SNodeConfig {
         layoutMode?: EnumParaLayoutMode;
         resizeMode?: EnumParaResizeMode;
         color: InputColor;
+        textAlign?: TextAlign;
+        textDirection?: TextDirection;
     };
 
     export type ParagraphConfig = BaseConfig & SParagraphPropsConfig;
@@ -303,6 +305,7 @@ export enum ResizeGizmoMode {
 export enum EnumParaLayoutMode {
     AUTO = 'auto',
     FIXED = 'fixed',
+    DEPEND_PARENT = 'dependParent',
 }
 
 export enum EnumParaResizeMode {
