@@ -28,6 +28,21 @@ export class EditEventsHandler {
             SNodeEvents.DB_CLICK,
             this._onTextDBClick
         );
+        this._bindGlobalEvents();
+    }
+
+    private _bindGlobalEvents() {
+        eventBus.onEnterEditMode((node) => {
+            this.enterEditMode(node);
+            this._focusTextArea(
+                this._currentText!,
+                0,
+                this._currentText!.text.length
+            );
+        });
+        eventBus.onExitEditMode(() => {
+            this.exitEditMode();
+        });
     }
 
     private _onTextDBClick = (event: SNodeEvents.IPointerEvent): void => {
@@ -78,7 +93,9 @@ export class EditEventsHandler {
         if (this._currentText) {
             this._currentText.text = this._hideTextArea!.value;
             alignToNode(this._resizerUI.node!, this._currentText.node!);
-            this._resizerUI.updateHandlerNodes();
+            if (!this._currentText.hasBelongToNode()) {
+                this._resizerUI.updateHandlerNodes();
+            }
             eventBus.reDraw();
         }
     };
@@ -89,7 +106,7 @@ export class EditEventsHandler {
         endIndex: number
     ): void {
         this._hideTextArea!.classList.remove('hide');
-        this._hideTextArea!.textContent = textComp.text;
+        this._hideTextArea!.value = textComp.text;
         this._hideTextArea!.setSelectionRange(startIndex, endIndex);
         setTimeout(() => {
             this._hideTextArea!.focus();
@@ -98,11 +115,11 @@ export class EditEventsHandler {
 
     private _setCursorAndFocusTextArea(
         node: SNode,
-        event: SNodeEvents.IPointerEvent
+        event?: SNodeEvents.IPointerEvent
     ): number {
         const textComp = node.getComponent(SParagraph);
         this._editorModeStore.setMode(EditorMode.TEXT_EDIT);
-        if (textComp) {
+        if (textComp && event) {
             const eventLocalPos = event.getLocalPosition(node);
             const cursorIndex = textComp.getCursorIndex(
                 eventLocalPos[0],
@@ -115,12 +132,18 @@ export class EditEventsHandler {
         return -1;
     }
 
-    public enterEditMode(node: SNode, event: SNodeEvents.IPointerEvent): void {
+    public enterEditMode(node: SNode, event?: SNodeEvents.IPointerEvent): void {
         const isEditMode =
             this._editorModeStore.currentMode === EditorMode.TEXT_EDIT;
         if (isEditMode) {
             return;
         }
+        const textComp = node.getComponent(SParagraph);
+        if (!textComp) {
+            return;
+        }
+        this._currentText = textComp;
+        this._editorModeStore.setMode(EditorMode.TEXT_EDIT);
         this._addTextEvents(node);
         this._setCursorAndFocusTextArea(node, event);
     }

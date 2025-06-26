@@ -9,6 +9,7 @@ import EventEmitter from 'eventemitter3';
 import { ReadonlyVec2, vec2 } from 'gl-matrix';
 import { SelectUI } from './SelectUI';
 import { createElement } from '@/renderer/createElement';
+import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 
 export class SelectEventsHandler extends EventEmitter {
     private _selectedNodes: SNode[] = [];
@@ -16,6 +17,8 @@ export class SelectEventsHandler extends EventEmitter {
     private _ui: SNode;
 
     private _startPos: ReadonlyVec2 = vec2.create();
+
+    private _editorModeStore = useEditorModeStore();
     constructor(private _editor: CanvasEditor) {
         super();
         this._ui = createNodeFromConfig(<SelectUI fill={0xffbbcc55} stroke={0xff0000cc} strokeWidth={1} />);
@@ -56,7 +59,12 @@ export class SelectEventsHandler extends EventEmitter {
         this._ui.position.set(x, y, true);
     };
 
+
     private _onSelectPointerUp = (event: SNodeEvents.IPointerEvent): void => {
+        const currentMode = this._editorModeStore.currentMode;
+        if (currentMode !== EditorMode.DEFAULT) {
+            return;
+        }
         this._isEnabled = false;
 
         // 如果选框太小，认为是点击而非拖拽，不执行框选

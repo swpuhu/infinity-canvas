@@ -1,3 +1,4 @@
+import SNode from '@/renderer/SNode';
 import EventEmitter from 'eventemitter3';
 
 const eventEmitter = new EventEmitter();
@@ -12,6 +13,22 @@ const eventBus = {
 
     offReDraw(callback: () => void) {
         eventEmitter.off('reDraw', callback);
+    },
+
+    enterEditMode(node: SNode) {
+        eventEmitter.emit('enterEditMode', node);
+    },
+
+    exitEditMode() {
+        eventEmitter.emit('exitEditMode');
+    },
+
+    onEnterEditMode(callback: (node: SNode) => void) {
+        eventEmitter.on('enterEditMode', callback);
+    },
+
+    onExitEditMode(callback: () => void) {
+        eventEmitter.on('exitEditMode', callback);
     },
 };
 

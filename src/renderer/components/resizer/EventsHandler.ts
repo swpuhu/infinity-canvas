@@ -11,6 +11,7 @@ import { ResizeEventsHandler } from './ResizeEventsHandler';
 import { ResizerUI } from './ResizerUI';
 import { RotateEventsHandler } from './RotateEventsHandler';
 import { SelectEventsHandler } from './SelectEventsHandler';
+import { SParagraph } from '@/renderer/RenderComponents/SParagraph';
 export class EventsHandler extends EventEmitter {
     private _dragEventsHandler: DragEventsHandler;
 
@@ -130,6 +131,11 @@ export class EventsHandler extends EventEmitter {
         const nodes: SNode[] = [];
         visitNodeRecursive(this._editor.scene.canvasLayer, (node) => {
             if (node !== this._editor.scene.canvasLayer) {
+                const textComp = node.getComponent(SParagraph);
+                if (textComp && textComp.hasBelongToNode()) {
+                    // 如果 Text 节点有父节点，说明是位于图形节点中，不加入到可编辑节点列表中
+                    return;
+                }
                 nodes.unshift(node);
             }
         });

@@ -8,6 +8,7 @@ import eventBus from "@/common/eventBus";
 import { ReadonlyVec2 } from "gl-matrix";
 import { SGeo } from "../Geometry/SGeo";
 import { CanvasEventSystem } from "../SEventManager";
+import { SParagraph } from "../RenderComponents/SParagraph";
 
 export class ShapeCreator {
 
@@ -74,6 +75,12 @@ export class ShapeCreator {
             SNodeEvents.DB_CLICK,
             (event: SNodeEvents.IPointerEvent) => {
                 console.log('shape db click');
+                
+                const hasText = !!node.children[0];
+                if (hasText) {
+                    eventBus.enterEditMode(node.children[0]!);
+                    return;
+                }
                 this._insertTextToShapeNode(node);
             })
     }
@@ -98,7 +105,13 @@ export class ShapeCreator {
             />
         const textNode = createNodeFromConfig(textConfig);
         shapeNode.addChild(textNode)
-
+        const textComp = textNode.getComponent(SParagraph);
+        if (textComp) {
+            textComp.setBelongToNode(shapeNode);
+        }
+        setTimeout(() => {
+            eventBus.enterEditMode(textNode);
+        }, 100);
     }
 
     public getShadowShape(): SNode | undefined {

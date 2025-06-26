@@ -1,6 +1,7 @@
 import type SNode from '@/renderer/SNode';
 import { mat3 } from 'gl-matrix';
-import { EnumRenderComponentType } from './types';
+import { EnumParaLayoutMode, EnumRenderComponentType } from './types';
+import { SParagraph } from '@/renderer/RenderComponents/SParagraph';
 
 export function angleToRadians(angle: number) {
     return angle * (Math.PI / 180);
@@ -231,4 +232,8 @@ export function isCtrlKey(event: KeyboardEvent | WheelEvent): boolean {
         return event.metaKey;
     }
     return event.ctrlKey;
+}
+
+export function textIsIndependent(textComp: SParagraph): boolean {
+    return textComp.node?.parent === undefined;
 }

@@ -16,6 +16,7 @@ import {
     SNodeEvents,
 } from '@/common/types';
 import { ReadonlyVec2 } from 'gl-matrix';
+import SNode from '../SNode';
 
 export class SParagraph extends SRenderComponent {
     private _text: string = '';
@@ -33,6 +34,8 @@ export class SParagraph extends SRenderComponent {
     private _heightMultiplier: number = 1.4;
 
     private _layoutMode: EnumParaLayoutMode = EnumParaLayoutMode.AUTO;
+
+    private _belongToNode: SNode | null = null;
 
     private _resizeMode: EnumParaResizeMode =
         EnumParaResizeMode.RESIZE_FONT_SIZE;
@@ -77,6 +80,14 @@ export class SParagraph extends SRenderComponent {
     public setFontSize(size: number) {
         this._fontSize = size;
         this.resetBuilder();
+    }
+
+    public setBelongToNode(node: SNode) {
+        this._belongToNode = node;
+    }
+
+    public hasBelongToNode(): boolean {
+        return this._belongToNode !== null;
     }
 
     private resetBuilder() {
