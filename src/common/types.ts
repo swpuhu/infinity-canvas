@@ -314,3 +314,13 @@ export enum EnumParaResizeMode {
 }
 
 export type ShapeType = 'rect' | 'round-rect' | 'tri' | 'diamond';
+
+export enum CursorStyle {
+    DEFAULT = 'default',
+    INSERT = 'insert',
+    TEXT_EDIT = 'textEdit',
+    RESIZE = 'resize',
+}
+
+// 定义调整大小的方向类型
+export type ResizeDirection = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'w' | 'e';

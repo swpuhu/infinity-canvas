@@ -1,7 +1,14 @@
 import type SNode from '@/renderer/SNode';
 import { mat3 } from 'gl-matrix';
-import { EnumParaLayoutMode, EnumRenderComponentType } from './types';
+import {
+    CursorStyle,
+    EnumParaLayoutMode,
+    EnumRenderComponentType,
+    ISize,
+    ResizeDirection,
+} from './types';
 import { SParagraph } from '@/renderer/RenderComponents/SParagraph';
+import { Vec2 } from './Vec2';
 
 export function angleToRadians(angle: number) {
     return angle * (Math.PI / 180);
@@ -236,4 +243,32 @@ export function isCtrlKey(event: KeyboardEvent | WheelEvent): boolean {
 
 export function textIsIndependent(textComp: SParagraph): boolean {
     return textComp.node?.parent === undefined;
+}
+
+// 函数重载：根据 CursorStyle 的不同类型提供不同的签名
+export function getCursorStyleString(
+    cursorStyle: CursorStyle.RESIZE,
+    resizeDirection: ResizeDirection
+): string;
+export function getCursorStyleString(
+    cursorStyle: Exclude<CursorStyle, CursorStyle.RESIZE>
+): string;
+export function getCursorStyleString(
+    cursorStyle: CursorStyle,
+    resizeDirection?: ResizeDirection
+): string {
+    if (cursorStyle === CursorStyle.RESIZE) {
+        if (!resizeDirection) {
+            throw new Error(
+                'resizeDirection is required when cursorStyle is RESIZE'
+            );
+        }
+        // 根据 resizeDirection 返回相应的鼠标样式
+        return `${resizeDirection}-resize`;
+    } else if (cursorStyle === CursorStyle.INSERT) {
+        return 'crosshair';
+    } else if (cursorStyle === CursorStyle.TEXT_EDIT) {
+        return 'text';
+    }
+    return 'default';
 }

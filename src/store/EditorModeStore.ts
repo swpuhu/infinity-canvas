@@ -1,4 +1,4 @@
-import { SNodeConfig } from '@/common/types';
+import { CursorStyle, SNodeConfig } from '@/common/types';
 import { defineStore } from 'pinia';
 
 // Define editor mode types
@@ -19,8 +19,9 @@ export const useEditorModeStore = defineStore('editorMode', {
         isHandToolActive: false,
         // Current shape being inserted
         currentInsertShape: SNodeConfig.NodeType.RECT,
-    }),
 
+        resizeDirection: 'none',
+    }),
     getters: {
         // Check if the editor is in hand tool mode
         isHandToolMode(): boolean {
@@ -42,6 +43,18 @@ export const useEditorModeStore = defineStore('editorMode', {
         // Get current insert shape
         getCurrentInsertShape(): string {
             return this.currentInsertShape;
+        },
+        currentCursorStyle(): CursorStyle {
+            if (
+                this.currentMode === EditorMode.TEXT_INSERT ||
+                this.currentMode === EditorMode.SHAPE_INSERT
+            ) {
+                return CursorStyle.INSERT;
+            } else if (this.currentMode === EditorMode.TEXT_EDIT) {
+                return CursorStyle.TEXT_EDIT;
+            }
+
+            return CursorStyle.DEFAULT;
         },
     },
 

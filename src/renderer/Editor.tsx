@@ -11,6 +11,7 @@ import { WhiteboardScene } from './WhiteboardScene';
 import { ShapeCreator } from './components/ShapeCreator';
 import { useEditorModeStore } from '@/store/EditorModeStore';
 import { TextCreator } from './components/TextCreator';
+import { getCursorStyleString } from '@/common/util';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
@@ -68,6 +69,11 @@ export class CanvasEditor {
         this._textCreator = new TextCreator(this);
 
         const editorModeStore = useEditorModeStore();
+        editorModeStore.$subscribe((mutation, state) => {
+            console.log('editorModeStore', editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);
+            const cursorStyleString = getCursorStyleString(editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);
+            this._canvas.style.cursor = cursorStyleString;
+        });
         
         this.eventSystem.addSystemEventListener(SNodeEvents.POINTER_MOVE, (event) => {
             const worldPos = event.getWorldPosition();
