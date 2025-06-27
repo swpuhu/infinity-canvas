@@ -30,11 +30,13 @@ export class RotateEventsHandler extends EventEmitter {
         super();
         this._enableRotate();
 
-        this._editor.eventSystem.addEventListener(
-            this._resizerUI.rotateNode,
-            SNodeEvents.POINTER_DOWN,
-            this._onRotatePointerDown
-        );
+        this._resizerUI.rotateNodes.forEach((node) => {
+            this._editor.eventSystem.addEventListener(
+                node,
+                SNodeEvents.POINTER_DOWN,
+                this._onRotatePointerDown
+            );
+        });
     }
     public setCurrentNodes(nodes: SNode[]): void {
         this._currentNodes = nodes;

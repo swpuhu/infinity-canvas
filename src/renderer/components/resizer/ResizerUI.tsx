@@ -61,15 +61,12 @@ export class ResizerUI {
     private _bottomLineRef: SNodeConfig.IRefSNode = refSNode();
 
     private _resizeHandlerNodes: SNode[] = [];
+    private _rotateHandlerNodes: SNode[] = [];
 
-    private _rotateRef: SNodeConfig.IRefSNode = refSNode();
+    private _rotateRefs: SNodeConfig.IRefSNode[] = [refSNode(), refSNode(), refSNode(), refSNode()];
 
     get resizeHandlerNodes(): SNode[] {
         return this._resizeHandlerNodes;
-    }
-
-    get rotateHandlerNode(): SNode {
-        return this._rotateRef.value!;
     }
 
     get lbNode(): SNode {
@@ -88,8 +85,8 @@ export class ResizerUI {
         return this._rtNodeRef.value!;
     }
 
-    get rotateNode(): SNode {
-        return this._rotateRef.value!;
+    get rotateNodes(): SNode[] {
+        return this._rotateHandlerNodes;
     }
 
     constructor(private _scene: WhiteboardScene) {
@@ -121,6 +118,13 @@ export class ResizerUI {
             { name: 'right-top', ref: this._rtNodeRef },
         ];
 
+        const rotatePoints = [
+            { name: 'rotate-point1', ref: this._rotateRefs[0] },
+            { name: 'rotate-point2', ref: this._rotateRefs[1] },
+            { name: 'rotate-point3', ref: this._rotateRefs[2] },
+            { name: 'rotate-point4', ref: this._rotateRefs[3] },
+        ];
+
         const rootConfig = (
             <container name="resize-gizmo" active={false}>
                 <container name="lines">
@@ -150,13 +154,11 @@ export class ResizerUI {
                         <CommonResizePoint name={p.name} ref={p.ref} />
                     ))}
                 </container>
-                <ellipse
-                    name="rotate-point"
-                    ref={this._rotateRef}
-                    width={ROTATE_GIZMO_SIZE}
-                    height={ROTATE_GIZMO_SIZE}
-                    style={blockStyle}
-                />
+                <container name="rotate-points">
+                    {rotatePoints.map((p) => (
+                        <ellipse name={p.name} ref={p.ref} width={ROTATE_GIZMO_SIZE} height={ROTATE_GIZMO_SIZE} style={blockStyle}/>
+                    ))}
+                </container>
                 <container name="dummy" ref={this._dummyRef}>
                     {/* <rect
                         name="dummy-rect"
@@ -224,14 +226,22 @@ export class ResizerUI {
             return;
         }
         const [l, b, r, t] = this._root.getLocalRect();
+        const { x: scaleX } = this._lbNodeRef.value!.getGlobalScale()!;
+        const offset = 2 / scaleX;
         // console.log(l, b, r, t);
 
         this._lbNodeRef.value!.position.set(l, b);
-        this._ltNodeRef.value!.position.set(l, t);
-        this._rbNodeRef.value!.position.set(r, b);
-        this._rtNodeRef.value!.position.set(r, t);
+        this._rotateRefs[0].value!.position.set(l - offset, b - offset);
 
-        const { x: scaleX } = this._lbNodeRef.value!.getGlobalScale()!;
+        this._ltNodeRef.value!.position.set(l, t);
+        this._rotateRefs[1].value!.position.set(l - offset, t + offset);
+
+        this._rbNodeRef.value!.position.set(r, b);
+        this._rotateRefs[2].value!.position.set(r + offset, b - offset);
+
+        this._rtNodeRef.value!.position.set(r, t);
+        this._rotateRefs[3].value!.position.set(r + offset, t + offset);
+
 
         const handlerWidth = RESIZE_GIZMO_SIZE / scaleX;
         const handlerHeight = RESIZE_GIZMO_SIZE / scaleX;
@@ -258,10 +268,10 @@ export class ResizerUI {
         this._topLineRef.value!.width = r - l;
         this._topLineRef.value!.position.set(r, t);
 
-        this._rotateRef.value!.width = rotateHandlerSize;
-        this._rotateRef.value!.height = rotateHandlerSize;
+        this._rotateRefs.forEach((ref) => {
+            ref.value!.width = rotateHandlerSize;
+            ref.value!.height = rotateHandlerSize;
+        });
 
-        const midX = (l + r) / 2;
-        this._rotateRef.value!.position.set(midX, b - 20 / scaleX);
     }
 }
