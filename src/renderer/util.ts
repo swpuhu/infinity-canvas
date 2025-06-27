@@ -93,7 +93,7 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
     return node;
 }
 
-export function getRectByNode(node: SNode): InputRect {
+export function getRectByNode(node: SNode): number[] {
     return [
         -node.width * node.anchor.x,
         -node.height * node.anchor.y,

@@ -63,6 +63,8 @@ class SNode extends EventEmitter {
 
     private _active = true;
 
+    private _preSelected: boolean = false;
+
     public aspectKeepMode = EnumAspectKeepMode.NONE;
 
     public renderType: EnumRenderComponentType = EnumRenderComponentType.NONE;
@@ -236,6 +238,14 @@ class SNode extends EventEmitter {
 
     public get worldPosition(): ReadonlyVec2 {
         return this.toGlobal([0, 0]);
+    }
+
+    public get preSelected(): boolean {
+        return this._preSelected;
+    }
+
+    public set preSelected(value: boolean) {
+        this._preSelected = value;
     }
 
     public setSize(width: number, height: number) {

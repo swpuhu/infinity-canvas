@@ -2,7 +2,7 @@ import { EventNames, SNodeEvents } from '@/common/types';
 import { visitNodeRecursive } from '@/common/util';
 import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
-import { useEditorModeStore } from '@/store/EditorModeStore';
+import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 import EventEmitter from 'eventemitter3';
 import { SnapGuide } from '../SnapGuide';
 import { DragEventsHandler } from './DragEventsHandler';
@@ -12,6 +12,7 @@ import { ResizerUI } from './ResizerUI';
 import { RotateEventsHandler } from './RotateEventsHandler';
 import { SelectEventsHandler } from './SelectEventsHandler';
 import { SParagraph } from '@/renderer/RenderComponents/SParagraph';
+import eventBus from '@/common/eventBus';
 export class EventsHandler extends EventEmitter {
     private _dragEventsHandler: DragEventsHandler;
 
@@ -22,6 +23,8 @@ export class EventsHandler extends EventEmitter {
     private _editEventsHandler: EditEventsHandler;
 
     private _selectEventsHandler: SelectEventsHandler;
+
+    private _prevHitNode: SNode | null = null;
 
     // Get the editor mode store
     private _editorModeStore = useEditorModeStore();
@@ -76,6 +79,11 @@ export class EventsHandler extends EventEmitter {
             this._handleCanvasLayerPointerDown
         );
 
+        this._editor.eventSystem.addSystemEventListener(
+            SNodeEvents.POINTER_MOVE,
+            this._handleCanvasLayerPointerMove
+        );
+
         this._dragEventsHandler.on(SNodeEvents.DRAGGING, () => {
             this._editEventsHandler.exitEditMode();
         });
@@ -98,14 +106,31 @@ export class EventsHandler extends EventEmitter {
         }
     }
 
-    private _handleCanvasLayerPointerDown = (
+    private _handleCanvasLayerPointerMove = (
         event: SNodeEvents.IPointerEvent
     ) => {
-        // Skip if in hand tool mode
-        if (this._editorModeStore.isHandToolMode) return;
+        const currentMode = this._editorModeStore.currentMode;
+        if (currentMode !== EditorMode.DEFAULT) {
+            return;
+        }
 
-        let hitNode: SNode | null = null;
         const allNodes = this._collectAllNodes();
+        const hitNode: SNode | null = this._hitTest(event, allNodes);
+        allNodes.forEach((node) => {
+            node.preSelected = node === hitNode;
+        });
+        if (hitNode !== this._prevHitNode) {
+            this._prevHitNode = hitNode;
+            eventBus.reDraw();
+        }
+    };
+
+    private _hitTest(
+        event: SNodeEvents.IPointerEvent,
+        allNodes?: SNode[]
+    ): SNode | null {
+        let hitNode: SNode | null = null;
+        allNodes = allNodes || this._collectAllNodes();
         let hasHit = false;
         for (let i = 0; i < allNodes.length; i++) {
             const node = allNodes[i];
@@ -116,6 +141,16 @@ export class EventsHandler extends EventEmitter {
                 break;
             }
         }
+        return hitNode;
+    }
+
+    private _handleCanvasLayerPointerDown = (
+        event: SNodeEvents.IPointerEvent
+    ) => {
+        // Skip if in hand tool mode
+        if (this._editorModeStore.isHandToolMode) return;
+
+        const hitNode: SNode | null = this._hitTest(event);
         this.emit(EventNames.POINTER_DOWN_NODE, hitNode);
         if (hitNode) {
             this.setCurrentNodes([hitNode]);

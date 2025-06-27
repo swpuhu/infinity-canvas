@@ -1,6 +1,7 @@
 import type {
     Canvas,
     GrDirectContext,
+    Paint,
     Surface,
     WebGLContextHandle,
 } from 'canvaskit-wasm';
@@ -12,6 +13,7 @@ import EventEmitter from 'eventemitter3';
 import { EventNames } from '@/common/types';
 import eventBus from '@/common/eventBus';
 import { Vec2 } from '@/common/Vec2';
+import { getRectByNode } from './util';
 
 export class Renderer extends EventEmitter {
     private surface: Surface | null = null;
@@ -25,6 +27,8 @@ export class Renderer extends EventEmitter {
     private _glContextHandle: WebGLContextHandle;
 
     private needRedraw = false;
+
+    private _preSelectedPaint: Paint | null = null;
 
     constructor(canvas: HTMLCanvasElement) {
         super();
@@ -46,7 +50,7 @@ export class Renderer extends EventEmitter {
             CanvasKitModule.CanvasKit.ColorSpace.SRGB
         );
 
-        this.resizeObserver = new ResizeObserver(entries => {
+        this.resizeObserver = new ResizeObserver((entries) => {
             const entry = entries[0];
             if (entry) {
                 const { width, height } = entry.contentRect;
@@ -56,6 +60,13 @@ export class Renderer extends EventEmitter {
         });
         this.resizeObserver.observe(canvas);
         this.startCheckRedraw();
+
+        this._preSelectedPaint = new CanvasKitModule.CanvasKit.Paint();
+        this._preSelectedPaint.setStyle(
+            CanvasKitModule.CanvasKit.PaintStyle.Stroke
+        );
+        this._preSelectedPaint.setStrokeWidth(2);
+        this._preSelectedPaint.setColor([0.95, 0.5, 0, 0.5]);
 
         eventBus.onReDraw(this.reDraw);
     }
@@ -145,14 +156,14 @@ export class Renderer extends EventEmitter {
 
         this.visitNode(
             this._currentRenderNode,
-            node => {
+            (node) => {
                 if (!node.activeInHierarchy) {
                     // console.log('node not active', node.name);
                     return;
                 }
                 const renderComps = node.getRenderComps();
                 if (renderComps) {
-                    renderComps.forEach(comp => {
+                    renderComps.forEach((comp) => {
                         if (comp.isEnabled) {
                             comp.draw(canvas);
                         }
@@ -170,14 +181,22 @@ export class Renderer extends EventEmitter {
                         true
                     );
                 }
+                if (node.preSelected) {
+                    const rect = getRectByNode(node);
+                    rect[0] -= 2;
+                    rect[1] -= 2;
+                    rect[2] += 2;
+                    rect[3] += 2;
+                    canvas.drawRect(rect, this._preSelectedPaint!);
+                }
             },
-            node => {
+            (node) => {
                 canvas.save();
                 canvas.translate(node.position.x, node.position.y);
                 canvas.rotate(node.rotation, 0, 0);
                 canvas.scale(node.scale.x, node.scale.y);
             },
-            _node => {
+            (_node) => {
                 canvas.restore();
             }
         );
@@ -201,11 +220,11 @@ export class Renderer extends EventEmitter {
             position: new Vec2(node.width / 2, node.height / 2),
         });
 
-        node.getRenderComps()?.forEach(comp => {
+        node.getRenderComps()?.forEach((comp) => {
             comp.disable();
         });
         this.render(node, renderTarget, true);
-        node.getRenderComps()?.forEach(comp => {
+        node.getRenderComps()?.forEach((comp) => {
             comp.enable();
         });
 
