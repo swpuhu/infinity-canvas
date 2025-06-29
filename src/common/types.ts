@@ -189,6 +189,7 @@ export namespace SNodeEvents {
     export const MOUSE_MOVE = 'mousemove';
     export const MOUSE_UP = 'mouseup';
 
+    export const PURE_POINTER_MOVE = 'purePointerMove';
     export const POINTER_DOWN = 'pointerdown';
     export const POINTER_MOVE = 'pointermove';
     export const POINTER_UP = 'pointerup';
@@ -260,6 +261,7 @@ export namespace SNodeEvents {
         [SNodeEvents.TOUCH_CANCEL]: TouchEvent;
         [SNodeEvents.WHEEL]: IWheelEvent;
         [SNodeEvents.DB_CLICK]: IPointerEvent;
+        [SNodeEvents.PURE_POINTER_MOVE]: IPointerEvent;
     };
 
     export type EventHandler<T extends keyof EventMap> = (
@@ -320,7 +322,17 @@ export enum CursorStyle {
     INSERT = 'insert',
     TEXT_EDIT = 'textEdit',
     RESIZE = 'resize',
+    ROTATE = 'rotate',
 }
 
 // 定义调整大小的方向类型
-export type ResizeDirection = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'w' | 'e';
+export type ResizeDirection =
+    | 'nw'
+    | 'ne'
+    | 'sw'
+    | 'se'
+    | 'n'
+    | 's'
+    | 'w'
+    | 'e'
+    | 'none';

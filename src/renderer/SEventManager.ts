@@ -186,6 +186,7 @@ export class CanvasEventSystem {
     private _handlePointerMove = (event: PointerEvent) => {
         // 处理系统级的鼠标移动事件（无论是否按下）
         this._processSystemPointerEvent(SNodeEvents.POINTER_MOVE, event);
+        this._processPointerEvent(SNodeEvents.PURE_POINTER_MOVE, event);
 
         // 原有的逻辑：只在按下状态时处理节点事件
         if (!this._pressed) {

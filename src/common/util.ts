@@ -245,14 +245,6 @@ export function textIsIndependent(textComp: SParagraph): boolean {
     return textComp.node?.parent === undefined;
 }
 
-// 函数重载：根据 CursorStyle 的不同类型提供不同的签名
-export function getCursorStyleString(
-    cursorStyle: CursorStyle.RESIZE,
-    resizeDirection: ResizeDirection
-): string;
-export function getCursorStyleString(
-    cursorStyle: Exclude<CursorStyle, CursorStyle.RESIZE>
-): string;
 export function getCursorStyleString(
     cursorStyle: CursorStyle,
     resizeDirection?: ResizeDirection
@@ -265,6 +257,8 @@ export function getCursorStyleString(
         }
         // 根据 resizeDirection 返回相应的鼠标样式
         return `${resizeDirection}-resize`;
+    } else if (cursorStyle === CursorStyle.ROTATE) {
+        return 'move';
     } else if (cursorStyle === CursorStyle.INSERT) {
         return 'crosshair';
     } else if (cursorStyle === CursorStyle.TEXT_EDIT) {

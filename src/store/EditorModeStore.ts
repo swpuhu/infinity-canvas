@@ -1,4 +1,4 @@
-import { CursorStyle, SNodeConfig } from '@/common/types';
+import { CursorStyle, ResizeDirection, SNodeConfig } from '@/common/types';
 import { defineStore } from 'pinia';
 
 // Define editor mode types
@@ -8,6 +8,8 @@ export enum EditorMode {
     TEXT_EDIT = 'text_edit',
     TEXT_INSERT = 'text_insert',
     SHAPE_INSERT = 'shape_insert',
+    RESIZE = 'resize',
+    ROTATE = 'rotate',
     // Add more modes as needed
 }
 
@@ -20,7 +22,7 @@ export const useEditorModeStore = defineStore('editorMode', {
         // Current shape being inserted
         currentInsertShape: SNodeConfig.NodeType.RECT,
 
-        resizeDirection: 'none',
+        resizeDirection: 'none' as ResizeDirection,
     }),
     getters: {
         // Check if the editor is in hand tool mode
@@ -52,6 +54,10 @@ export const useEditorModeStore = defineStore('editorMode', {
                 return CursorStyle.INSERT;
             } else if (this.currentMode === EditorMode.TEXT_EDIT) {
                 return CursorStyle.TEXT_EDIT;
+            } else if (this.currentMode === EditorMode.RESIZE) {
+                return CursorStyle.RESIZE;
+            } else if (this.currentMode === EditorMode.ROTATE) {
+                return CursorStyle.ROTATE;
             }
 
             return CursorStyle.DEFAULT;
@@ -60,8 +66,11 @@ export const useEditorModeStore = defineStore('editorMode', {
 
     actions: {
         // Set the current editor mode
-        setMode(mode: EditorMode) {
+        setMode(mode: EditorMode, direction?: ResizeDirection) {
             this.currentMode = mode;
+            if (mode === EditorMode.RESIZE) {
+                this.resizeDirection = direction || 'none';
+            }
         },
 
         // Set hand tool active state

@@ -1,11 +1,13 @@
 import { createNodeFromConfig } from '@/renderer/util';
 
-import { EventNames, IPointData, SNodeConfig } from '@/common/types';
+import { CursorStyle, EventNames, IPointData, ResizeDirection, SNodeConfig, SNodeEvents } from '@/common/types';
 import { decomposeMatrix } from '@/common/util';
 import { createElement } from '@/renderer/createElement';
 import SNode from '@/renderer/SNode';
 import { refSNode } from '@/renderer/util';
 import { WhiteboardScene } from '@/renderer/WhiteboardScene';
+import { CanvasEventSystem } from '@/renderer/SEventManager';
+import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 
 const RESIZE_GIZMO_SIZE = 10;
 const ROTATE_GIZMO_SIZE = 8;
@@ -65,6 +67,10 @@ export class ResizerUI {
 
     private _rotateRefs: SNodeConfig.IRefSNode[] = [refSNode(), refSNode(), refSNode(), refSNode()];
 
+    private _editorModeStore = useEditorModeStore();
+
+    private _prevHoveredNode: SNode | null = null;
+
     get resizeHandlerNodes(): SNode[] {
         return this._resizeHandlerNodes;
     }
@@ -93,7 +99,67 @@ export class ResizerUI {
         this._createHandler();
 
         this._scene.on(EventNames.RESIZE, this._onResize);
+        this._bindEvents();
     }
+
+    private _bindEvents(): void {
+        this.rotateNodes.forEach((node) => {
+            CanvasEventSystem.instance.addEventListener(
+                node,
+                SNodeEvents.PURE_POINTER_MOVE,
+                this._onPointerMove
+            );
+        });
+        this.resizeHandlerNodes.forEach((node) => {
+            CanvasEventSystem.instance.addEventListener(
+                node,
+                SNodeEvents.PURE_POINTER_MOVE,
+                this._onPointerMove
+            );
+        });
+        CanvasEventSystem.instance.addEventListener(
+            this._scene.getCanvasNode(),
+            SNodeEvents.PURE_POINTER_MOVE,
+            this._onPointerMove
+        );
+    }
+
+    private _onPointerMove = (event: SNodeEvents.IPointerEvent): void => {
+        event.stopPropagation();
+        const currentTarget = event.currentTarget;
+        const currentMode = this._editorModeStore.currentMode;
+        if (currentMode !== EditorMode.DEFAULT && currentMode !== EditorMode.ROTATE && currentMode !== EditorMode.RESIZE) {
+            return;
+        }
+        if (!currentTarget) {
+            return;
+        }
+        const rotateNodeIndex = this.rotateNodes.indexOf(currentTarget);
+        const resizerNodeIndex = this.resizeHandlerNodes.indexOf(currentTarget);
+
+        if (rotateNodeIndex !== -1) {
+            const direction = this._getDirection(rotateNodeIndex);
+            console.log('currentTarget', currentTarget.name, direction);
+            // this._editorModeStore.setMode(EditorMode.ROTATE, direction);
+        } else if (resizerNodeIndex !== -1) {
+            const direction = this._getDirection(resizerNodeIndex);
+            console.log('currentTarget', currentTarget.name, direction);
+            this._editorModeStore.setMode(EditorMode.RESIZE, direction);
+        } else {
+            this._editorModeStore.setMode(EditorMode.DEFAULT);
+        }
+        this._prevHoveredNode = currentTarget;
+    };
+
+    private _getDirection(nodeIndex: number): ResizeDirection {
+        // index 0 -> lb
+        // index 1 -> lt
+        // index 2 -> rb
+        // index 3 -> rt
+        return nodeIndex === 0 ? 'nw' : nodeIndex === 1 ? 'sw' : nodeIndex === 2 ? 'ne' : 'se';
+    }
+
+
 
     get node() {
         if (!this._root) {
@@ -174,6 +240,7 @@ export class ResizerUI {
 
         // 收集引用节点
         this._resizeHandlerNodes = controlPoints.map((p) => p.ref.value!);
+        this._rotateHandlerNodes = rotatePoints.map((p) => p.ref.value!);
         // this._lineNodes = [
         //     this._leftLineRef.value!,
         //     this._rightLineRef.value!,
