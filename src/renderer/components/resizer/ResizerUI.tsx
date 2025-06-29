@@ -19,6 +19,7 @@ const GIZMO_LINE_COLOR = 0xcccccc;
 
 // 通用样式配置
 const blockStyle = { fill: RESIZE_GIZMO_COLOR };
+const rotateBlockStyle = { fill: ROTATE_GIZMO_COLOR };
 const lineStyle = { fill: GIZMO_LINE_COLOR };
 const CommonResizePoint = (props: {
     name: string;
@@ -140,7 +141,7 @@ export class ResizerUI {
         if (rotateNodeIndex !== -1) {
             const direction = this._getDirection(rotateNodeIndex);
             console.log('currentTarget', currentTarget.name, direction);
-            // this._editorModeStore.setMode(EditorMode.ROTATE, direction);
+            this._editorModeStore.setMode(EditorMode.ROTATE, direction);
         } else if (resizerNodeIndex !== -1) {
             const direction = this._getDirection(resizerNodeIndex);
             console.log('currentTarget', currentTarget.name, direction);
@@ -222,7 +223,9 @@ export class ResizerUI {
                 </container>
                 <container name="rotate-points">
                     {rotatePoints.map((p) => (
-                        <ellipse name={p.name} ref={p.ref} width={ROTATE_GIZMO_SIZE} height={ROTATE_GIZMO_SIZE} style={blockStyle}/>
+                        <ellipse name={p.name} ref={p.ref} width={ROTATE_GIZMO_SIZE} height={ROTATE_GIZMO_SIZE} style={{
+                            alpha: 0
+                        }}/>
                     ))}
                 </container>
                 <container name="dummy" ref={this._dummyRef}>
@@ -294,7 +297,7 @@ export class ResizerUI {
         }
         const [l, b, r, t] = this._root.getLocalRect();
         const { x: scaleX } = this._lbNodeRef.value!.getGlobalScale()!;
-        const offset = 2 / scaleX;
+        const offset = 8 / scaleX;
         // console.log(l, b, r, t);
 
         this._lbNodeRef.value!.position.set(l, b);

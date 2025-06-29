@@ -22,6 +22,8 @@ export class RotateEventsHandler extends EventEmitter {
 
     protected _dummyNodes: SNode[] = [];
 
+    private _initAngle = 0;
+
     constructor(
         private _editor: CanvasEditor,
         private _resizerUI: ResizerUI,
@@ -68,6 +70,7 @@ export class RotateEventsHandler extends EventEmitter {
         // const hostNode = this._resizerUI.node.parent;
         const eventWorldPos = event.getWorldPosition();
         this._rotateStartPos.set(eventWorldPos[0], eventWorldPos[1]);
+        this._initAngle = this._resizerUI.node.rotation;
         this._dummyNodes = cloneNodesAndMoveIn(
             this._currentNodes,
             this._resizerUI.dummyNode,
@@ -91,7 +94,7 @@ export class RotateEventsHandler extends EventEmitter {
         const diffRad = dragVec.signRad(startVec);
         const angle = (diffRad * 180) / Math.PI;
 
-        this._resizerUI.node.rotation = angle;
+        this._resizerUI.node.rotation = this._initAngle + angle;
         if (this._snapGuide && this._currentNodes.length === 1) {
             const newRotation = this._snapGuide.calculateSnapRotation(
                 this._resizerUI.node

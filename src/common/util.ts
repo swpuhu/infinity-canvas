@@ -258,7 +258,7 @@ export function getCursorStyleString(
         // 根据 resizeDirection 返回相应的鼠标样式
         return `${resizeDirection}-resize`;
     } else if (cursorStyle === CursorStyle.ROTATE) {
-        return 'move';
+        return "url('rotate.png') 12 12, auto";
     } else if (cursorStyle === CursorStyle.INSERT) {
         return 'crosshair';
     } else if (cursorStyle === CursorStyle.TEXT_EDIT) {

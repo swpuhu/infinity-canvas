@@ -15,6 +15,8 @@ export class SGeo extends SRenderComponent {
 
     protected shadowPaint!: Paint;
     public options: SNodeConfig.SGraphicsPropsAndStyle = {};
+
+    private _alpha: number = 1;
     protected onCreated(): void {}
 
     protected _getShadowPaint(): Paint {
@@ -45,13 +47,13 @@ export class SGeo extends SRenderComponent {
     }
 
     public draw(_canvas: Canvas): void {
-        if (this.shadowPaint) {
+        if (this.shadowPaint && this._alpha !== 0) {
             this.drawShadow(_canvas, this.shadowPaint);
         }
-        if (this.fillPaint) {
+        if (this.fillPaint && this._alpha !== 0) {
             this.drawShape(_canvas, this.fillPaint);
         }
-        if (this.strokePaint) {
+        if (this.strokePaint && this._alpha !== 0) {
             this.drawShape(_canvas, this.strokePaint);
         }
     }
@@ -91,6 +93,9 @@ export class SGeo extends SRenderComponent {
         fillPaint.setAlphaf(alpha);
         const strokePaint = this._getStrokePaint();
         strokePaint.setAlphaf(alpha);
+        const shadowPaint = this._getShadowPaint();
+        shadowPaint.setAlphaf(alpha);
+        this._alpha = alpha;
     }
 
     public applyStyle(options: SNodeConfig.SGraphicsPropsAndStyle): void {

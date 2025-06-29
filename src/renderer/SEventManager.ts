@@ -223,6 +223,10 @@ export class CanvasEventSystem {
                 break;
             }
 
+            if (!listener.node.activeInHierarchy) {
+                continue;
+            }
+
             if (
                 listener.node.hitTest([
                     nativeEvent.offsetX,
