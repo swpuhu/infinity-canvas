@@ -1,6 +1,12 @@
 import { createNodeFromConfig } from '@/renderer/util';
 
-import { CursorStyle, EventNames, IPointData, ResizeDirection, SNodeConfig, SNodeEvents } from '@/common/types';
+import {
+    EventNames,
+    IPointData,
+    ResizeDirection,
+    SNodeConfig,
+    SNodeEvents,
+} from '@/common/types';
 import { decomposeMatrix } from '@/common/util';
 import { createElement } from '@/renderer/createElement';
 import SNode from '@/renderer/SNode';
@@ -10,16 +16,16 @@ import { CanvasEventSystem } from '@/renderer/SEventManager';
 import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 
 const RESIZE_GIZMO_SIZE = 10;
+const ADD_SHAPE_GIZMO_SIZE = 20;
 const ROTATE_GIZMO_SIZE = 8;
-const RESIZE_GIZMO_COLOR = 0x3670F4;
-const ROTATE_GIZMO_COLOR = 0x00ffbc;
+const RESIZE_GIZMO_COLOR = 0x3670f4;
+const SHAPE_GIZMO_COLOR = 0xbbcffd;
 
 const GIZMO_LINE_WIDTH = 2;
-const GIZMO_LINE_COLOR = 0x3670F4;
+const GIZMO_LINE_COLOR = 0x3670f4;
 
 // 通用样式配置
 const blockStyle = { fill: RESIZE_GIZMO_COLOR };
-const rotateBlockStyle = { fill: ROTATE_GIZMO_COLOR };
 const lineStyle = { fill: GIZMO_LINE_COLOR };
 const CommonResizePoint = (props: {
     name: string;
@@ -49,6 +55,19 @@ const Line = (props: {
         ></rect>
     );
 };
+
+const AddShapeNode = (props: { name: string; ref: SNodeConfig.IRefSNode }) => {
+    return (
+        <ellipse
+            name={props.name}
+            ref={props.ref}
+            style={{ fill: SHAPE_GIZMO_COLOR }}
+            width={ADD_SHAPE_GIZMO_SIZE}
+            height={ADD_SHAPE_GIZMO_SIZE}
+        ></ellipse>
+    );
+};
+
 export class ResizerUI {
     private _root: SNode | null = null;
 
@@ -63,10 +82,20 @@ export class ResizerUI {
     private _topLineRef: SNodeConfig.IRefSNode = refSNode();
     private _bottomLineRef: SNodeConfig.IRefSNode = refSNode();
 
+    private _leftAddShapeRef: SNodeConfig.IRefSNode = refSNode();
+    private _rightAddShapeRef: SNodeConfig.IRefSNode = refSNode();
+    private _topAddShapeRef: SNodeConfig.IRefSNode = refSNode();
+    private _bottomAddShapeRef: SNodeConfig.IRefSNode = refSNode();
+
     private _resizeHandlerNodes: SNode[] = [];
     private _rotateHandlerNodes: SNode[] = [];
 
-    private _rotateRefs: SNodeConfig.IRefSNode[] = [refSNode(), refSNode(), refSNode(), refSNode()];
+    private _rotateRefs: SNodeConfig.IRefSNode[] = [
+        refSNode(),
+        refSNode(),
+        refSNode(),
+        refSNode(),
+    ];
 
     private _editorModeStore = useEditorModeStore();
 
@@ -94,6 +123,19 @@ export class ResizerUI {
 
     get rotateNodes(): SNode[] {
         return this._rotateHandlerNodes;
+    }
+
+    get leftAddShapeNode(): SNode {
+        return this._leftAddShapeRef.value!;
+    }
+    get rightAddShapeNode(): SNode {
+        return this._rightAddShapeRef.value!;
+    }
+    get topAddShapeNode(): SNode {
+        return this._topAddShapeRef.value!;
+    }
+    get bottomAddShapeNode(): SNode {
+        return this._bottomAddShapeRef.value!;
     }
 
     constructor(private _scene: WhiteboardScene) {
@@ -129,9 +171,11 @@ export class ResizerUI {
         event.stopPropagation();
         const currentTarget = event.currentTarget;
         const currentMode = this._editorModeStore.currentMode;
-        if (currentMode !== EditorMode.DEFAULT 
-            && currentMode !== EditorMode.PRE_ROTATE 
-            && currentMode !== EditorMode.PRE_RESIZE) {
+        if (
+            currentMode !== EditorMode.DEFAULT &&
+            currentMode !== EditorMode.PRE_ROTATE &&
+            currentMode !== EditorMode.PRE_RESIZE
+        ) {
             return;
         }
         if (!currentTarget) {
@@ -159,10 +203,14 @@ export class ResizerUI {
         // index 1 -> lt
         // index 2 -> rb
         // index 3 -> rt
-        return nodeIndex === 0 ? 'nw' : nodeIndex === 1 ? 'sw' : nodeIndex === 2 ? 'ne' : 'se';
+        return nodeIndex === 0
+            ? 'nw'
+            : nodeIndex === 1
+            ? 'sw'
+            : nodeIndex === 2
+            ? 'ne'
+            : 'se';
     }
-
-
 
     get node() {
         if (!this._root) {
@@ -225,10 +273,34 @@ export class ResizerUI {
                 </container>
                 <container name="rotate-points">
                     {rotatePoints.map((p) => (
-                        <ellipse name={p.name} ref={p.ref} width={ROTATE_GIZMO_SIZE} height={ROTATE_GIZMO_SIZE} style={{
-                            alpha: 0
-                        }}/>
+                        <ellipse
+                            name={p.name}
+                            ref={p.ref}
+                            width={ROTATE_GIZMO_SIZE}
+                            height={ROTATE_GIZMO_SIZE}
+                            style={{
+                                alpha: 0,
+                            }}
+                        />
                     ))}
+                </container>
+                <container name="add-shape-points">
+                    <AddShapeNode
+                        name="left-add-shape"
+                        ref={this._leftAddShapeRef}
+                    />
+                    <AddShapeNode
+                        name="right-add-shape"
+                        ref={this._rightAddShapeRef}
+                    />
+                    <AddShapeNode
+                        name="top-add-shape"
+                        ref={this._topAddShapeRef}
+                    />
+                    <AddShapeNode
+                        name="bottom-add-shape"
+                        ref={this._bottomAddShapeRef}
+                    />
                 </container>
                 <container name="dummy" ref={this._dummyRef}>
                     {/* <rect
@@ -301,6 +373,14 @@ export class ResizerUI {
         const { x: scaleX } = this._lbNodeRef.value!.getGlobalScale()!;
         const offset = 8 / scaleX;
         const lineOffset = 2 / scaleX;
+        const addShapeOffset = 10 / scaleX;
+
+        const handlerWidth = RESIZE_GIZMO_SIZE / scaleX;
+        const handlerHeight = RESIZE_GIZMO_SIZE / scaleX;
+        const rotateHandlerSize = ROTATE_GIZMO_SIZE / scaleX;
+
+        const midX = l + (r - l) / 2;
+        const midY = b + (t - b) / 2;
         // console.log(l, b, r, t);
 
         this._lbNodeRef.value!.position.set(l, b);
@@ -315,11 +395,6 @@ export class ResizerUI {
         this._rtNodeRef.value!.position.set(r, t);
         this._rotateRefs[3].value!.position.set(r + offset, t + offset);
 
-
-        const handlerWidth = RESIZE_GIZMO_SIZE / scaleX;
-        const handlerHeight = RESIZE_GIZMO_SIZE / scaleX;
-        const rotateHandlerSize = ROTATE_GIZMO_SIZE / scaleX;
-
         const lineWidth = GIZMO_LINE_WIDTH / scaleX;
         this._resizeHandlerNodes.forEach((node) => {
             node.width = handlerWidth;
@@ -328,23 +403,38 @@ export class ResizerUI {
         this._leftLineRef.value!.width = lineWidth;
         this._leftLineRef.value!.height = t - b;
         this._leftLineRef.value!.position.set(l - lineOffset, b);
+        this.leftAddShapeNode.position.set(
+            l - lineOffset - addShapeOffset,
+            midY
+        );
 
         this._bottomLineRef.value!.height = lineWidth;
         this._bottomLineRef.value!.width = r - l;
         this._bottomLineRef.value!.position.set(l, b - lineOffset);
+        this.bottomAddShapeNode.position.set(
+            midX,
+            b - lineOffset - addShapeOffset
+        );
 
         this._rightLineRef.value!.width = lineWidth;
         this._rightLineRef.value!.height = t - b;
         this._rightLineRef.value!.position.set(r + lineOffset, t);
+        this.rightAddShapeNode.position.set(
+            r + lineOffset + addShapeOffset,
+            midY
+        );
 
         this._topLineRef.value!.height = lineWidth;
         this._topLineRef.value!.width = r - l;
         this._topLineRef.value!.position.set(r, t + lineOffset);
+        this.topAddShapeNode.position.set(
+            midX,
+            t + lineOffset + addShapeOffset
+        );
 
         this._rotateRefs.forEach((ref) => {
             ref.value!.width = rotateHandlerSize;
             ref.value!.height = rotateHandlerSize;
         });
-
     }
 }
