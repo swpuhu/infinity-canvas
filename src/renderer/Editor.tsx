@@ -71,28 +71,34 @@ export class CanvasEditor {
         const editorModeStore = useEditorModeStore();
         editorModeStore.$subscribe((mutation, state) => {
             // console.log('editorModeStore', editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);
-            const cursorStyleString = getCursorStyleString(editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);
+            const cursorStyleString = getCursorStyleString(
+                editorModeStore.currentCursorStyle,
+                editorModeStore.resizeDirection
+            );
             this._canvas.style.cursor = cursorStyleString;
         });
-        
-        this.eventSystem.addSystemEventListener(SNodeEvents.POINTER_MOVE, (event) => {
-            const worldPos = event.getWorldPosition();
-            const canvasNode = this.scene.getCanvasNode();
-            const localPos = canvasNode.toLocal(worldPos);
-            if (editorModeStore.isShapeInsertMode) {
-                const shadowShape = this._shapeCreator?.getShadowShape();
-                if (shadowShape) {
-                    shadowShape.position.set(localPos[0], localPos[1]);
-                    eventBus.reDraw();
-                }
-            } else if (editorModeStore.isTextInsertMode) {
-                const shadowText = this._textCreator?.getShadowText();
-                if (shadowText) {
-                    shadowText.position.set(localPos[0], localPos[1]);
-                    eventBus.reDraw();
+
+        this.eventSystem.addSystemEventListener(
+            SNodeEvents.POINTER_MOVE,
+            (event) => {
+                const worldPos = event.getWorldPosition();
+                const canvasNode = this.scene.getCanvasNode();
+                const localPos = canvasNode.toLocal(worldPos);
+                if (editorModeStore.isShapeInsertMode) {
+                    const shadowShape = this._shapeCreator?.getShadowShape();
+                    if (shadowShape) {
+                        shadowShape.position.set(localPos[0], localPos[1]);
+                        eventBus.reDraw();
+                    }
+                } else if (editorModeStore.isTextInsertMode) {
+                    const shadowText = this._textCreator?.getShadowText();
+                    if (shadowText) {
+                        shadowText.position.set(localPos[0], localPos[1]);
+                        eventBus.reDraw();
+                    }
                 }
             }
-        });
+        );
 
         this._renderer.on(EventNames.RESIZE, (width, height) => {
             scene.resizeCanvasSize({ width, height });
@@ -255,9 +261,7 @@ export class CanvasEditor {
             return new Vec2(screenX, screenY);
         }
 
-
         const canvasPos = canvasContainer.toLocal([worldX, worldY]);
-
 
         return new Vec2(canvasPos[0], canvasPos[1]);
     }
@@ -282,5 +286,6 @@ export class CanvasEditor {
         CanvasKitModule.destroy();
         this._resizeGizmo?.destroy();
         this._shapeCreator?.destroy();
+        eventBus.destroy();
     }
 }

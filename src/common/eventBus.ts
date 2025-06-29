@@ -30,6 +30,9 @@ const eventBus = {
     onExitEditMode(callback: () => void) {
         eventEmitter.on('exitEditMode', callback);
     },
+    destroy() {
+        eventEmitter.removeAllListeners();
+    },
 };
 
 export default eventBus;
