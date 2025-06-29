@@ -95,22 +95,13 @@ export class DragEventsHandler extends EventEmitter {
             localPos[0] - this._dragStartPos.x,
             localPos[1] - this._dragStartPos.y
         );
+        this._resizerUI.hide();
 
         this._resizerUI.node.position.set(
             this._originPos.x + diff.x,
             this._originPos.y + diff.y
         );
         if (this._snapGuide && this._currentNodes.length === 1) {
-            const snapInfo = this._snapGuide.calculateSnapLines(
-                this._resizerUI.node,
-                this._currentNodes
-            );
-            if (snapInfo.hasSnapped) {
-                this._resizerUI.node.position.set(
-                    snapInfo.position.x,
-                    snapInfo.position.y
-                );
-            }
         }
 
         this._dummyNodes.forEach((dummyNode, i) => {
@@ -128,6 +119,7 @@ export class DragEventsHandler extends EventEmitter {
             this._dummyNodes.forEach((dummyNode) => {
                 this._pool.put(dummyNode);
             });
+            this._resizerUI.show();
             return;
         }
 

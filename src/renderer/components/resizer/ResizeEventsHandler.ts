@@ -125,6 +125,7 @@ export class ResizeEventsHandler extends EventEmitter {
         }
         const hostNode = this._resizerUI.node;
         const moveLocalPos = hostNode!.toLocal(event.getWorldPosition());
+        this._resizerUI.hide();
 
         const diff = new Vec2(
             moveLocalPos[0] - this._resizeStartPos.x,
@@ -142,12 +143,6 @@ export class ResizeEventsHandler extends EventEmitter {
         let nextHeight = this._resizeStartNodeSize.y + diff.y;
 
         if (this._snapGuide && this._currentNodes.length === 1) {
-            const snapInfo = this._snapGuide.calculateSnapLines(
-                this._resizerUI.node,
-                this._currentNodes
-            );
-            if (snapInfo.hasSnapped) {
-            }
         }
         const keepWidthHeight = nextWidth / this._originAspect;
         const keepHeightWidth = nextHeight * this._originAspect;
@@ -201,7 +196,7 @@ export class ResizeEventsHandler extends EventEmitter {
             pairNode.removeScale(dummyNode.width, dummyNode.height);
         });
         // this._currentNodes!.alignTo(this._resizerUI.node!);
-        this._resizerUI.updateHandlerNodes();
+        // this._resizerUI.updateHandlerNodes();
         this.emit(SNodeEvents.RESIZING);
     };
 
@@ -209,6 +204,9 @@ export class ResizeEventsHandler extends EventEmitter {
         if (!this._currentNodes || !this._isResizing) {
             return;
         }
+        this._resizerUI.show();
+        this._resizerUI.updateHandlerNodes();
+
         if (this._isResizing) {
             this._isResizing = false;
             this._currentHandleNode = null;
