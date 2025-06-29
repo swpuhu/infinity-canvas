@@ -16,7 +16,7 @@ import { CanvasEventSystem } from '@/renderer/SEventManager';
 import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 
 const RESIZE_GIZMO_SIZE = 10;
-const ADD_SHAPE_GIZMO_SIZE = 20;
+const ADD_SHAPE_GIZMO_SIZE = 10;
 const ROTATE_GIZMO_SIZE = 8;
 const RESIZE_GIZMO_COLOR = 0x3670f4;
 const SHAPE_GIZMO_COLOR = 0xbbcffd;
@@ -378,6 +378,7 @@ export class ResizerUI {
         const handlerWidth = RESIZE_GIZMO_SIZE / scaleX;
         const handlerHeight = RESIZE_GIZMO_SIZE / scaleX;
         const rotateHandlerSize = ROTATE_GIZMO_SIZE / scaleX;
+        const addShapeSize = ADD_SHAPE_GIZMO_SIZE / scaleX;
 
         const midX = l + (r - l) / 2;
         const midY = b + (t - b) / 2;
@@ -407,6 +408,8 @@ export class ResizerUI {
             l - lineOffset - addShapeOffset,
             midY
         );
+        this.leftAddShapeNode.width = addShapeSize;
+        this.leftAddShapeNode.height = addShapeSize;
 
         this._bottomLineRef.value!.height = lineWidth;
         this._bottomLineRef.value!.width = r - l;
@@ -415,6 +418,8 @@ export class ResizerUI {
             midX,
             b - lineOffset - addShapeOffset
         );
+        this.bottomAddShapeNode.width = addShapeSize;
+        this.bottomAddShapeNode.height = addShapeSize;
 
         this._rightLineRef.value!.width = lineWidth;
         this._rightLineRef.value!.height = t - b;
@@ -423,6 +428,8 @@ export class ResizerUI {
             r + lineOffset + addShapeOffset,
             midY
         );
+        this.rightAddShapeNode.width = addShapeSize;
+        this.rightAddShapeNode.height = addShapeSize;
 
         this._topLineRef.value!.height = lineWidth;
         this._topLineRef.value!.width = r - l;
@@ -431,6 +438,8 @@ export class ResizerUI {
             midX,
             t + lineOffset + addShapeOffset
         );
+        this.topAddShapeNode.width = addShapeSize;
+        this.topAddShapeNode.height = addShapeSize;
 
         this._rotateRefs.forEach((ref) => {
             ref.value!.width = rotateHandlerSize;
