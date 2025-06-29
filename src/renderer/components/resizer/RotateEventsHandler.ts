@@ -8,6 +8,7 @@ import { changeAnchorButStay, cloneNodesAndMoveIn } from '@/renderer/util';
 import EventEmitter from 'eventemitter3';
 import { SnapGuide } from '../SnapGuide';
 import { ResizerUI } from './ResizerUI';
+import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 
 export class RotateEventsHandler extends EventEmitter {
     private _isRotating = false;
@@ -23,6 +24,8 @@ export class RotateEventsHandler extends EventEmitter {
     protected _dummyNodes: SNode[] = [];
 
     private _initAngle = 0;
+
+    private _editorModeStore = useEditorModeStore();
 
     constructor(
         private _editor: CanvasEditor,
@@ -60,6 +63,7 @@ export class RotateEventsHandler extends EventEmitter {
     private _onRotatePointerDown = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
         this._isRotating = true;
+        this._editorModeStore.setMode(EditorMode.ROTATING);
         changeAnchorButStay(this._resizerUI.node, {
             x: 0.5,
             y: 0.5,
@@ -113,6 +117,8 @@ export class RotateEventsHandler extends EventEmitter {
 
     private _onRotatePointerUp = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
+
+        this._editorModeStore.setMode(EditorMode.DEFAULT);
         if (this._isRotating) {
             this._isRotating = false;
             this._dummyNodes.forEach((dummyNode) => {

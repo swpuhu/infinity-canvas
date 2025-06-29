@@ -11,11 +11,11 @@ import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 
 const RESIZE_GIZMO_SIZE = 10;
 const ROTATE_GIZMO_SIZE = 8;
-const RESIZE_GIZMO_COLOR = 0x00bcfb;
+const RESIZE_GIZMO_COLOR = 0x3670F4;
 const ROTATE_GIZMO_COLOR = 0x00ffbc;
 
-const GIZMO_LINE_WIDTH = 1;
-const GIZMO_LINE_COLOR = 0xcccccc;
+const GIZMO_LINE_WIDTH = 2;
+const GIZMO_LINE_COLOR = 0x3670F4;
 
 // 通用样式配置
 const blockStyle = { fill: RESIZE_GIZMO_COLOR };
@@ -129,7 +129,9 @@ export class ResizerUI {
         event.stopPropagation();
         const currentTarget = event.currentTarget;
         const currentMode = this._editorModeStore.currentMode;
-        if (currentMode !== EditorMode.DEFAULT && currentMode !== EditorMode.ROTATE && currentMode !== EditorMode.RESIZE) {
+        if (currentMode !== EditorMode.DEFAULT 
+            && currentMode !== EditorMode.PRE_ROTATE 
+            && currentMode !== EditorMode.PRE_RESIZE) {
             return;
         }
         if (!currentTarget) {
@@ -141,11 +143,11 @@ export class ResizerUI {
         if (rotateNodeIndex !== -1) {
             const direction = this._getDirection(rotateNodeIndex);
             console.log('currentTarget', currentTarget.name, direction);
-            this._editorModeStore.setMode(EditorMode.ROTATE, direction);
+            this._editorModeStore.setMode(EditorMode.PRE_ROTATE, direction);
         } else if (resizerNodeIndex !== -1) {
             const direction = this._getDirection(resizerNodeIndex);
             console.log('currentTarget', currentTarget.name, direction);
-            this._editorModeStore.setMode(EditorMode.RESIZE, direction);
+            this._editorModeStore.setMode(EditorMode.PRE_RESIZE, direction);
         } else {
             this._editorModeStore.setMode(EditorMode.DEFAULT);
         }
@@ -298,6 +300,7 @@ export class ResizerUI {
         const [l, b, r, t] = this._root.getLocalRect();
         const { x: scaleX } = this._lbNodeRef.value!.getGlobalScale()!;
         const offset = 8 / scaleX;
+        const lineOffset = 2 / scaleX;
         // console.log(l, b, r, t);
 
         this._lbNodeRef.value!.position.set(l, b);
@@ -324,19 +327,19 @@ export class ResizerUI {
         });
         this._leftLineRef.value!.width = lineWidth;
         this._leftLineRef.value!.height = t - b;
-        this._leftLineRef.value!.position.set(l, b);
+        this._leftLineRef.value!.position.set(l - lineOffset, b);
 
         this._bottomLineRef.value!.height = lineWidth;
         this._bottomLineRef.value!.width = r - l;
-        this._bottomLineRef.value!.position.set(l, b);
+        this._bottomLineRef.value!.position.set(l, b - lineOffset);
 
         this._rightLineRef.value!.width = lineWidth;
         this._rightLineRef.value!.height = t - b;
-        this._rightLineRef.value!.position.set(r, t);
+        this._rightLineRef.value!.position.set(r + lineOffset, t);
 
         this._topLineRef.value!.height = lineWidth;
         this._topLineRef.value!.width = r - l;
-        this._topLineRef.value!.position.set(r, t);
+        this._topLineRef.value!.position.set(r, t + lineOffset);
 
         this._rotateRefs.forEach((ref) => {
             ref.value!.width = rotateHandlerSize;

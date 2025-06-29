@@ -8,8 +8,10 @@ export enum EditorMode {
     TEXT_EDIT = 'text_edit',
     TEXT_INSERT = 'text_insert',
     SHAPE_INSERT = 'shape_insert',
-    RESIZE = 'resize',
-    ROTATE = 'rotate',
+    PRE_RESIZE = 'pre_resize',
+    PRE_ROTATE = 'pre_rotate',
+    RESIZING = 'resizing',
+    ROTATING = 'rotating',
     // Add more modes as needed
 }
 
@@ -54,9 +56,15 @@ export const useEditorModeStore = defineStore('editorMode', {
                 return CursorStyle.INSERT;
             } else if (this.currentMode === EditorMode.TEXT_EDIT) {
                 return CursorStyle.TEXT_EDIT;
-            } else if (this.currentMode === EditorMode.RESIZE) {
+            } else if (
+                this.currentMode === EditorMode.PRE_RESIZE ||
+                this.currentMode === EditorMode.RESIZING
+            ) {
                 return CursorStyle.RESIZE;
-            } else if (this.currentMode === EditorMode.ROTATE) {
+            } else if (
+                this.currentMode === EditorMode.PRE_ROTATE ||
+                this.currentMode === EditorMode.ROTATING
+            ) {
                 return CursorStyle.ROTATE;
             }
 
@@ -68,7 +76,7 @@ export const useEditorModeStore = defineStore('editorMode', {
         // Set the current editor mode
         setMode(mode: EditorMode, direction?: ResizeDirection) {
             this.currentMode = mode;
-            if (mode === EditorMode.RESIZE) {
+            if (mode === EditorMode.PRE_RESIZE) {
                 this.resizeDirection = direction || 'none';
             }
         },

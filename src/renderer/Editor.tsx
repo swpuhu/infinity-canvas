@@ -70,7 +70,7 @@ export class CanvasEditor {
 
         const editorModeStore = useEditorModeStore();
         editorModeStore.$subscribe((mutation, state) => {
-            console.log('editorModeStore', editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);
+            // console.log('editorModeStore', editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);
             const cursorStyleString = getCursorStyleString(editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);
             this._canvas.style.cursor = cursorStyleString;
         });
