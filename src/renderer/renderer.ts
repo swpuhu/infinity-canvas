@@ -30,6 +30,8 @@ export class Renderer extends EventEmitter {
 
     private _preSelectedPaint: Paint | null = null;
 
+    private _prevGlobalScaleX = 1;
+
     constructor(canvas: HTMLCanvasElement) {
         super();
         this._canvasElement = canvas;
@@ -183,10 +185,17 @@ export class Renderer extends EventEmitter {
                 }
                 if (node.preSelected) {
                     const rect = getRectByNode(node);
-                    rect[0] -= 2;
-                    rect[1] -= 2;
-                    rect[2] += 2;
-                    rect[3] += 2;
+                    const globalScaleX = node.getGlobalScale().x;
+                    if (globalScaleX !== this._prevGlobalScaleX) {
+                        this._prevGlobalScaleX = globalScaleX;
+                        this._preSelectedPaint!.setStrokeWidth(
+                            2 / globalScaleX
+                        );
+                    }
+                    rect[0] -= 2 / globalScaleX;
+                    rect[1] -= 2 / globalScaleX;
+                    rect[2] += 2 / globalScaleX;
+                    rect[3] += 2 / globalScaleX;
                     canvas.drawRect(rect, this._preSelectedPaint!);
                 }
             },
