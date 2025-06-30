@@ -9,9 +9,16 @@ export interface IPoint extends IPointData {
     observeFunc?: () => void;
 }
 
-export interface ILine {
+export type Vec2Like = number[] | Float32Array<ArrayBufferLike>;
+
+export interface ISegment {
     start: IPointData;
     end: IPointData;
+}
+
+export interface ILine {
+    start: ReadonlyVec2;
+    dir: ReadonlyVec2;
 }
 
 export interface IPointData {
@@ -228,6 +235,8 @@ export namespace SNodeEvents {
     export type IPointerEvent = IEvent & {
         getLocalPosition: (node: SNode) => ReadonlyVec2;
         getWorldPosition: () => ReadonlyVec2;
+        getFixedWorldPosition: () => ReadonlyVec2;
+        setFixedWorldPosition(worldPosition: ReadonlyVec2): void;
     };
 
     export type IKeyboardEvent = IEvent & {

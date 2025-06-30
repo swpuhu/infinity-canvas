@@ -14,6 +14,7 @@ import { changeAnchorButStay, cloneNodesAndMoveIn } from '@/renderer/util';
 import EventEmitter from 'eventemitter3';
 import { SnapGuide } from '../SnapGuide';
 import { ResizerUI } from './ResizerUI';
+import { ReadonlyVec2 } from 'gl-matrix';
 
 export class ResizeEventsHandler extends EventEmitter {
     private _currentHandleNode: SNode | null = null;
@@ -124,7 +125,16 @@ export class ResizeEventsHandler extends EventEmitter {
             return;
         }
         const hostNode = this._resizerUI.node;
-        const moveLocalPos = hostNode!.toLocal(event.getWorldPosition());
+        let fixedWorldPosition = event.getWorldPosition().slice();
+        if (this._snapGuide) {
+            fixedWorldPosition = this._snapGuide.fixEventWorldPosition(
+                fixedWorldPosition,
+                this._currentNodes
+            );
+        }
+        const moveLocalPos = hostNode!.toLocal(
+            fixedWorldPosition as ReadonlyVec2
+        );
         this._resizerUI.hide();
 
         const diff = new Vec2(
@@ -142,8 +152,6 @@ export class ResizeEventsHandler extends EventEmitter {
         let nextWidth = this._resizeStartNodeSize.x + diff.x;
         let nextHeight = this._resizeStartNodeSize.y + diff.y;
 
-        if (this._snapGuide && this._currentNodes.length === 1) {
-        }
         const keepWidthHeight = nextWidth / this._originAspect;
         const keepHeightWidth = nextHeight * this._originAspect;
 

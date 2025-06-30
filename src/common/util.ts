@@ -1,14 +1,7 @@
 import type SNode from '@/renderer/SNode';
-import { mat3 } from 'gl-matrix';
-import {
-    CursorStyle,
-    EnumParaLayoutMode,
-    EnumRenderComponentType,
-    ISize,
-    ResizeDirection,
-} from './types';
+import { mat3, ReadonlyVec2 } from 'gl-matrix';
+import { CursorStyle, EnumRenderComponentType, ResizeDirection } from './types';
 import { SParagraph } from '@/renderer/RenderComponents/SParagraph';
-import { Vec2 } from './Vec2';
 
 export function angleToRadians(angle: number) {
     return angle * (Math.PI / 180);
@@ -265,4 +258,48 @@ export function getCursorStyleString(
         return 'text';
     }
     return 'default';
+}
+
+export function excludeNearNodes(
+    points: ReadonlyVec2[],
+    distance: number
+): ReadonlyVec2[] {
+    // 如果点数组为空,直接返回空数组
+    if (points.length === 0) {
+        return [];
+    }
+
+    // 创建结果数组,先加入第一个点
+    const result: ReadonlyVec2[] = [points[0]];
+
+    // 遍历剩余的点
+    for (let i = 1; i < points.length; i++) {
+        const point = points[i];
+
+        // 检查当前点是否与已保存的点距离都大于distance
+        let shouldAdd = true;
+        for (const savedPoint of result) {
+            const dx = point[0] - savedPoint[0];
+            const dy = point[1] - savedPoint[1];
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < distance) {
+                shouldAdd = false;
+                break;
+            }
+        }
+
+        // 如果当前点与所有已保存点距离都大于distance,则加入结果数组
+        if (shouldAdd) {
+            result.push(point);
+        }
+    }
+
+    return result;
+}
+
+export function getDistance(point1: ReadonlyVec2, point2: ReadonlyVec2) {
+    const dx = point1[0] - point2[0];
+    const dy = point1[1] - point2[1];
+    return Math.sqrt(dx * dx + dy * dy);
 }

@@ -1,6 +1,6 @@
 import { nodePool } from '@/common/NodePool';
 import { Pool } from '@/common/Pool';
-import { SNodeEvents } from '@/common/types';
+import { SNodeEvents, Vec2Like } from '@/common/types';
 import { Vec2 } from '@/common/Vec2';
 import { CanvasEditor } from '@/renderer/Editor';
 import { CanvasEventSystem } from '@/renderer/SEventManager';
@@ -10,6 +10,7 @@ import EventEmitter from 'eventemitter3';
 import { SnapGuide } from '../SnapGuide';
 import { ResizerUI } from './ResizerUI';
 import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
+import { ReadonlyVec2 } from 'gl-matrix';
 
 export class DragEventsHandler extends EventEmitter {
     protected _currentNodes: SNode[] = [];
@@ -25,6 +26,10 @@ export class DragEventsHandler extends EventEmitter {
     protected _dummyNodes: SNode[] = [];
 
     private _editorModeStore = useEditorModeStore();
+
+    private _dragStartEvent: SNodeEvents.IPointerEvent | null = null;
+
+    private _prevFixedWorldPosition: Vec2Like | null = null;
 
     constructor(
         private _editor: CanvasEditor,
@@ -66,9 +71,11 @@ export class DragEventsHandler extends EventEmitter {
         }
 
         this._isDragging = true;
+        this._dragStartEvent = event;
         const localPos = this._resizerUI.node.parent!.toLocal(
             event.getWorldPosition()
         );
+
         this._dragStartPos.set(localPos[0], localPos[1]);
 
         this._dummyNodes = cloneNodesAndMoveIn(
@@ -88,8 +95,13 @@ export class DragEventsHandler extends EventEmitter {
         if (!this._currentNodes || !this._isDragging) {
             return;
         }
+        let fixedWorldPosition: Vec2Like = event.getWorldPosition().slice();
+        const worldPosition = event.getWorldPosition().slice();
+        if (this._snapGuide) {
+        }
+
         const localPos = this._resizerUI.node.parent!.toLocal(
-            event.getWorldPosition()
+            fixedWorldPosition as ReadonlyVec2
         );
         const diff = new Vec2(
             localPos[0] - this._dragStartPos.x,
@@ -101,19 +113,18 @@ export class DragEventsHandler extends EventEmitter {
             this._originPos.x + diff.x,
             this._originPos.y + diff.y
         );
-        if (this._snapGuide && this._currentNodes.length === 1) {
-        }
 
         this._dummyNodes.forEach((dummyNode, i) => {
             const pairNode = this._currentNodes[i];
             pairNode.alignTo(dummyNode);
         });
-        this.emit(SNodeEvents.DRAGGING);
+        // this.emit(SNodeEvents.DRAGGING);
         // this._currentNodes!.alignTo(this._resizerUI.node!);
     };
 
     private _onDragPointerUp = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
+        this._prevFixedWorldPosition = null;
         if (this._isDragging) {
             this._isDragging = false;
             this._dummyNodes.forEach((dummyNode) => {

@@ -45,6 +45,8 @@ export class SEvent implements SNodeEvents.IEvent {
 
 export class SPointerEvent extends SEvent implements SNodeEvents.IPointerEvent {
     private _nativeEvent: PointerEvent;
+
+    private _fixedWorldPosition: ReadonlyVec2 | null = null;
     constructor(type: string, nativeEvent: PointerEvent) {
         super(type);
         this._nativeEvent = nativeEvent;
@@ -58,6 +60,17 @@ export class SPointerEvent extends SEvent implements SNodeEvents.IPointerEvent {
 
     getWorldPosition(): ReadonlyVec2 {
         return [this._nativeEvent.offsetX, this._nativeEvent.offsetY];
+    }
+
+    getFixedWorldPosition(): ReadonlyVec2 {
+        if (!this._fixedWorldPosition) {
+            return [this._nativeEvent.offsetX, this._nativeEvent.offsetY];
+        }
+        return this._fixedWorldPosition;
+    }
+
+    setFixedWorldPosition(worldPosition: ReadonlyVec2): void {
+        this._fixedWorldPosition = worldPosition;
     }
 }
 

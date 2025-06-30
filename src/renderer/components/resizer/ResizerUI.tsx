@@ -18,7 +18,8 @@ import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 const RESIZE_GIZMO_SIZE = 10;
 const ADD_SHAPE_GIZMO_SIZE = 10;
 const ROTATE_GIZMO_SIZE = 8;
-const RESIZE_GIZMO_COLOR = 0x3670f4;
+const RESIZE_GIZMO_FILL_COLOR = 0xffffff;
+const RESIZE_GIZMO_STROKE_COLOR = 0x3670f4;
 const SHAPE_GIZMO_COLOR = 0xbbcffd;
 const SHAPE_GIZMO_HOVER_COLOR = 0x5b8df7; // 高亮颜色
 
@@ -26,8 +27,12 @@ const GIZMO_LINE_WIDTH = 2;
 const GIZMO_LINE_COLOR = 0x3670f4;
 
 // 通用样式配置
-const blockStyle = { fill: RESIZE_GIZMO_COLOR };
-const lineStyle = { fill: GIZMO_LINE_COLOR };
+const blockStyle = {
+    fill: RESIZE_GIZMO_FILL_COLOR,
+    stroke: RESIZE_GIZMO_STROKE_COLOR,
+    strokeWidth: 1,
+};
+const lineStyle = { stroke: GIZMO_LINE_COLOR, strokeWidth: 1 };
 const CommonResizePoint = (props: {
     name: string;
     ref: SNodeConfig.IRefSNode;
