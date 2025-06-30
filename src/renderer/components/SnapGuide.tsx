@@ -143,6 +143,10 @@ export class SnapGuide {
         const otherPoints = this._collectPoints(excludeNodes);
         const srcWorldPoint = worldPosition;
         const fixedWorldPosition = worldPosition.slice();
+        const snapSegments: ISegment[] = []; // 记录吸附线段
+        let horizontalSnapped = false;
+        let verticalSnapped = false;
+
         for (let j = 0; j < otherPoints.length; j++) {
             const otherPoint = otherPoints[j];
             // const dist = getDistance(srcWorldPoint as ReadonlyVec2, otherPoint);
@@ -164,23 +168,64 @@ export class SnapGuide {
              */
 
             // 检查与通过otherPoint的水平线的距离
-            const horizontalLineDist = Math.abs(
-                srcWorldPoint[1] - otherPoint[1]
-            );
+            let horizontalLineDist = 100000;
+            if (!horizontalSnapped) {
+                horizontalLineDist = Math.abs(srcWorldPoint[1] - otherPoint[1]);
+            }
+
             if (horizontalLineDist < 10) {
+                horizontalSnapped = true;
                 // 将srcWorldPoint投影到水平线上（只修改Y坐标）
                 const horizontalOffset = otherPoint[1] - srcWorldPoint[1];
                 fixedWorldPosition[1] += horizontalOffset;
+
+                // 记录水平吸附线段
+                const lineExtension = 100; // 线段延伸长度
+                snapSegments.push({
+                    start: {
+                        x: otherPoint[0] - lineExtension,
+                        y: otherPoint[1],
+                    },
+                    end: {
+                        x: fixedWorldPosition[0],
+                        y: fixedWorldPosition[1],
+                    },
+                });
             }
 
             // 检查与通过otherPoint的垂直线的距离
-            const verticalLineDist = Math.abs(srcWorldPoint[0] - otherPoint[0]);
+            let verticalLineDist = 100000;
+            if (!verticalSnapped) {
+                verticalLineDist = Math.abs(srcWorldPoint[0] - otherPoint[0]);
+            }
             if (verticalLineDist < 10) {
+                verticalSnapped = true;
                 // 将srcWorldPoint投影到垂直线上（只修改X坐标）
                 const verticalOffset = otherPoint[0] - srcWorldPoint[0];
                 fixedWorldPosition[0] += verticalOffset;
+
+                // 记录垂直吸附线段
+                const lineExtension = 100; // 线段延伸长度
+                snapSegments.push({
+                    start: {
+                        x: otherPoint[0],
+                        y: otherPoint[1] - lineExtension,
+                    },
+                    end: {
+                        x: fixedWorldPosition[0],
+                        y: fixedWorldPosition[1],
+                    },
+                });
             }
         }
+
+        // 显示或隐藏吸附引导线
+        if (snapSegments.length > 0) {
+            this.showGuides(snapSegments);
+        } else {
+            this.hideGuides();
+        }
+
         return fixedWorldPosition;
     }
 
