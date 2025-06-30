@@ -99,7 +99,7 @@ export class SnapGuide {
             const dx = line.end.x - line.start.x;
             const dy = line.end.y - line.start.y;
             const length = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            const angle = Math.round(Math.atan2(dy, dx) * (180 / Math.PI) / 90) * 90;
 
             // Convert world coordinates to local coordinates
             const startLocal = root.toLocal([line.start.x, line.start.y]);
@@ -115,7 +115,7 @@ export class SnapGuide {
                 // 水平线，确保正确显示
                 dashLine.setTransform({
                     position: { x: startLocal[0], y: startLocal[1] },
-                    rotation: 0,
+                    rotation: angle,
                     anchor: { x: 0, y: 0.5 }, // 确保水平线的锚点在线的中心
                 });
                 eventBus.reDraw();
@@ -124,7 +124,7 @@ export class SnapGuide {
 
                 dashLine.setTransform({
                     position: { x: startLocal[0], y: startLocal[1] },
-                    rotation: 90,
+                    rotation: angle,
                     anchor: { x: 0, y: 0 }, // 垂直线可以保持锚点在顶部
                 });
             }
@@ -180,10 +180,9 @@ export class SnapGuide {
                 fixedWorldPosition[1] += horizontalOffset;
 
                 // 记录水平吸附线段
-                const lineExtension = 100; // 线段延伸长度
                 snapSegments.push({
                     start: {
-                        x: otherPoint[0] - lineExtension,
+                        x: otherPoint[0],
                         y: otherPoint[1],
                     },
                     end: {
@@ -205,11 +204,10 @@ export class SnapGuide {
                 fixedWorldPosition[0] += verticalOffset;
 
                 // 记录垂直吸附线段
-                const lineExtension = 100; // 线段延伸长度
                 snapSegments.push({
                     start: {
                         x: otherPoint[0],
-                        y: otherPoint[1] - lineExtension,
+                        y: otherPoint[1],
                     },
                     end: {
                         x: fixedWorldPosition[0],
