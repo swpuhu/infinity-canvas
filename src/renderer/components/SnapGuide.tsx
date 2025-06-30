@@ -145,15 +145,40 @@ export class SnapGuide {
         const fixedWorldPosition = worldPosition.slice();
         for (let j = 0; j < otherPoints.length; j++) {
             const otherPoint = otherPoints[j];
-            const dist = getDistance(srcWorldPoint as ReadonlyVec2, otherPoint);
+            // const dist = getDistance(srcWorldPoint as ReadonlyVec2, otherPoint);
 
-            if (dist < 10) {
-                const dir = [
-                    otherPoint[0] - srcWorldPoint[0],
-                    otherPoint[1] - srcWorldPoint[1],
-                ];
-                fixedWorldPosition[0] += dir[0];
-                fixedWorldPosition[1] += dir[1];
+            // if (dist < 10) {
+            //     const dir = [
+            //         otherPoint[0] - srcWorldPoint[0],
+            //         otherPoint[1] - srcWorldPoint[1],
+            //     ];
+            //     fixedWorldPosition[0] += dir[0];
+            //     fixedWorldPosition[1] += dir[1];
+            // }
+
+            /**
+             * 在这后面继续生成代码：
+             * 继续判断otherPoint所在的水平线段与垂直线段 与 srcWorldPoint的距离
+             * 如果距离小于10，则将srcWorldPoint移动到该线段上
+             * 如果距离大于10，则不进行移动
+             */
+
+            // 检查与通过otherPoint的水平线的距离
+            const horizontalLineDist = Math.abs(
+                srcWorldPoint[1] - otherPoint[1]
+            );
+            if (horizontalLineDist < 10) {
+                // 将srcWorldPoint投影到水平线上（只修改Y坐标）
+                const horizontalOffset = otherPoint[1] - srcWorldPoint[1];
+                fixedWorldPosition[1] += horizontalOffset;
+            }
+
+            // 检查与通过otherPoint的垂直线的距离
+            const verticalLineDist = Math.abs(srcWorldPoint[0] - otherPoint[0]);
+            if (verticalLineDist < 10) {
+                // 将srcWorldPoint投影到垂直线上（只修改X坐标）
+                const verticalOffset = otherPoint[0] - srcWorldPoint[0];
+                fixedWorldPosition[0] += verticalOffset;
             }
         }
         return fixedWorldPosition;

@@ -75,33 +75,39 @@ export class ResizeEventsHandler extends EventEmitter {
         this._originAspect =
             this._resizerUI.node.width / this._resizerUI.node.height;
 
+        const hostWorldPoints = this._resizerUI.node.getWorldPoints();
+        let controllerPoint: ReadonlyVec2 = event.getWorldPosition();
         if (event.target === this._resizerUI.lbNode) {
             changeAnchorButStay(this._resizerUI.node, {
                 x: 1,
                 y: 1,
             });
             this._resizerUI.dummyNode.anchor.set(1, 1);
+            controllerPoint = hostWorldPoints[0];
         } else if (event.target === this._resizerUI.ltNode) {
             changeAnchorButStay(this._resizerUI.node, {
                 x: 1,
                 y: 0,
             });
             this._resizerUI.dummyNode.anchor.set(1, 0);
+            controllerPoint = hostWorldPoints[1];
         } else if (event.target === this._resizerUI.rbNode) {
             changeAnchorButStay(this._resizerUI.node, {
                 x: 0,
                 y: 1,
             });
             this._resizerUI.dummyNode.anchor.set(0, 1);
+            controllerPoint = hostWorldPoints[2];
         } else if (event.target === this._resizerUI.rtNode) {
             changeAnchorButStay(this._resizerUI.node, {
                 x: 0,
                 y: 0,
             });
             this._resizerUI.dummyNode.anchor.set(0, 0);
+            controllerPoint = hostWorldPoints[3];
         }
         const hostNode = this._resizerUI.node;
-        const localPos = hostNode!.toLocal(event.getWorldPosition());
+        const localPos = hostNode!.toLocal(controllerPoint);
         this._resizeStartNodeSize.set(hostNode!.width, hostNode!.height);
         this._resizeStartPos.set(localPos[0], localPos[1]);
 
