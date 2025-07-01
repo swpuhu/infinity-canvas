@@ -11,9 +11,13 @@ export interface IPoint extends IPointData {
 
 export type Vec2Like = number[] | Float32Array<ArrayBufferLike>;
 
+export const HORIZONTAL_DIR_VALUE = 1;
+export const VERTICAL_DIR_VALUE = 2;
+
 export interface ISegment {
     start: IPointData;
     end: IPointData;
+    dir: typeof HORIZONTAL_DIR_VALUE | typeof VERTICAL_DIR_VALUE;
 }
 
 export interface ILine {

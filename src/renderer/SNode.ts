@@ -173,6 +173,10 @@ class SNode extends EventEmitter {
         );
     }
 
+    public get positionVec2(): ReadonlyVec2 {
+        return vec2.fromValues(this._position.x, this._position.y);
+    }
+
     public get position(): Readonly<IPoint> {
         return this._position;
     }
@@ -260,6 +264,16 @@ class SNode extends EventEmitter {
             -this._height * this.anchor.y,
             this._width * (1 - this.anchor.x),
             this._height * (1 - this.anchor.y),
+        ];
+    }
+
+    public getLocalRectPoints(): ReadonlyVec2[] {
+        const [l, b, r, t] = this.getLocalRect();
+        return [
+            [l, b],
+            [l, t],
+            [r, b],
+            [r, t],
         ];
     }
 

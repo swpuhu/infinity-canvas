@@ -30,6 +30,13 @@ const eventBus = {
     onExitEditMode(callback: () => void) {
         eventEmitter.on('exitEditMode', callback);
     },
+
+    cancelSnapGuide() {
+        eventEmitter.emit('cancelSnapGuide');
+    },
+    onCancelSnapGuide(callback: () => void) {
+        eventEmitter.on('cancelSnapGuide', callback);
+    },
     destroy() {
         eventEmitter.removeAllListeners();
     },

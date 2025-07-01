@@ -10,7 +10,8 @@ import EventEmitter from 'eventemitter3';
 import { SnapGuide } from '../SnapGuide';
 import { ResizerUI } from './ResizerUI';
 import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
-import { ReadonlyVec2 } from 'gl-matrix';
+import { ReadonlyVec2, vec2 } from 'gl-matrix';
+import eventBus from '@/common/eventBus';
 
 export class DragEventsHandler extends EventEmitter {
     protected _currentNodes: SNode[] = [];
@@ -95,13 +96,9 @@ export class DragEventsHandler extends EventEmitter {
         if (!this._currentNodes || !this._isDragging) {
             return;
         }
-        let fixedWorldPosition: Vec2Like = event.getWorldPosition().slice();
-        const worldPosition = event.getWorldPosition().slice();
-        if (this._snapGuide) {
-        }
 
         const localPos = this._resizerUI.node.parent!.toLocal(
-            fixedWorldPosition as ReadonlyVec2
+            event.getWorldPosition()
         );
         const diff = new Vec2(
             localPos[0] - this._dragStartPos.x,
@@ -109,10 +106,18 @@ export class DragEventsHandler extends EventEmitter {
         );
         this._resizerUI.hide();
 
-        this._resizerUI.node.position.set(
+        const newPos = vec2.fromValues(
             this._originPos.x + diff.x,
             this._originPos.y + diff.y
         );
+        this._resizerUI.node.position.set(newPos[0], newPos[1]);
+
+        if (this._snapGuide) {
+            this._snapGuide.snapPosition(
+                this._resizerUI.node,
+                this._currentNodes
+            );
+        }
 
         this._dummyNodes.forEach((dummyNode, i) => {
             const pairNode = this._currentNodes[i];
@@ -125,6 +130,7 @@ export class DragEventsHandler extends EventEmitter {
     private _onDragPointerUp = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
         this._prevFixedWorldPosition = null;
+        eventBus.cancelSnapGuide();
         if (this._isDragging) {
             this._isDragging = false;
             this._dummyNodes.forEach((dummyNode) => {

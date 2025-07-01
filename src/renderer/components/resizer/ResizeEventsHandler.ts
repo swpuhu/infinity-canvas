@@ -15,6 +15,7 @@ import EventEmitter from 'eventemitter3';
 import { SnapGuide } from '../SnapGuide';
 import { ResizerUI } from './ResizerUI';
 import { ReadonlyVec2 } from 'gl-matrix';
+import eventBus from '@/common/eventBus';
 
 export class ResizeEventsHandler extends EventEmitter {
     private _currentHandleNode: SNode | null = null;
@@ -220,6 +221,7 @@ export class ResizeEventsHandler extends EventEmitter {
         }
         this._resizerUI.show();
         this._resizerUI.updateHandlerNodes();
+        eventBus.cancelSnapGuide();
 
         if (this._isResizing) {
             this._isResizing = false;

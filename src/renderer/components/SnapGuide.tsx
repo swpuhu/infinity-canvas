@@ -1,32 +1,20 @@
-import { nodePool } from '@/common/NodePool';
-import { Pool } from '@/common/Pool';
 import eventBus from '@/common/eventBus';
 import {
     ISegment,
     IPointData,
     SNodeConfig,
-    SNodeEvents,
-    ILine,
     Vec2Like,
+    HORIZONTAL_DIR_VALUE,
+    VERTICAL_DIR_VALUE,
 } from '@/common/types';
 import { CanvasEditor } from '../Editor';
 import SNode from '../SNode';
 import { createElement } from '../createElement';
-import {
-    createNodeFromConfig,
-    getRectByNode,
-    getWorldRect,
-    refSNode,
-} from '../util';
-import { HORIZONTAL_VEC, VERTICAL_VEC } from '@/common/const';
-import { ReadonlyVec2 } from 'gl-matrix';
-import { getDistance } from '@/common/util';
+import { createNodeFromConfig, getRectByNode, refSNode } from '../util';
+import { ReadonlyVec2, vec2 } from 'gl-matrix';
 
 export class SnapGuide {
     private _rootRef: SNodeConfig.IRefSNode = refSNode();
-
-    private _nodePool: Pool<SNode> = nodePool;
-
     private _containerRef: SNodeConfig.IRefSNode = refSNode();
 
     private _dashLineRefs: SNodeConfig.IRefSNode[] = [];
@@ -35,11 +23,18 @@ export class SnapGuide {
         this._rootRef.value = this._createNode();
         console.log(this._dashLineRefs);
         this._editor.scene.topLayer.addChild(this._rootRef.value);
+        this._bindGlobalEvent();
+    }
+
+    private _bindGlobalEvent() {
+        eventBus.onCancelSnapGuide(() => {
+            this.hideGuides();
+        });
     }
 
     private _createNode(): SNode {
         return createNodeFromConfig(
-            <container ref={this._containerRef}>
+            <container ref={this._containerRef} active={false}>
                 {Array.from({ length: 4 }).map((_, index) => {
                     const ref = refSNode();
                     this._dashLineRefs.push(ref);
@@ -99,7 +94,8 @@ export class SnapGuide {
             const dx = line.end.x - line.start.x;
             const dy = line.end.y - line.start.y;
             const length = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.round(Math.atan2(dy, dx) * (180 / Math.PI) / 90) * 90;
+            const angle =
+                Math.round((Math.atan2(dy, dx) * (180 / Math.PI)) / 90) * 90;
 
             // Convert world coordinates to local coordinates
             const startLocal = root.toLocal([line.start.x, line.start.y]);
@@ -189,6 +185,7 @@ export class SnapGuide {
                         x: fixedWorldPosition[0],
                         y: fixedWorldPosition[1],
                     },
+                    dir: HORIZONTAL_DIR_VALUE,
                 });
             }
 
@@ -213,6 +210,7 @@ export class SnapGuide {
                         x: fixedWorldPosition[0],
                         y: fixedWorldPosition[1],
                     },
+                    dir: VERTICAL_DIR_VALUE,
                 });
             }
         }
@@ -227,33 +225,96 @@ export class SnapGuide {
         return fixedWorldPosition;
     }
 
-    public calculateSnapLines(
-        srcNode: SNode,
-        excludeNodes: SNode[] = [],
-        fixedWorldPosition: Vec2Like
-    ) {
-        const otherPoints = this._collectPoints(excludeNodes);
-        const srcWorldPoints = srcNode.getWorldPoints();
+    public snapPosition(srcNode: SNode, excludeNodes: SNode[]): void {
+        if (!srcNode.parent) {
+            return;
+        }
+        const parent = srcNode.parent;
+        const otherPoints = this._collectPoints(excludeNodes).map((pos) =>
+            parent.toLocal(pos)
+        );
+        const srcPoints = srcNode
+            .getWorldPoints()
+            .map((pos) => parent.toLocal(pos));
+        const snapSegments: ISegment[] = []; // 记录吸附线段
+        let horizontalSnapped = false;
+        let verticalSnapped = false;
 
-        for (let i = 0; i < srcWorldPoints.length; i++) {
-            const srcWorldPoint = srcWorldPoints[i];
+        const newOffset = vec2.fromValues(0, 0);
+        for (let i = 0; i < srcPoints.length; i++) {
+            const srcPoint = srcPoints[i].slice();
             for (let j = 0; j < otherPoints.length; j++) {
                 const otherPoint = otherPoints[j];
-                const dist = getDistance(srcWorldPoint, otherPoint);
 
-                if (dist < 10) {
-                    const dir = [
-                        otherPoint[0] - srcWorldPoint[0],
-                        otherPoint[1] - srcWorldPoint[1],
-                    ];
-                    fixedWorldPosition[0] += dir[0];
-                    fixedWorldPosition[1] += dir[1];
+                // 检查与通过otherPoint的水平线的距离
+                let horizontalLineDist = 100000;
+                if (!horizontalSnapped) {
+                    horizontalLineDist = Math.abs(srcPoint[1] - otherPoint[1]);
+                }
+
+                if (horizontalLineDist < 10) {
+                    horizontalSnapped = true;
+                    // 将srcWorldPoint投影到水平线上（只修改Y坐标）
+                    const horizontalOffset = otherPoint[1] - srcPoint[1];
+                    newOffset[1] += horizontalOffset;
+                    const globalStart = parent.toGlobal(otherPoint);
+                    const globalEnd = parent.toGlobal(srcPoint as ReadonlyVec2);
+                    // 记录水平吸附线段
+                    snapSegments.push({
+                        start: {
+                            x: globalStart[0],
+                            y: globalStart[1],
+                        },
+                        end: {
+                            x: globalEnd[0],
+                            y: globalEnd[1],
+                        },
+                        dir: HORIZONTAL_DIR_VALUE,
+                    });
+                }
+
+                // 检查与通过otherPoint的垂直线的距离
+                let verticalLineDist = 100000;
+                if (!verticalSnapped) {
+                    verticalLineDist = Math.abs(srcPoint[0] - otherPoint[0]);
+                }
+                if (verticalLineDist < 10) {
+                    verticalSnapped = true;
+                    // 将srcWorldPoint投影到垂直线上（只修改X坐标）
+                    const verticalOffset = otherPoint[0] - srcPoint[0];
+                    newOffset[0] += verticalOffset;
+
+                    // 记录垂直吸附线段
+                    const globalStart = parent.toGlobal(otherPoint);
+                    const globalEnd = parent.toGlobal(srcPoint as ReadonlyVec2);
+                    snapSegments.push({
+                        start: {
+                            x: globalStart[0],
+                            y: globalStart[1],
+                        },
+                        end: {
+                            x: globalEnd[0],
+                            y: globalEnd[1],
+                        },
+                        dir: VERTICAL_DIR_VALUE,
+                    });
                 }
             }
         }
-        return fixedWorldPosition;
-    }
 
+        srcNode.position.set(
+            srcNode.position.x + newOffset[0],
+            srcNode.position.y + newOffset[1]
+        );
+
+        // 显示或隐藏吸附引导线
+        if (snapSegments.length > 0) {
+            console.log('snapSegments', snapSegments);
+            this.showGuides(snapSegments);
+        } else {
+            this.hideGuides();
+        }
+    }
     private _collectPoints(excludeNodes: SNode[]): ReadonlyVec2[] {
         const otherPoints: ReadonlyVec2[] = [];
         const nodes = this._editor.scene
