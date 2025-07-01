@@ -237,6 +237,7 @@ export namespace SNodeEvents {
 
     type MouseEvent = {} & IEvent;
     export type IPointerEvent = IEvent & {
+        button: number;
         getLocalPosition: (node: SNode) => ReadonlyVec2;
         getWorldPosition: () => ReadonlyVec2;
         getFixedWorldPosition: () => ReadonlyVec2;

@@ -1,7 +1,4 @@
-import {
-    EventNames,
-    SNodeEvents,
-} from '@/common/types';
+import { EventNames, SNodeEvents } from '@/common/types';
 import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
 import { createNodeFromConfig } from '@/renderer/util';
@@ -21,21 +18,24 @@ export class SelectEventsHandler extends EventEmitter {
     private _editorModeStore = useEditorModeStore();
     constructor(private _editor: CanvasEditor) {
         super();
-        this._ui = createNodeFromConfig(<SelectUI fill={0xffbbcc55} stroke={0xff0000cc} strokeWidth={1} />);
+        this._ui = createNodeFromConfig(
+            <SelectUI fill={0xffbbcc55} stroke={0xff0000cc} strokeWidth={1} />
+        );
         this._editor.scene.topLayer.addChild(this._ui);
         this._enableSelect();
     }
     public selectStart = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
+        if (event.button === 2) {
+            return;
+        }
         this._isEnabled = true;
         this._showUI();
         const localPos = event.getLocalPosition(this._ui.parent!);
         this._startPos = localPos;
     };
 
-    private _onSelectPointerMove = (
-        event: SNodeEvents.IPointerEvent
-    ): void => {
+    private _onSelectPointerMove = (event: SNodeEvents.IPointerEvent): void => {
         if (!this._isEnabled) {
             return;
         }
@@ -59,7 +59,6 @@ export class SelectEventsHandler extends EventEmitter {
         this._ui.position.set(x, y, true);
     };
 
-
     private _onSelectPointerUp = (event: SNodeEvents.IPointerEvent): void => {
         const currentMode = this._editorModeStore.currentMode;
         if (currentMode !== EditorMode.DEFAULT) {
@@ -76,7 +75,10 @@ export class SelectEventsHandler extends EventEmitter {
         // 获取选框的世界坐标边界
         // 将选框的四个角转换到世界坐标系
         const topLeft = this._ui.toGlobal([0, 0]);
-        const bottomRight = this._ui.toGlobal([this._ui.width, this._ui.height]);
+        const bottomRight = this._ui.toGlobal([
+            this._ui.width,
+            this._ui.height,
+        ]);
 
         const selectRect = {
             x: topLeft[0],
@@ -84,7 +86,7 @@ export class SelectEventsHandler extends EventEmitter {
             width: bottomRight[0] - topLeft[0],
             height: bottomRight[1] - topLeft[1],
             right: bottomRight[0],
-            bottom: bottomRight[1]
+            bottom: bottomRight[1],
         };
 
         console.log('Selection rectangle (world coords):', selectRect);
@@ -93,15 +95,21 @@ export class SelectEventsHandler extends EventEmitter {
         this._selectedNodes = [];
 
         // 遍历场景中的节点，检查是否与选框相交
-        this._findIntersectingNodes(this._editor.scene.getAllNodes(), selectRect);
+        this._findIntersectingNodes(
+            this._editor.scene.getAllNodes(),
+            selectRect
+        );
 
         // 打印选中的节点
-        console.log('Selected nodes:', this._selectedNodes.map(node => ({
-            name: node.name,
-            uuid: node.uuid,
-            position: { x: node.position.x, y: node.position.y },
-            size: { width: node.width, height: node.height }
-        })));
+        console.log(
+            'Selected nodes:',
+            this._selectedNodes.map((node) => ({
+                name: node.name,
+                uuid: node.uuid,
+                position: { x: node.position.x, y: node.position.y },
+                size: { width: node.width, height: node.height },
+            }))
+        );
 
         this._hideUI();
 
@@ -109,7 +117,17 @@ export class SelectEventsHandler extends EventEmitter {
     };
 
     // 递归检查节点及其子节点是否与选框相交
-    private _findIntersectingNodes(nodes: ReadonlyArray<SNode>, selectRect: { x: number, y: number, width: number, height: number, right: number, bottom: number }): void {
+    private _findIntersectingNodes(
+        nodes: ReadonlyArray<SNode>,
+        selectRect: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+            right: number;
+            bottom: number;
+        }
+    ): void {
         // 跳过选框UI自身
         for (const node of nodes) {
             if (node === this._ui) {
@@ -125,17 +143,28 @@ export class SelectEventsHandler extends EventEmitter {
                 this._selectedNodes.push(node);
             }
         }
-
     }
 
     // 检查节点是否与选框相交
-    private _isNodeIntersectingWithRect(node: SNode, selectRect: { x: number, y: number, width: number, height: number, right: number, bottom: number }): boolean {
+    private _isNodeIntersectingWithRect(
+        node: SNode,
+        selectRect: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+            right: number;
+            bottom: number;
+        }
+    ): boolean {
         // 获取节点的世界坐标边界
         const worldPoints = node.getWorldPoints();
 
         // 找出节点边界的最小和最大坐标
-        let minX = Infinity, minY = Infinity;
-        let maxX = -Infinity, maxY = -Infinity;
+        let minX = Infinity,
+            minY = Infinity;
+        let maxX = -Infinity,
+            maxY = -Infinity;
 
         for (const point of worldPoints) {
             minX = Math.min(minX, point[0]);

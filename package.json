@@ -9,6 +9,8 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@ant-design/icons-vue": "^7.0.1",
+        "ant-design-vue": "4.x",
         "canvaskit-wasm": "^0.38.0",
         "core-decorators": "^0.20.0",
         "eventemitter3": "^5.0.1",

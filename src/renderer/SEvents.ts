@@ -46,6 +46,8 @@ export class SEvent implements SNodeEvents.IEvent {
 export class SPointerEvent extends SEvent implements SNodeEvents.IPointerEvent {
     private _nativeEvent: PointerEvent;
 
+    public button: number = 0;
+
     private _fixedWorldPosition: ReadonlyVec2 | null = null;
     constructor(type: string, nativeEvent: PointerEvent) {
         super(type);

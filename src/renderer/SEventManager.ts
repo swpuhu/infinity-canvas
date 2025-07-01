@@ -84,7 +84,7 @@ export class CanvasEventSystem {
     private _preventDefaultBehavior(): void {
         this.canvas.addEventListener('contextmenu', (event) => {
             event.preventDefault();
-            event.stopPropagation();
+            // event.stopPropagation();
         });
     }
 
@@ -158,6 +158,7 @@ export class CanvasEventSystem {
             return;
         }
         const pointerEvent = new SPointerEvent(eventType, nativeEvent);
+        pointerEvent.button = nativeEvent.button;
 
         for (const handler of handlers) {
             handler(pointerEvent);
@@ -217,7 +218,7 @@ export class CanvasEventSystem {
         let shouldStopPropagation = false;
         let isFirst = true;
         const pointerEvent = new SPointerEvent(eventType, nativeEvent);
-
+        pointerEvent.button = nativeEvent.button;
         for (const listener of listeners) {
             if (shouldStopPropagation) {
                 break;

@@ -1,0 +1,266 @@
+<template>
+    <!-- 使用绝对定位的菜单，而不是dropdown -->
+    <teleport to="body">
+        <div v-if="visible" class="context-menu-overlay" @click="hide" @contextmenu.prevent>
+            <a-menu :style="menuStyle" @click="handleMenuClick" :selectable="false" class="context-menu-wrapper"
+                @contextmenu.stop>
+                <!-- 粘贴 -->
+                <a-menu-item key="paste" class="context-menu-item">
+                    <template #icon>
+                        <CopyOutlined />
+                    </template>
+                    <div class="menu-item-content">
+                        <span>粘贴</span>
+                        <span class="shortcut">Ctrl + V</span>
+                    </div>
+                </a-menu-item>
+
+                <a-menu-divider />
+
+                <!-- 添加文字 -->
+                <a-menu-item key="addText" class="context-menu-item">
+                    <template #icon>
+                        <EditOutlined />
+                    </template>
+                    <div class="menu-item-content">
+                        <span>添加文字</span>
+                        <span class="shortcut">T</span>
+                    </div>
+                </a-menu-item>
+
+                <!-- 隐藏网格 -->
+                <a-menu-item key="toggleGrid" class="context-menu-item">
+                    <template #icon>
+                        <BorderOutlined />
+                    </template>
+                    <div class="menu-item-content">
+                        <span>隐藏网格</span>
+                        <span class="shortcut">Shift + G</span>
+                    </div>
+                </a-menu-item>
+
+                <a-menu-divider />
+
+                <!-- 放大 -->
+                <a-menu-item key="zoomIn" class="context-menu-item">
+                    <template #icon>
+                        <PlusOutlined />
+                    </template>
+                    <span>放大</span>
+                </a-menu-item>
+
+                <!-- 缩小 -->
+                <a-menu-item key="zoomOut" class="context-menu-item">
+                    <template #icon>
+                        <MinusOutlined />
+                    </template>
+                    <span>缩小</span>
+                </a-menu-item>
+
+                <!-- 缩放至 100% -->
+                <a-menu-item key="actualSize" class="context-menu-item">
+                    <template #icon>
+                        <OneToOneOutlined />
+                    </template>
+                    <div class="menu-item-content">
+                        <span>缩放至 100%</span>
+                        <span class="shortcut">⌘ + 0</span>
+                    </div>
+                </a-menu-item>
+
+                <!-- 画布全览 -->
+                <a-menu-item key="fitWindow" class="context-menu-item">
+                    <template #icon>
+                        <ExpandOutlined />
+                    </template>
+                    <div class="menu-item-content">
+                        <span>画布全览</span>
+                        <span class="shortcut">Shift + 1</span>
+                    </div>
+                </a-menu-item>
+            </a-menu>
+        </div>
+    </teleport>
+</template>
+
+<script setup lang="ts">
+import { ref, watch, computed } from 'vue'
+import {
+    EditOutlined,
+    ZoomInOutlined,
+    PlusOutlined,
+    MinusOutlined,
+    ExpandOutlined,
+    OneToOneOutlined,
+    EyeOutlined,
+    DragOutlined,
+    AimOutlined,
+    SaveOutlined,
+    CopyOutlined,
+    BorderOutlined
+} from '@ant-design/icons-vue'
+
+interface ContextMenuProps {
+    visible?: boolean
+    position?: { x: number; y: number }
+}
+
+const props = withDefaults(defineProps<ContextMenuProps>(), {
+    visible: false,
+    position: () => ({ x: 0, y: 0 })
+})
+
+const emit = defineEmits<{
+    'update:visible': [visible: boolean]
+    'menuClick': [key: string]
+}>()
+
+const visible = ref(false)
+
+// 监听外部 visible 变化
+watch(() => props.visible, (newVal) => {
+    console.log('AntContextMenu visible 变化:', newVal);
+    visible.value = newVal
+}, { immediate: true })
+
+// 监听内部 visible 变化，同步到外部
+watch(visible, (newVal) => {
+    console.log('内部 visible 变化:', newVal);
+    emit('update:visible', newVal)
+})
+
+// 计算菜单样式
+const menuStyle = computed(() => {
+    if (!props.position) return {}
+
+    const menuWidth = 200
+    const menuHeight = 300
+
+    let x = props.position.x
+    let y = props.position.y
+
+    // 边界检测
+    if (x + menuWidth > window.innerWidth) {
+        x = props.position.x - menuWidth
+    }
+    if (y + menuHeight > window.innerHeight) {
+        y = props.position.y - menuHeight
+    }
+
+    return {
+        position: 'fixed',
+        left: `${x}px`,
+        top: `${y}px`,
+        zIndex: 9999
+    }
+})
+
+// 处理菜单点击
+const handleMenuClick = ({ key }: { key: string }) => {
+    console.log('菜单项被点击:', key);
+    emit('menuClick', key)
+    hide()
+}
+
+// 显示菜单的方法
+const show = (x: number, y: number) => {
+    console.log('显示菜单:', x, y);
+    visible.value = true
+}
+
+// 隐藏菜单的方法
+const hide = () => {
+    console.log('隐藏菜单');
+    visible.value = false
+}
+
+// 暴露方法
+defineExpose({
+    show,
+    hide
+})
+</script>
+
+<style scoped>
+.context-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9998;
+    background: transparent;
+}
+
+.context-menu-wrapper {
+    min-width: 180px;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    background: white;
+    border: 1px solid #e8e8e8;
+    padding: 8px 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+:deep(.context-menu-item) {
+    padding: 8px 16px !important;
+    font-size: 14px;
+    line-height: 20px;
+    margin: 0 4px;
+    border-radius: 6px;
+    color: #374151;
+    display: flex !important;
+    align-items: center !important;
+    min-height: 32px;
+}
+
+:deep(.context-menu-item .ant-menu-item-icon) {
+    margin-right: 12px !important;
+    font-size: 14px;
+    color: #6b7280;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+:deep(.context-menu-item:hover) {
+    background-color: #f3f4f6 !important;
+}
+
+:deep(.context-menu-item .ant-menu-title-content) {
+    flex: 1;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.menu-item-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    flex: 1;
+}
+
+.shortcut {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-left: auto;
+    font-weight: 400;
+    padding-left: 16px;
+}
+
+/* 分割线样式 */
+:deep(.ant-menu-divider) {
+    margin: 6px 12px;
+    background-color: #e5e7eb;
+}
+
+/* 确保菜单项内容正确对齐 */
+:deep(.ant-menu-item-only-child) {
+    display: flex !important;
+    align-items: center !important;
+}
+</style>
