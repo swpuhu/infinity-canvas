@@ -166,6 +166,9 @@ export class CanvasEventSystem {
     }
 
     private _handlePointerDown = (event: PointerEvent) => {
+        if (event.button !== 0) {
+            return;
+        }
         this._pressed = true;
 
         this._processSystemPointerEvent(SNodeEvents.POINTER_DOWN, event);
@@ -197,6 +200,9 @@ export class CanvasEventSystem {
     };
 
     private _handlePointerUp = (event: PointerEvent) => {
+        if (event.button !== 0) {
+            return;
+        }
         try {
             this._processPointerEvent(SNodeEvents.POINTER_UP, event);
         } catch (e) {

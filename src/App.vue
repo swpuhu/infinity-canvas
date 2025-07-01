@@ -10,22 +10,23 @@
                     <!-- 右侧工具按钮预留位置 -->
                 </div>
             </div>
-            <div class="canvas-container" @contextmenu="handleCanvasContextMenu">
+            <div class="canvas-container" @contextmenu="contextMenuHandler?.handleCanvasContextMenu">
                 <canvas ref="canvasRef"></canvas>
                 <ZoomControls ref="zoomControlsRef" @zoom-value-change="handleZoomValueChange"
                     @hand-tool-change="handleHandToolChange" @canvas-drag="handleCanvasDrag"
                     @canvas-drag-start="handleCanvasDragStart" />
                 <VerticalToolbar ref="verticalToolbarRef" />
-                <!-- 右键菜单 -->
-                <AntContextMenu v-model:visible="contextMenuVisible" :position="contextMenuPosition"
-                    @menuClick="handleContextMenuClick" ref="contextMenuRef" />
             </div>
         </div>
+
+        <!-- 右键菜单处理器 -->
+        <ContextMenuHandler ref="contextMenuHandler" :editor="editorWrapper.editor" :zoom-store="zoomStore"
+            :editor-mode-store="editorModeStore" :ui-store="uiStore" />
     </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch, reactive } from 'vue';
+import { onMounted, onUnmounted, ref, watch, reactive, toRef } from 'vue';
 import { Vec2 } from './common/Vec2';
 import eventBus from './common/eventBus';
 import { IPoint } from './common/types';
@@ -33,34 +34,33 @@ import { isCtrlKey } from './common/util';
 import UButton from './components/UButton.vue';
 import VerticalToolbar from './components/VerticalToolbar.vue';
 import ZoomControls from './components/ZoomControls.vue';
-import AntContextMenu from './components/AntContextMenu.vue';
 import { CanvasEditor } from './renderer/Editor';
 import { useEditorModeStore } from './store/EditorModeStore';
 import { useUIStore } from './store/UIStore';
 import { useZoomStore } from './store/ZoomStore';
+import ContextMenuHandler from './components/ContextMenuHandler.vue';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const zoomControlsRef = ref<InstanceType<typeof ZoomControls> | null>(null);
 const verticalToolbarRef = ref<InstanceType<typeof VerticalToolbar> | null>(
     null
 );
+const contextMenuHandler = ref<InstanceType<typeof ContextMenuHandler> | null>(null);
 
 const uiStore = useUIStore();
 const zoomStore = useZoomStore();
 const editorModeStore = useEditorModeStore();
 
-// 右键菜单状态
-const contextMenuVisible = ref(false);
-const contextMenuPosition = reactive({ x: 0, y: 0 });
-const contextMenuRef = ref();
-
 let editor: CanvasEditor | null = null;
+const editorWrapper = reactive({ editor: null as CanvasEditor | null });
+
 onMounted(async () => {
     try {
         const canvasEle = canvasRef.value!;
         // canvasEle.width = window.innerWidth;
         // canvasEle.height = window.innerHeight;
         editor = new CanvasEditor(canvasEle);
+        editorWrapper.editor = editor;
         await editor.init();
 
         // Initialize zoom functionality
@@ -73,6 +73,7 @@ onMounted(async () => {
 onUnmounted(() => {
     editor?.destroy();
     editor = null;
+    editorWrapper.editor = null;
 });
 
 // Initialize zoom functionality
@@ -215,82 +216,6 @@ const handleAddText = () => {
         uiStore.setWillAddText(true);
     }
 };
-
-// 右键菜单事件处理
-function handleCanvasContextMenu(event: MouseEvent) {
-    console.log('右键点击事件触发', event);
-    event.preventDefault();
-    contextMenuPosition.x = event.clientX;
-    contextMenuPosition.y = event.clientY;
-    contextMenuVisible.value = true;
-    console.log('菜单位置:', contextMenuPosition);
-    console.log('菜单可见性:', contextMenuVisible.value);
-}
-
-function handleContextMenuClick(key: string) {
-    console.log('菜单项点击:', key);
-    switch (key) {
-        case 'paste':
-            // TODO: 实现粘贴功能
-            console.log('执行粘贴操作');
-            break;
-        case 'addText':
-            handleAddText();
-            break;
-        case 'toggleGrid':
-            // TODO: 实现网格显示/隐藏功能
-            console.log('切换网格显示');
-            break;
-        case 'zoomIn':
-            zoomStore.zoomIn();
-            applyZoom();
-            break;
-        case 'zoomOut':
-            zoomStore.zoomOut();
-            applyZoom();
-            break;
-        case 'actualSize':
-            zoomStore.setZoomValue(0); // 0 对应 100%
-            applyZoom();
-            break;
-        case 'fitWindow':
-            zoomStore.resetZoom();
-            applyZoom();
-            break;
-        case 'handTool':
-            const isActive = !editorModeStore.isHandToolMode;
-            handleHandToolChange(isActive);
-            break;
-        case 'centerCanvas':
-            handleCenterCanvas();
-            break;
-        case 'save':
-            handleSave();
-            break;
-    }
-}
-
-function handleCenterCanvas() {
-    if (!editor) return;
-
-    // 重置画布位置到中心
-    const scene = editor.scene;
-    const canvasContainer = scene.rootNode.getNodeByName('canvas-container');
-
-    if (canvasContainer) {
-        // 获取当前缩放比例
-        const scale = canvasContainer.scale;
-
-        // 重置位置到中心，保持缩放比例
-        canvasContainer.setTransform({
-            position: new Vec2(0, 0),
-            scale: scale,
-        });
-
-        // 触发重绘
-        eventBus.reDraw();
-    }
-}
 
 </script>
 
