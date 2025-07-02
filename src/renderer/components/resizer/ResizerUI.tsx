@@ -294,15 +294,15 @@ export class ResizerUI {
 
         if (rotateNodeIndex !== -1) {
             const direction = this._getDirection(rotateNodeIndex);
-            console.log('currentTarget', currentTarget.name, direction);
+            // console.log('currentTarget', currentTarget.name, direction);
             this._editorModeStore.setMode(EditorMode.PRE_ROTATE, direction);
         } else if (resizerNodeIndex !== -1) {
             const direction = this._getDirection(resizerNodeIndex);
-            console.log('currentTarget', currentTarget.name, direction);
+            // console.log('currentTarget', currentTarget.name, direction);
             this._editorModeStore.setMode(EditorMode.PRE_RESIZE, direction);
         } else if (lineContainerIndex !== -1) {
             const direction = this._getLineDirection(lineContainerIndex);
-            console.log('currentTarget', currentTarget.name, direction);
+            // console.log('currentTarget', currentTarget.name, direction);
             this._editorModeStore.setMode(EditorMode.PRE_RESIZE, direction);
         } else if (
             this._prevHoveredNode !== currentTarget &&

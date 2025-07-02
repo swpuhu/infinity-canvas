@@ -8,6 +8,7 @@ import { ref, reactive } from 'vue'
 import { Vec2 } from '@/common/Vec2'
 import eventBus from '@/common/eventBus'
 import AntContextMenu from './AntContextMenu.vue'
+import { VueCompConsts } from '@/common/const'
 
 interface ContextMenuHandlerProps {
     editor?: any
@@ -23,70 +24,88 @@ const contextMenuVisible = ref(false)
 const contextMenuPosition = reactive({ x: 0, y: 0 })
 const contextMenuRef = ref()
 
+
+
 // 右键菜单点击处理
 function handleContextMenuClick(key: string) {
     console.log('菜单项点击:', key)
 
     const { editor, zoomStore, editorModeStore, uiStore } = props
-
+    console.log('key', key)
     switch (key) {
-        case 'paste':
+        case VueCompConsts.ContextMenuKeys.PASTE:
             // TODO: 实现粘贴功能
             console.log('执行粘贴操作')
             break
 
-        case 'addText':
+        case VueCompConsts.ContextMenuKeys.ADD_TEXT:
             if (editor && uiStore) {
                 uiStore.setWillAddText(true)
             }
             break
 
-        case 'toggleGrid':
+        case VueCompConsts.ContextMenuKeys.TOGGLE_GRID:
             // TODO: 实现网格显示/隐藏功能
             console.log('切换网格显示')
             break
 
-        case 'zoomIn':
+        case VueCompConsts.ContextMenuKeys.ZOOM_IN:
             if (zoomStore) {
                 zoomStore.zoomIn()
                 applyZoom()
             }
             break
 
-        case 'zoomOut':
+        case VueCompConsts.ContextMenuKeys.ZOOM_OUT:
             if (zoomStore) {
                 zoomStore.zoomOut()
                 applyZoom()
             }
             break
 
-        case 'actualSize':
+        case VueCompConsts.ContextMenuKeys.ACTUAL_SIZE:
             if (zoomStore) {
                 zoomStore.setZoomValue(0) // 0 对应 100%
                 applyZoom()
             }
             break
 
-        case 'fitWindow':
+        case VueCompConsts.ContextMenuKeys.FIT_WINDOW:
             if (zoomStore) {
                 zoomStore.resetZoom()
                 applyZoom()
             }
             break
 
-        case 'handTool':
+        case VueCompConsts.ContextMenuKeys.HAND_TOOL:
             if (editorModeStore) {
                 const isActive = !editorModeStore.isHandToolMode
                 handleHandToolChange(isActive)
             }
             break
 
-        case 'centerCanvas':
+        case VueCompConsts.ContextMenuKeys.CENTER_CANVAS:
             handleCenterCanvas()
             break
 
-        case 'save':
+        case VueCompConsts.ContextMenuKeys.SAVE:
             handleSave()
+            break
+        case VueCompConsts.ContextMenuKeys.BRING_FORWARD:
+            // TODO: 上移一层
+            eventBus.modifyNodeLayer(VueCompConsts.ContextMenuKeys.BRING_FORWARD as 'bringForward')
+            break
+        case VueCompConsts.ContextMenuKeys.SEND_BACKWARD:
+            // TODO: 下移一层
+            eventBus.modifyNodeLayer(VueCompConsts.ContextMenuKeys.SEND_BACKWARD as 'sendBackward')
+            break
+        case VueCompConsts.ContextMenuKeys.BRING_TO_FRONT:
+            // TODO: 置于顶层
+            eventBus.modifyNodeLayer(VueCompConsts.ContextMenuKeys.BRING_TO_FRONT as 'bringToFront')
+            break
+        case VueCompConsts.ContextMenuKeys.SEND_TO_BACK:
+            // TODO: 置于底层
+            eventBus.modifyNodeLayer(VueCompConsts.ContextMenuKeys.SEND_TO_BACK as 'sendToBack')
             break
     }
 }

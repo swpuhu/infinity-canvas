@@ -40,6 +40,24 @@ const eventBus = {
     destroy() {
         eventEmitter.removeAllListeners();
     },
+
+    modifyNodeLayer(
+        method: 'bringForward' | 'sendBackward' | 'bringToFront' | 'sendToBack'
+    ) {
+        eventEmitter.emit('modifyNodeLayer', method);
+    },
+
+    onModifyNodeLayer(
+        callback: (
+            method:
+                | 'bringForward'
+                | 'sendBackward'
+                | 'bringToFront'
+                | 'sendToBack'
+        ) => void
+    ) {
+        eventEmitter.on('modifyNodeLayer', callback);
+    },
 };
 
 export default eventBus;

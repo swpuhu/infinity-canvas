@@ -216,7 +216,7 @@ class SNode extends EventEmitter {
         return this._rotation;
     }
 
-    public get children(): Readonly<SNode[]> {
+    public get children(): SNode[] {
         return this._children;
     }
 
@@ -490,6 +490,19 @@ class SNode extends EventEmitter {
 
     public hideFrame(): void {
         this._needDrawFrame = false;
+    }
+
+    public getNodeByUUID(uuid: string): SNode | null {
+        if (this.uuid === uuid) {
+            return this;
+        }
+        for (const child of this._children) {
+            const node = child.getNodeByUUID(uuid);
+            if (node) {
+                return node;
+            }
+        }
+        return null;
     }
 }
 

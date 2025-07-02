@@ -28,6 +28,18 @@
                     </div>
                 </a-menu-item>
 
+                <!-- 层级菜单 - 支持子菜单 -->
+                <a-menu-item key="layer" class="context-menu-item submenu-item" @mouseenter="showSubmenu"
+                    @mouseleave="hideSubmenuDelayed">
+                    <template #icon>
+                        <BarsOutlined />
+                    </template>
+                    <div class="menu-item-content">
+                        <span>层级</span>
+                        <RightOutlined class="submenu-arrow" />
+                    </div>
+                </a-menu-item>
+
                 <!-- 隐藏网格 -->
                 <a-menu-item key="toggleGrid" class="context-menu-item">
                     <template #icon>
@@ -79,6 +91,44 @@
                     </div>
                 </a-menu-item>
             </a-menu>
+
+            <!-- 子菜单 -->
+            <div v-if="submenuVisible" :style="submenuStyle" class="context-submenu-wrapper"
+                @mouseenter="clearSubmenuTimer" @mouseleave="hideSubmenuDelayed">
+                <a-menu @click="handleSubmenuClick" :selectable="false" class="context-menu-wrapper">
+
+                    <!-- 上移一层 -->
+                    <a-menu-item key="bringForward" class="context-menu-item">
+                        <template #icon>
+                            <UpOutlined />
+                        </template>
+                        <span>上移一层</span>
+                    </a-menu-item>
+
+                    <!-- 下移一层 -->
+                    <a-menu-item key="sendBackward" class="context-menu-item">
+                        <template #icon>
+                            <DownOutlined />
+                        </template>
+                        <span>下移一层</span>
+                    </a-menu-item>
+                    <!-- 置于顶层 -->
+                    <a-menu-item key="bringToFront" class="context-menu-item">
+                        <template #icon>
+                            <VerticalAlignTopOutlined />
+                        </template>
+                        <span>置于顶层</span>
+                    </a-menu-item>
+
+                    <!-- 置于底层 -->
+                    <a-menu-item key="sendToBack" class="context-menu-item">
+                        <template #icon>
+                            <VerticalAlignBottomOutlined />
+                        </template>
+                        <span>置于底层</span>
+                    </a-menu-item>
+                </a-menu>
+            </div>
         </div>
     </teleport>
 </template>
@@ -92,7 +142,13 @@ import {
     ExpandOutlined,
     OneToOneOutlined,
     CopyOutlined,
-    BorderOutlined
+    BorderOutlined,
+    BarsOutlined,
+    RightOutlined,
+    VerticalAlignTopOutlined,
+    VerticalAlignBottomOutlined,
+    UpOutlined,
+    DownOutlined
 } from '@ant-design/icons-vue'
 
 interface ContextMenuProps {
@@ -111,11 +167,16 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
+const submenuVisible = ref(false)
+let submenuTimer: number | null = null
 
 // 监听外部 visible 变化
 watch(() => props.visible, (newVal) => {
     console.log('AntContextMenu visible 变化:', newVal);
     visible.value = newVal
+    if (!newVal) {
+        submenuVisible.value = false // 主菜单隐藏时同时隐藏子菜单
+    }
 }, { immediate: true })
 
 // 监听内部 visible 变化，同步到外部
@@ -143,16 +204,77 @@ const menuStyle = computed(() => {
     }
 
     return {
-        position: 'fixed',
+        position: 'fixed' as const,
         left: `${x}px`,
         top: `${y}px`,
         zIndex: 9999
     }
 })
 
-// 处理菜单点击
+// 计算子菜单样式
+const submenuStyle = computed(() => {
+    if (!props.position) return {}
+
+    const mainMenuWidth = 200
+    const submenuWidth = 160
+    const submenuHeight = 200
+
+    let x = props.position.x + mainMenuWidth
+    let y = props.position.y + 80 // 大概在"层级"菜单项的位置
+
+    // 边界检测 - 如果右侧空间不够，显示在左侧
+    if (x + submenuWidth > window.innerWidth) {
+        x = props.position.x - submenuWidth
+    }
+
+    // 垂直边界检测
+    if (y + submenuHeight > window.innerHeight) {
+        y = window.innerHeight - submenuHeight - 10
+    }
+
+    return {
+        position: 'fixed' as const,
+        left: `${x}px`,
+        top: `${y}px`,
+        zIndex: 10000
+    }
+})
+
+// 显示子菜单
+const showSubmenu = () => {
+    clearSubmenuTimer()
+    submenuVisible.value = true
+}
+
+// 延迟隐藏子菜单
+const hideSubmenuDelayed = () => {
+    submenuTimer = window.setTimeout(() => {
+        submenuVisible.value = false
+    }, 200)
+}
+
+// 清除子菜单定时器
+const clearSubmenuTimer = () => {
+    if (submenuTimer) {
+        clearTimeout(submenuTimer)
+        submenuTimer = null
+    }
+}
+
+// 处理主菜单点击
 const handleMenuClick = ({ key }: { key: string }) => {
     console.log('菜单项被点击:', key);
+    // 层级菜单项不处理点击，只显示子菜单
+    if (key === 'layer') {
+        return
+    }
+    emit('menuClick', key)
+    hide()
+}
+
+// 处理子菜单点击
+const handleSubmenuClick = ({ key }: { key: string }) => {
+    console.log('子菜单项被点击:', key);
     emit('menuClick', key)
     hide()
 }
@@ -167,6 +289,8 @@ const show = (x: number, y: number) => {
 const hide = () => {
     console.log('隐藏菜单');
     visible.value = false
+    submenuVisible.value = false
+    clearSubmenuTimer()
 }
 
 // 暴露方法
@@ -195,6 +319,10 @@ defineExpose({
     border: 1px solid #e8e8e8;
     padding: 8px 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.context-submenu-wrapper {
+    min-width: 160px;
 }
 
 :deep(.context-menu-item) {
@@ -245,6 +373,16 @@ defineExpose({
     margin-left: auto;
     font-weight: 400;
     padding-left: 16px;
+}
+
+.submenu-arrow {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-left: auto;
+}
+
+.submenu-item .menu-item-content {
+    position: relative;
 }
 
 /* 分割线样式 */

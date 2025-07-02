@@ -6,6 +6,7 @@ import { WhiteboardScene } from '../WhiteboardScene';
 import { EventsHandler } from './resizer/EventsHandler';
 import { ResizerUI } from './resizer/ResizerUI';
 import { SnapGuide } from './SnapGuide';
+import { useNodeInfoStore } from '@/store/NodeInfoStore';
 
 export class ResizeGizmo {
     private _scene: WhiteboardScene;
@@ -15,6 +16,7 @@ export class ResizeGizmo {
 
     private _eventsHandler: EventsHandler;
 
+    private _nodeInfoStore = useNodeInfoStore();
     constructor(editor: CanvasEditor, snapGuide: SnapGuide) {
         this._editor = editor;
         this._scene = editor.scene;
@@ -56,12 +58,16 @@ export class ResizeGizmo {
 
             this._uiComponent.alignToNode(dummyNode);
         }
+        const uuids = targetNodes.map((node) => node.uuid);
+
+        this._nodeInfoStore.setCurrentSelectedNodeIds(uuids);
 
         this._uiComponent.show();
         this._uiComponent.updateHandlerNodes();
     }
 
     public unMount(): void {
+        this._nodeInfoStore.setCurrentSelectedNodeIds([]);
         this._uiComponent.hide();
     }
 
