@@ -206,8 +206,8 @@ watch(shouldShowLayerMenu, (newVal) => {
 const menuStyle = computed(() => {
     if (!props.position) return {}
 
-    const menuWidth = 200
-    const menuHeight = 300
+    const menuWidth = 160
+    const menuHeight = 250
 
     let x = props.position.x
     let y = props.position.y
@@ -232,12 +232,12 @@ const menuStyle = computed(() => {
 const submenuStyle = computed(() => {
     if (!props.position) return {}
 
-    const mainMenuWidth = 200
-    const submenuWidth = 160
-    const submenuHeight = 200
+    const mainMenuWidth = 160
+    const submenuWidth = 140
+    const submenuHeight = 160
 
     let x = props.position.x + mainMenuWidth
-    let y = props.position.y + 80 // 大概在"层级"菜单项的位置
+    let y = props.position.y + 60
 
     // 边界检测 - 如果右侧空间不够，显示在左侧
     if (x + submenuWidth > window.innerWidth) {
@@ -329,41 +329,43 @@ defineExpose({
 }
 
 .context-menu-wrapper {
-    min-width: 180px;
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    min-width: 140px;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
     background: white;
     border: 1px solid #e8e8e8;
-    padding: 8px 0;
+    padding: 4px 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .context-submenu-wrapper {
-    min-width: 160px;
+    min-width: 120px;
 }
 
 :deep(.context-menu-item) {
-    padding: 8px 16px !important;
-    font-size: 14px;
-    line-height: 20px;
-    margin: 0 4px;
-    border-radius: 6px;
+    padding: 4px 12px !important;
+    font-size: 13px !important;
+    line-height: 16px !important;
+    margin: 0 2px !important;
+    border-radius: 4px !important;
     color: #374151;
     display: flex !important;
     align-items: center !important;
-    min-height: 32px;
+    min-height: 24px !important;
+    height: 32px !important;
 }
 
 :deep(.context-menu-item .ant-menu-item-icon) {
-    margin-right: 12px !important;
-    font-size: 14px;
+    margin-right: 8px !important;
+    font-size: 12px !important;
     color: #6b7280;
-    width: 16px;
-    height: 16px;
+    width: 14px !important;
+    height: 14px !important;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+
 }
 
 :deep(.context-menu-item:hover) {
@@ -385,15 +387,15 @@ defineExpose({
 }
 
 .shortcut {
-    font-size: 12px;
+    font-size: 11px;
     color: #9ca3af;
     margin-left: auto;
     font-weight: 400;
-    padding-left: 16px;
+    padding-left: 12px;
 }
 
 .submenu-arrow {
-    font-size: 12px;
+    font-size: 10px;
     color: #9ca3af;
     margin-left: auto;
 }
@@ -404,7 +406,7 @@ defineExpose({
 
 /* 分割线样式 */
 :deep(.ant-menu-divider) {
-    margin: 6px 12px;
+    margin: 3px 8px !important;
     background-color: #e5e7eb;
 }
 
