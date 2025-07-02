@@ -2,9 +2,16 @@ import eventBus from '@/common/eventBus';
 import { WhiteboardScene } from '../WhiteboardScene';
 import { useNodeInfoStore } from '@/store/NodeInfoStore';
 import { VueCompConsts } from '@/common/const';
+import SNode from '../SNode';
+
+interface LayerOperationData {
+    allNodes: SNode[];
+    indices: number[];
+}
 
 export class LayerController {
     private _nodeInfoStore = useNodeInfoStore();
+
     constructor(private _scene: WhiteboardScene) {
         eventBus.onModifyNodeLayer((method) => {
             switch (method) {
@@ -24,135 +31,142 @@ export class LayerController {
         });
     }
 
-    public bringNodeToForward() {
-        // TODO: 上移一层
+    /**
+     * 获取当前选中节点的操作数据
+     */
+    private getOperationData(): LayerOperationData | null {
         const currentSelectedNodeIds =
             this._nodeInfoStore.currentSelectedNodeIds;
         const canvasNode = this._scene.getCanvasNode();
         const allNodes = this._scene.getAllNodes();
+
         const nodes = currentSelectedNodeIds
             .map((id) => canvasNode!.getNodeByUUID(id))
             .filter((item) => !!item);
+
         const indices = nodes
             .map((node) => allNodes.indexOf(node))
             .filter((index) => index !== -1);
-        if (indices.length === 0) return;
+
+        if (indices.length === 0) return null;
+
         indices.sort((a, b) => a - b);
 
-        // 从后往前遍历,依次将节点往后移动一个位置
+        return { allNodes, indices };
+    }
+
+    /**
+     * 交换数组中两个位置的元素
+     */
+    private swapElements(arr: SNode[], index1: number, index2: number): void {
+        const temp = arr[index1];
+        arr[index1] = arr[index2];
+        arr[index2] = temp;
+    }
+
+    /**
+     * 上移一层
+     */
+    public bringNodeToForward(): void {
+        const data = this.getOperationData();
+        if (!data) return;
+
+        const { allNodes, indices } = data;
+
+        // 从后往前遍历，依次将节点往后移动一个位置
         for (let i = indices.length - 1; i >= 0; i--) {
             const currentIndex = indices[i];
             const nextIndex = currentIndex + 1;
-            // 如果nextIndex 在 indices 中, 则不移动
-            if (indices.includes(nextIndex)) continue;
-            // 如果已经在最后面了就不动
-            if (nextIndex >= allNodes.length) continue;
-            // 交换当前节点和后一个节点的位置
-            const temp = allNodes[currentIndex];
-            allNodes[currentIndex] = allNodes[currentIndex + 1];
-            allNodes[currentIndex + 1] = temp;
+
+            // 如果nextIndex在indices中或已经在最后面，则不移动
+            if (
+                indices.indexOf(nextIndex) !== -1 ||
+                nextIndex >= allNodes.length
+            ) {
+                continue;
+            }
+
+            this.swapElements(allNodes, currentIndex, nextIndex);
         }
     }
 
-    public sendNodeToBackward() {
-        // TODO: 下移一层
-        const currentSelectedNodeIds =
-            this._nodeInfoStore.currentSelectedNodeIds;
-        const canvasNode = this._scene.getCanvasNode();
-        const allNodes = this._scene.getAllNodes();
-        const nodes = currentSelectedNodeIds
-            .map((id) => canvasNode!.getNodeByUUID(id))
-            .filter((item) => !!item);
-        const indices = nodes
-            .map((node) => allNodes.indexOf(node))
-            .filter((index) => index !== -1);
-        if (indices.length === 0) return;
-        indices.sort((a, b) => a - b);
+    /**
+     * 下移一层
+     */
+    public sendNodeToBackward(): void {
+        const data = this.getOperationData();
+        if (!data) return;
 
-        // 从前往后遍历,依次将节点往前移动一个位置
+        const { allNodes, indices } = data;
+
+        // 从前往后遍历，依次将节点往前移动一个位置
         for (let i = 0; i < indices.length; i++) {
             const currentIndex = indices[i];
             const prevIndex = currentIndex - 1;
-            // 如果prevIndex 在 indices 中, 则不移动
-            if (indices.includes(prevIndex)) continue;
-            // 如果已经在最前面了就不动
-            if (prevIndex < 0) continue;
-            // 交换当前节点和前一个节点的位置
-            const temp = allNodes[currentIndex];
-            allNodes[currentIndex] = allNodes[prevIndex];
-            allNodes[prevIndex] = temp;
+
+            // 如果prevIndex在indices中或已经在最前面，则不移动
+            if (indices.indexOf(prevIndex) !== -1 || prevIndex < 0) {
+                continue;
+            }
+
+            this.swapElements(allNodes, currentIndex, prevIndex);
         }
     }
 
-    public bringNodeToFront() {
-        // TODO: 置于顶层
-        const currentSelectedNodeIds =
-            this._nodeInfoStore.currentSelectedNodeIds;
-        const canvasNode = this._scene.getCanvasNode();
-        const allNodes = this._scene.getAllNodes();
-        const nodes = currentSelectedNodeIds
-            .map((id) => canvasNode!.getNodeByUUID(id))
-            .filter((item) => !!item);
-        const indices = nodes
-            .map((node) => allNodes.indexOf(node))
-            .filter((index) => index !== -1);
-        if (indices.length === 0) return;
-        indices.sort((a, b) => a - b);
+    /**
+     * 置于顶层
+     */
+    public bringNodeToFront(): void {
+        const data = this.getOperationData();
+        if (!data) return;
 
-        /**
-         * 先计算indices中最后面的那个索引距离最后节点的距离N，
-         * 然后从后往前遍历，依次将节点往前移动 N 个位置
-         */
+        const { allNodes, indices } = data;
+
+        // 计算最后一个选中节点距离数组末尾的距离
         const lastIndex = indices[indices.length - 1];
-        const lastNodeIndex = allNodes.length - 1;
-        const distance = lastNodeIndex - lastIndex;
+        const distance = allNodes.length - 1 - lastIndex;
+
+        // 从后往前遍历，依次将节点移动到顶层
         for (let i = indices.length - 1; i >= 0; i--) {
             const currentIndex = indices[i];
-            const nextIndex = currentIndex + distance;
-            // 如果nextIndex 在 indices 中, 则不移动
-            if (indices.includes(nextIndex)) continue;
-            // 如果已经在最前面了就不动
-            if (nextIndex >= allNodes.length) continue;
-            // 交换当前节点和后一个节点的位置
-            const temp = allNodes[currentIndex];
-            allNodes[currentIndex] = allNodes[nextIndex];
-            allNodes[nextIndex] = temp;
+            const targetIndex = currentIndex + distance;
+
+            // 如果目标位置在indices中或超出范围，则不移动
+            if (
+                indices.indexOf(targetIndex) !== -1 ||
+                targetIndex >= allNodes.length
+            ) {
+                continue;
+            }
+
+            this.swapElements(allNodes, currentIndex, targetIndex);
         }
     }
 
-    public sendNodeToBack() {
-        // TODO: 置于底层
-        const currentSelectedNodeIds =
-            this._nodeInfoStore.currentSelectedNodeIds;
-        const canvasNode = this._scene.getCanvasNode();
-        const allNodes = this._scene.getAllNodes();
-        const nodes = currentSelectedNodeIds
-            .map((id) => canvasNode!.getNodeByUUID(id))
-            .filter((item) => !!item);
-        const indices = nodes
-            .map((node) => allNodes.indexOf(node))
-            .filter((index) => index !== -1);
-        if (indices.length === 0) return;
-        indices.sort((a, b) => a - b);
+    /**
+     * 置于底层
+     */
+    public sendNodeToBack(): void {
+        const data = this.getOperationData();
+        if (!data) return;
 
-        /**
-         * 先计算indices中第一个索引距离第一个节点的距离N，
-         * 然后从前往后遍历，依次将节点往后移动 N 个位置
-         */
+        const { allNodes, indices } = data;
+
+        // 计算第一个选中节点距离数组开头的距离
         const firstIndex = indices[0];
-        const firstNodeIndex = 0;
-        const distance = firstIndex - firstNodeIndex;
+        const distance = firstIndex - 0;
+
+        // 从前往后遍历，依次将节点移动到底层
         for (let i = 0; i < indices.length; i++) {
             const currentIndex = indices[i];
-            const prevIndex = currentIndex - distance;
-            // 如果prevIndex 在 indices 中, 则不移动
-            if (indices.includes(prevIndex)) continue;
-            // 如果已经在最后面了就不动
-            if (prevIndex < 0) continue;
-            // 交换当前节点和前一个节点的位置
-            const temp = allNodes[currentIndex];
-            allNodes[currentIndex] = allNodes[prevIndex];
-            allNodes[prevIndex] = temp;
+            const targetIndex = currentIndex - distance;
+
+            // 如果目标位置在indices中或超出范围，则不移动
+            if (indices.indexOf(targetIndex) !== -1 || targetIndex < 0) {
+                continue;
+            }
+
+            this.swapElements(allNodes, currentIndex, targetIndex);
         }
     }
 }
