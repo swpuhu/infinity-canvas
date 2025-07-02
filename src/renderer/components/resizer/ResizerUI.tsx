@@ -22,8 +22,10 @@ const RESIZE_GIZMO_FILL_COLOR = 0xffffff;
 const RESIZE_GIZMO_STROKE_COLOR = 0x3670f4;
 const SHAPE_GIZMO_COLOR = 0xbbcffd;
 const SHAPE_GIZMO_HOVER_COLOR = 0x5b8df7; // 高亮颜色
+const SHAPE_GIZMO_OFFSET = 20;
 
 const GIZMO_LINE_WIDTH = 2;
+const GIZMO_LINE_HOVER_WIDTH = 10;
 const GIZMO_LINE_COLOR = 0x3670f4;
 
 // 通用样式配置
@@ -50,15 +52,22 @@ const CommonResizePoint = (props: {
 const Line = (props: {
     name: string;
     ref: SNodeConfig.IRefSNode;
+    containerRef: SNodeConfig.IRefSNode;
     anchor: IPointData;
 }) => {
     return (
-        <rect
+        <container
             name={props.name}
-            ref={props.ref}
-            style={lineStyle}
+            ref={props.containerRef}
             transform={{ anchor: props.anchor }}
-        ></rect>
+        >
+            <rect
+                name={`${props.name}-line`}
+                ref={props.ref}
+                style={lineStyle}
+                transform={{ anchor: props.anchor }}
+            ></rect>
+        </container>
     );
 };
 
@@ -88,6 +97,11 @@ export class ResizerUI {
     private _topLineRef: SNodeConfig.IRefSNode = refSNode();
     private _bottomLineRef: SNodeConfig.IRefSNode = refSNode();
 
+    private _leftLineContainerRef: SNodeConfig.IRefSNode = refSNode();
+    private _rightLineContainerRef: SNodeConfig.IRefSNode = refSNode();
+    private _topLineContainerRef: SNodeConfig.IRefSNode = refSNode();
+    private _bottomLineContainerRef: SNodeConfig.IRefSNode = refSNode();
+
     private _leftAddShapeRef: SNodeConfig.IRefSNode = refSNode();
     private _rightAddShapeRef: SNodeConfig.IRefSNode = refSNode();
     private _topAddShapeRef: SNodeConfig.IRefSNode = refSNode();
@@ -95,6 +109,7 @@ export class ResizerUI {
 
     private _resizeHandlerNodes: SNode[] = [];
     private _rotateHandlerNodes: SNode[] = [];
+    private _lineContainers: SNode[] = [];
 
     private _rotateRefs: SNodeConfig.IRefSNode[] = [
         refSNode(),
@@ -110,6 +125,26 @@ export class ResizerUI {
 
     get resizeHandlerNodes(): SNode[] {
         return this._resizeHandlerNodes;
+    }
+
+    get resizeLineHandlerNodes(): SNode[] {
+        return this._lineContainers;
+    }
+
+    get leftLineNode(): SNode {
+        return this._leftLineContainerRef.value!;
+    }
+
+    get rightLineNode(): SNode {
+        return this._rightLineContainerRef.value!;
+    }
+
+    get topLineNode(): SNode {
+        return this._topLineContainerRef.value!;
+    }
+
+    get bottomLineNode(): SNode {
+        return this._bottomLineContainerRef.value!;
     }
 
     get lbNode(): SNode {
@@ -176,7 +211,22 @@ export class ResizerUI {
             this.bottomAddShapeNode,
         ];
 
+        const lineContainers = [
+            this._leftLineContainerRef.value!,
+            this._rightLineContainerRef.value!,
+            this._topLineContainerRef.value!,
+            this._bottomLineContainerRef.value!,
+        ];
+
         addShapeNodes.forEach((node) => {
+            CanvasEventSystem.instance.addEventListener(
+                node,
+                SNodeEvents.PURE_POINTER_MOVE,
+                this._onPointerMove
+            );
+        });
+
+        lineContainers.forEach((node) => {
             CanvasEventSystem.instance.addEventListener(
                 node,
                 SNodeEvents.PURE_POINTER_MOVE,
@@ -195,6 +245,9 @@ export class ResizerUI {
         event.stopPropagation();
         const currentTarget = event.currentTarget;
         const currentMode = this._editorModeStore.currentMode;
+        if (!this.node.active) {
+            return;
+        }
         if (
             currentMode !== EditorMode.DEFAULT &&
             currentMode !== EditorMode.PRE_ROTATE &&
@@ -237,6 +290,7 @@ export class ResizerUI {
 
         const rotateNodeIndex = this.rotateNodes.indexOf(currentTarget);
         const resizerNodeIndex = this.resizeHandlerNodes.indexOf(currentTarget);
+        const lineContainerIndex = this._lineContainers.indexOf(currentTarget);
 
         if (rotateNodeIndex !== -1) {
             const direction = this._getDirection(rotateNodeIndex);
@@ -246,9 +300,34 @@ export class ResizerUI {
             const direction = this._getDirection(resizerNodeIndex);
             console.log('currentTarget', currentTarget.name, direction);
             this._editorModeStore.setMode(EditorMode.PRE_RESIZE, direction);
+        } else if (lineContainerIndex !== -1) {
+            const direction = this._getLineDirection(lineContainerIndex);
+            console.log('currentTarget', currentTarget.name, direction);
+            this._editorModeStore.setMode(EditorMode.PRE_RESIZE, direction);
+        } else if (
+            this._prevHoveredNode !== currentTarget &&
+            currentTarget === this._scene.getCanvasNode()
+        ) {
+            this._editorModeStore.setMode(EditorMode.DEFAULT);
         }
         this._prevHoveredNode = currentTarget;
     };
+
+    private _getLineDirection(nodeIndex: number): ResizeDirection {
+        /**
+         * 0 -> left / west
+         * 1 -> right / east
+         * 2 -> bottom / north
+         * 3 -> top / south
+         */
+        return nodeIndex === 0
+            ? 'w'
+            : nodeIndex === 1
+            ? 'e'
+            : nodeIndex === 2
+            ? 'n'
+            : 's';
+    }
 
     private _getDirection(nodeIndex: number): ResizeDirection {
         // index 0 -> lb
@@ -300,21 +379,25 @@ export class ResizerUI {
                     <Line
                         name="left-line"
                         ref={this._leftLineRef}
+                        containerRef={this._leftLineContainerRef}
                         anchor={{ x: 0.5, y: 0 }}
                     />
                     <Line
                         name="right-line"
                         ref={this._rightLineRef}
+                        containerRef={this._rightLineContainerRef}
                         anchor={{ x: 0.5, y: 1 }}
                     />
                     <Line
                         name="top-line"
                         ref={this._topLineRef}
+                        containerRef={this._topLineContainerRef}
                         anchor={{ x: 1, y: 0.5 }}
                     />
                     <Line
                         name="bottom-line"
                         ref={this._bottomLineRef}
+                        containerRef={this._bottomLineContainerRef}
                         anchor={{ x: 0, y: 0.5 }}
                     />
                 </container>
@@ -370,6 +453,12 @@ export class ResizerUI {
         // 收集引用节点
         this._resizeHandlerNodes = controlPoints.map((p) => p.ref.value!);
         this._rotateHandlerNodes = rotatePoints.map((p) => p.ref.value!);
+        this._lineContainers = [
+            this._leftLineContainerRef.value!,
+            this._rightLineContainerRef.value!,
+            this._bottomLineContainerRef.value!,
+            this._topLineContainerRef.value!,
+        ];
         // this._lineNodes = [
         //     this._leftLineRef.value!,
         //     this._rightLineRef.value!,
@@ -385,6 +474,7 @@ export class ResizerUI {
         const handlerWidth = RESIZE_GIZMO_SIZE / scale.x;
         const handlerHeight = RESIZE_GIZMO_SIZE / scale.y;
         const lineWidth = GIZMO_LINE_WIDTH / scale.x;
+        const lineHoverWidth = GIZMO_LINE_HOVER_WIDTH / scale.x;
 
         this._resizeHandlerNodes.forEach((node) => {
             node.width = handlerWidth;
@@ -394,6 +484,11 @@ export class ResizerUI {
         this._rightLineRef.value!.width = lineWidth;
         this._topLineRef.value!.height = lineWidth;
         this._bottomLineRef.value!.height = lineWidth;
+
+        this._leftLineContainerRef.value!.width = lineHoverWidth;
+        this._rightLineContainerRef.value!.width = lineHoverWidth;
+        this._topLineContainerRef.value!.height = lineHoverWidth;
+        this._bottomLineContainerRef.value!.height = lineHoverWidth;
     };
 
     public show(): void {
@@ -425,7 +520,7 @@ export class ResizerUI {
         const { x: scaleX } = this._lbNodeRef.value!.getGlobalScale()!;
         const offset = 8 / scaleX;
         const lineOffset = 2 / scaleX;
-        const addShapeOffset = 10 / scaleX;
+        const addShapeOffset = SHAPE_GIZMO_OFFSET / scaleX;
 
         const handlerWidth = RESIZE_GIZMO_SIZE / scaleX;
         const handlerHeight = RESIZE_GIZMO_SIZE / scaleX;
@@ -449,13 +544,17 @@ export class ResizerUI {
         this._rotateRefs[3].value!.position.set(r + offset, t + offset);
 
         const lineWidth = GIZMO_LINE_WIDTH / scaleX;
+        const lineHoverWidth = GIZMO_LINE_HOVER_WIDTH / scaleX;
         this._resizeHandlerNodes.forEach((node) => {
             node.width = handlerWidth;
             node.height = handlerHeight;
         });
         this._leftLineRef.value!.width = lineWidth;
         this._leftLineRef.value!.height = t - b;
-        this._leftLineRef.value!.position.set(l - lineOffset, b);
+        this._leftLineContainerRef.value!.width = lineHoverWidth;
+        this._leftLineContainerRef.value!.height = t - b;
+        this._leftLineContainerRef.value!.position.set(l - lineOffset, b);
+
         this.leftAddShapeNode.position.set(
             l - lineOffset - addShapeOffset,
             midY
@@ -465,7 +564,9 @@ export class ResizerUI {
 
         this._bottomLineRef.value!.height = lineWidth;
         this._bottomLineRef.value!.width = r - l;
-        this._bottomLineRef.value!.position.set(l, b - lineOffset);
+        this._bottomLineContainerRef.value!.height = lineHoverWidth;
+        this._bottomLineContainerRef.value!.width = r - l;
+        this._bottomLineContainerRef.value!.position.set(l, b - lineOffset);
         this.bottomAddShapeNode.position.set(
             midX,
             b - lineOffset - addShapeOffset
@@ -475,7 +576,9 @@ export class ResizerUI {
 
         this._rightLineRef.value!.width = lineWidth;
         this._rightLineRef.value!.height = t - b;
-        this._rightLineRef.value!.position.set(r + lineOffset, t);
+        this._rightLineContainerRef.value!.width = lineHoverWidth;
+        this._rightLineContainerRef.value!.height = t - b;
+        this._rightLineContainerRef.value!.position.set(r + lineOffset, t);
         this.rightAddShapeNode.position.set(
             r + lineOffset + addShapeOffset,
             midY
@@ -485,7 +588,9 @@ export class ResizerUI {
 
         this._topLineRef.value!.height = lineWidth;
         this._topLineRef.value!.width = r - l;
-        this._topLineRef.value!.position.set(r, t + lineOffset);
+        this._topLineContainerRef.value!.height = lineHoverWidth;
+        this._topLineContainerRef.value!.width = r - l;
+        this._topLineContainerRef.value!.position.set(r, t + lineOffset);
         this.topAddShapeNode.position.set(
             midX,
             t + lineOffset + addShapeOffset

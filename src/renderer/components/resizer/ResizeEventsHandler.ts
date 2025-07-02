@@ -49,7 +49,10 @@ export class ResizeEventsHandler extends EventEmitter {
     ) {
         super();
         this._enableResize();
-        this._resizerUI.resizeHandlerNodes.forEach((node) => {
+        const resizeHandlers = this._resizerUI.resizeHandlerNodes.concat(
+            this._resizerUI.resizeLineHandlerNodes
+        );
+        resizeHandlers.forEach((node) => {
             this._editor.eventSystem.addEventListener(
                 node,
                 SNodeEvents.POINTER_DOWN,
@@ -78,21 +81,31 @@ export class ResizeEventsHandler extends EventEmitter {
 
         const hostWorldPoints = this._resizerUI.node.getWorldPoints();
         let controllerPoint: ReadonlyVec2 = event.getWorldPosition();
-        if (event.target === this._resizerUI.lbNode) {
+        if (
+            event.target === this._resizerUI.lbNode ||
+            event.target === this._resizerUI.leftLineNode
+        ) {
             changeAnchorButStay(this._resizerUI.node, {
                 x: 1,
                 y: 1,
             });
             this._resizerUI.dummyNode.anchor.set(1, 1);
             controllerPoint = hostWorldPoints[0];
-        } else if (event.target === this._resizerUI.ltNode) {
+        } else if (
+            event.target === this._resizerUI.ltNode ||
+            event.target === this._resizerUI.topLineNode
+        ) {
             changeAnchorButStay(this._resizerUI.node, {
                 x: 1,
                 y: 0,
             });
             this._resizerUI.dummyNode.anchor.set(1, 0);
             controllerPoint = hostWorldPoints[1];
-        } else if (event.target === this._resizerUI.rbNode) {
+        } else if (
+            event.target === this._resizerUI.rbNode ||
+            event.target === this._resizerUI.rightLineNode ||
+            event.target === this._resizerUI.bottomLineNode
+        ) {
             changeAnchorButStay(this._resizerUI.node, {
                 x: 0,
                 y: 1,
@@ -148,7 +161,27 @@ export class ResizeEventsHandler extends EventEmitter {
             moveLocalPos[0] - this._resizeStartPos.x,
             moveLocalPos[1] - this._resizeStartPos.y
         );
-        if (this._currentHandleNode === this._resizerUI.lbNode) {
+        if (
+            this._currentHandleNode === this._resizerUI.leftLineNode ||
+            this._currentHandleNode === this._resizerUI.rightLineNode
+        ) {
+            diff.y = 0;
+        } else if (
+            this._currentHandleNode === this._resizerUI.topLineNode ||
+            this._currentHandleNode === this._resizerUI.bottomLineNode
+        ) {
+            diff.x = 0;
+        }
+
+        if (
+            this._currentHandleNode === this._resizerUI.lbNode ||
+            this._currentHandleNode === this._resizerUI.leftLineNode ||
+            this._currentHandleNode === this._resizerUI.bottomLineNode
+        ) {
+            console.log(
+                'this._currentHandleNode',
+                this._currentHandleNode.name
+            );
             diff.x = -diff.x;
             diff.y = -diff.y;
         } else if (this._currentHandleNode === this._resizerUI.ltNode) {
