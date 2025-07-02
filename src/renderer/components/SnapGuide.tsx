@@ -309,7 +309,7 @@ export class SnapGuide {
 
         // 显示或隐藏吸附引导线
         if (snapSegments.length > 0) {
-            console.log('snapSegments', snapSegments);
+            // console.log('snapSegments', snapSegments);
             this.showGuides(snapSegments);
         } else {
             this.hideGuides();

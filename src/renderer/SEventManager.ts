@@ -177,9 +177,8 @@ export class CanvasEventSystem {
         // 处理双击事件
         const now = Date.now();
         const diff = now - this._prevPointerDownTime;
-        console.log(diff);
+        // console.log(diff);
         if (diff < DB_CLICK_TIME_THRESHOLD) {
-            console.log('trigger dblclick');
             this._processPointerEvent(SNodeEvents.DB_CLICK, event);
             this._prevPointerDownTime = 0;
             return;
@@ -295,9 +294,9 @@ export class CanvasEventSystem {
         }
 
         sNode.on(type, handler);
-        if (type === SNodeEvents.POINTER_MOVE) {
-            console.log(originalListeners);
-        }
+        // if (type === SNodeEvents.POINTER_MOVE) {
+        //     console.log(originalListeners);
+        // }
         this._sortListeners();
     }
 
@@ -345,7 +344,7 @@ export class CanvasEventSystem {
             listeners.splice(index, 1);
         }
         sNode.off(type, handler);
-        console.log(listeners);
+        // console.log(listeners);
         this._sortListeners();
     }
 

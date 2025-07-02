@@ -118,7 +118,6 @@ export class EditEventsHandler {
         event?: SNodeEvents.IPointerEvent
     ): number {
         const textComp = node.getComponent(SParagraph);
-        this._editorModeStore.setMode(EditorMode.TEXT_EDIT);
         if (textComp && event) {
             const eventLocalPos = event.getLocalPosition(node);
             const cursorIndex = textComp.getCursorIndex(
@@ -133,8 +132,9 @@ export class EditEventsHandler {
     }
 
     public enterEditMode(node: SNode, event?: SNodeEvents.IPointerEvent): void {
-        const isEditMode =
-            this._editorModeStore.currentMode === EditorMode.TEXT_EDIT;
+        const currentMode = this._editorModeStore.currentMode;
+        const isEditMode = currentMode === EditorMode.TEXT_EDIT;
+        console.log('enter edit mode', currentMode);
         if (isEditMode) {
             return;
         }
@@ -146,6 +146,24 @@ export class EditEventsHandler {
         this._editorModeStore.setMode(EditorMode.TEXT_EDIT);
         this._addTextEvents(node);
         this._setCursorAndFocusTextArea(node, event);
+    }
+
+    public exitEditMode(): void {
+        const currentMode = this._editorModeStore.currentMode;
+        console.log('exit edit mode', currentMode);
+        if (currentMode !== EditorMode.TEXT_EDIT) {
+            return;
+        }
+        if (!this._currentText) {
+            return;
+        }
+        this._currentText!.unSelect();
+        this._removeTextEvents(this._currentText.node!);
+        this._editorModeStore.setMode(EditorMode.DEFAULT);
+        this._hideCursor();
+        this._hideTextArea!.classList.add('hide');
+        this._currentText.setSelectionRange(-1, -1);
+        this._currentText = null;
     }
 
     private _onTextChanged = (): void => {
@@ -195,6 +213,10 @@ export class EditEventsHandler {
 
     private _onTextTouchStart = (event: SNodeEvents.IPointerEvent): void => {
         console.log('onTextTouchStart');
+        const currentMode = this._editorModeStore.currentMode;
+        if (currentMode !== EditorMode.TEXT_EDIT) {
+            return;
+        }
         if (!this._currentText) {
             return;
         }
@@ -206,6 +228,10 @@ export class EditEventsHandler {
     };
 
     private _onTextTouchMove = (event: SNodeEvents.IPointerEvent): void => {
+        const currentMode = this._editorModeStore.currentMode;
+        if (currentMode !== EditorMode.TEXT_EDIT) {
+            return;
+        }
         if (!this._currentText) {
             return;
         }
@@ -221,23 +247,6 @@ export class EditEventsHandler {
     private _onTextTouchUp = (event: SNodeEvents.IPointerEvent): void => {
         console.log('onTextTouchUp', event);
     };
-
-    public exitEditMode(): void {
-        const currentMode = this._editorModeStore.currentMode;
-        if (currentMode !== EditorMode.TEXT_EDIT) {
-            return;
-        }
-        if (!this._currentText) {
-            return;
-        }
-        this._removeTextEvents(this._currentText.node!);
-        this._editorModeStore.setMode(EditorMode.DEFAULT);
-        this._hideCursor();
-        this._currentText!.unSelect();
-        this._hideTextArea!.classList.add('hide');
-        this._currentText.setSelectionRange(-1, -1);
-        this._currentText = null;
-    }
 
     private _hideCursor(): void {
         this._cursorDiv!.classList.add('hide');

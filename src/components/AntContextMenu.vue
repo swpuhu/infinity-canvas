@@ -87,15 +87,10 @@
 import { ref, watch, computed } from 'vue'
 import {
     EditOutlined,
-    ZoomInOutlined,
     PlusOutlined,
     MinusOutlined,
     ExpandOutlined,
     OneToOneOutlined,
-    EyeOutlined,
-    DragOutlined,
-    AimOutlined,
-    SaveOutlined,
     CopyOutlined,
     BorderOutlined
 } from '@ant-design/icons-vue'

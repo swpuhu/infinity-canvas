@@ -75,6 +75,11 @@ export const useEditorModeStore = defineStore('editorMode', {
     actions: {
         // Set the current editor mode
         setMode(mode: EditorMode, direction?: ResizeDirection) {
+            // if (this.currentMode === mode) {
+            //     debugger;
+            // }
+            // console.log('setMode', mode);
+
             this.currentMode = mode;
             if (mode === EditorMode.PRE_RESIZE) {
                 this.resizeDirection = direction || 'none';
@@ -117,6 +122,7 @@ export const useEditorModeStore = defineStore('editorMode', {
         },
 
         setTextInsertMode(active: boolean) {
+            console.log('setTextInsertMode');
             if (active) {
                 this.isHandToolActive = false;
                 this.currentMode = EditorMode.TEXT_INSERT;

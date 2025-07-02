@@ -147,17 +147,14 @@ export class EventsHandler extends EventEmitter {
     private _handleCanvasLayerPointerDown = (
         event: SNodeEvents.IPointerEvent
     ) => {
-        // Skip if in hand tool mode
-        if (this._editorModeStore.isHandToolMode) return;
-
         const hitNode: SNode | null = this._hitTest(event);
         this.emit(EventNames.POINTER_DOWN_NODE, hitNode);
+        this._editEventsHandler.exitEditMode();
         if (hitNode) {
             this.setCurrentNodes([hitNode]);
 
             this._dragEventsHandler.dragStart(event);
         } else {
-            this._editEventsHandler.exitEditMode();
             this._selectEventsHandler.selectStart(event);
         }
     };

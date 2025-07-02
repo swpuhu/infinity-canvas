@@ -246,8 +246,6 @@ export class ResizerUI {
             const direction = this._getDirection(resizerNodeIndex);
             console.log('currentTarget', currentTarget.name, direction);
             this._editorModeStore.setMode(EditorMode.PRE_RESIZE, direction);
-        } else {
-            this._editorModeStore.setMode(EditorMode.DEFAULT);
         }
         this._prevHoveredNode = currentTarget;
     };

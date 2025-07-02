@@ -89,8 +89,6 @@ export class SelectEventsHandler extends EventEmitter {
             bottom: bottomRight[1],
         };
 
-        console.log('Selection rectangle (world coords):', selectRect);
-
         // 清空之前选中的节点
         this._selectedNodes = [];
 
@@ -98,17 +96,6 @@ export class SelectEventsHandler extends EventEmitter {
         this._findIntersectingNodes(
             this._editor.scene.getAllNodes(),
             selectRect
-        );
-
-        // 打印选中的节点
-        console.log(
-            'Selected nodes:',
-            this._selectedNodes.map((node) => ({
-                name: node.name,
-                uuid: node.uuid,
-                position: { x: node.position.x, y: node.position.y },
-                size: { width: node.width, height: node.height },
-            }))
         );
 
         this._hideUI();

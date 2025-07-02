@@ -118,12 +118,12 @@ export class RotateEventsHandler extends EventEmitter {
     private _onRotatePointerUp = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
 
-        this._editorModeStore.setMode(EditorMode.DEFAULT);
         if (this._isRotating) {
             this._isRotating = false;
             this._dummyNodes.forEach((dummyNode) => {
                 this._pool.put(dummyNode);
             });
+            this._editorModeStore.setMode(EditorMode.DEFAULT);
             this._resizerUI.dummyNode.rotation = 0;
         }
     };
