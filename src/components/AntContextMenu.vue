@@ -29,8 +29,8 @@
                 </a-menu-item>
 
                 <!-- 层级菜单 - 支持子菜单 -->
-                <a-menu-item key="layer" class="context-menu-item submenu-item" @mouseenter="showSubmenu"
-                    @mouseleave="hideSubmenuDelayed">
+                <a-menu-item v-if="shouldShowLayerMenu" key="layer" class="context-menu-item submenu-item"
+                    @mouseenter="showSubmenu" @mouseleave="hideSubmenuDelayed">
                     <template #icon>
                         <BarsOutlined />
                     </template>
@@ -93,7 +93,7 @@
             </a-menu>
 
             <!-- 子菜单 -->
-            <div v-if="submenuVisible" :style="submenuStyle" class="context-submenu-wrapper"
+            <div v-if="submenuVisible && shouldShowLayerMenu" :style="submenuStyle" class="context-submenu-wrapper"
                 @mouseenter="clearSubmenuTimer" @mouseleave="hideSubmenuDelayed">
                 <a-menu @click="handleSubmenuClick" :selectable="false" class="context-menu-wrapper">
 
@@ -150,6 +150,7 @@ import {
     UpOutlined,
     DownOutlined
 } from '@ant-design/icons-vue'
+import { useNodeInfoStore } from '@/store/NodeInfoStore'
 
 interface ContextMenuProps {
     visible?: boolean
@@ -170,6 +171,14 @@ const visible = ref(false)
 const submenuVisible = ref(false)
 let submenuTimer: number | null = null
 
+// 获取节点信息状态
+const nodeInfoStore = useNodeInfoStore()
+
+// 计算是否显示层级菜单 - 只有在有选中节点时才显示
+const shouldShowLayerMenu = computed(() => {
+    return nodeInfoStore.currentSelectedNodeIds.length > 0
+})
+
 // 监听外部 visible 变化
 watch(() => props.visible, (newVal) => {
     console.log('AntContextMenu visible 变化:', newVal);
@@ -183,6 +192,14 @@ watch(() => props.visible, (newVal) => {
 watch(visible, (newVal) => {
     console.log('内部 visible 变化:', newVal);
     emit('update:visible', newVal)
+})
+
+// 监听选中节点变化，当没有选中节点时隐藏子菜单
+watch(shouldShowLayerMenu, (newVal) => {
+    if (!newVal && submenuVisible.value) {
+        submenuVisible.value = false
+        clearSubmenuTimer()
+    }
 })
 
 // 计算菜单样式
