@@ -337,6 +337,7 @@ export enum CursorStyle {
     TEXT_EDIT = 'textEdit',
     RESIZE = 'resize',
     ROTATE = 'rotate',
+    HAND_TOOL = 'handTool',
 }
 
 // 定义调整大小的方向类型

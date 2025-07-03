@@ -256,6 +256,8 @@ export function getCursorStyleString(
         return 'crosshair';
     } else if (cursorStyle === CursorStyle.TEXT_EDIT) {
         return 'text';
+    } else if (cursorStyle === CursorStyle.HAND_TOOL) {
+        return 'grab';
     }
     return 'default';
 }

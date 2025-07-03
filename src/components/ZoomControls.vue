@@ -3,17 +3,8 @@
         <div class="zoom-control-container">
             <!-- Undo button (UI only) -->
             <button class="control-button" disabled>
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 14L4 9l5-5" />
                     <path d="M4 9h16c1.5 0 3 1.5 3 3s-1.5 3-3 3h-7" />
                 </svg>
@@ -21,61 +12,29 @@
 
             <!-- Redo button (UI only) -->
             <button class="control-button" disabled>
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M15 14l5-5-5-5" />
                     <path d="M20 9H4c-1.5 0-3 1.5-3 3s1.5 3 3 3h7" />
                 </svg>
             </button>
 
             <!-- Hand tool -->
-            <button
-                class="control-button"
-                :class="{ active: isHandToolActive }"
-                @click="toggleHandTool"
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
+            <button class="control-button" :class="{ active: isHandToolActive }" @click="toggleHandTool">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
                     <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2" />
                     <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" />
                     <path
-                        d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"
-                    />
+                        d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
                 </svg>
             </button>
 
             <!-- Zoom out button -->
             <button class="control-button" @click="zoomOut">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     <line x1="8" y1="11" x2="14" y2="11" />
@@ -84,29 +43,15 @@
 
             <!-- Zoom level input -->
             <div class="zoom-level-input-container">
-                <input
-                    type="text"
-                    class="zoom-level-input"
-                    v-model="inputZoomPercentage"
-                    @blur="handleZoomInputBlur"
-                    @keyup.enter="handleZoomInputBlur"
-                />
+                <input type="text" class="zoom-level-input" v-model="inputZoomPercentage" @blur="handleZoomInputBlur"
+                    @keyup.enter="handleZoomInputBlur" />
                 <span class="zoom-level-suffix">%</span>
             </div>
 
             <!-- Zoom in button -->
             <button class="control-button" @click="zoomIn">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     <line x1="11" y1="8" x2="11" y2="14" />
@@ -116,20 +61,9 @@
 
             <!-- Reset zoom button -->
             <button class="control-button" @click="resetZoom">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path
-                        d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
-                    />
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                     <path d="M3 3v5h5" />
                 </svg>
             </button>
@@ -140,7 +74,7 @@
 <script setup lang="ts">
 import { Vec2 } from '@/common/Vec2';
 import { computed, defineEmits, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useEditorModeStore } from '../store/EditorModeStore';
+import { EditorMode, useEditorModeStore } from '../store/EditorModeStore';
 
 const emit = defineEmits([
     'zoom-change',
@@ -157,12 +91,12 @@ const editorModeStore = useEditorModeStore();
 
 // Hand tool state
 const isSpaceKeyPressed = ref(false);
-const isDragging = ref(false);
+let isDragging = false;  // 改为普通变量
 const startPos = new Vec2(0);
 const dragPos = new Vec2(0);
 
 // Computed property for hand tool active state from the store
-const isHandToolActive = computed(() => editorModeStore.isHandToolActive);
+const isHandToolActive = computed(() => editorModeStore.currentMode === EditorMode.HAND_TOOL);
 
 // Computed property to check if hand tool mode is active (either by button click or space key)
 const isHandToolMode = computed(() => {
@@ -184,19 +118,23 @@ watch(displayZoomPercentage, (newPercentage) => {
 
 // Toggle hand tool mode
 function toggleHandTool() {
-    const newState = !editorModeStore.isHandToolActive;
-    editorModeStore.setHandToolActive(newState);
-    emit('hand-tool-change', newState);
+    if (isHandToolMode) {
+        editorModeStore.setMode(EditorMode.DEFAULT);
+    } else {
+        editorModeStore.setMode(EditorMode.HAND_TOOL);
+    }
+    emit('hand-tool-change', isHandToolMode);
 }
 
 // Handle space key press
 function handleKeyDown(event: KeyboardEvent) {
     if (event.code === 'Space' && !event.repeat && !isSpaceKeyPressed.value) {
         isSpaceKeyPressed.value = true;
-
-        // Update cursor immediately
-        updateCursor();
-
+        const currentEditMode = editorModeStore.currentMode;
+        if (currentEditMode === EditorMode.DEFAULT) {
+            editorModeStore.setMode(EditorMode.HAND_TOOL);
+            return;
+        }
         emit('hand-tool-change', true);
         // Prevent default space behavior (like scrolling the page)
         event.preventDefault();
@@ -207,25 +145,18 @@ function handleKeyDown(event: KeyboardEvent) {
 function handleKeyUp(event: KeyboardEvent) {
     if (event.code === 'Space' && isSpaceKeyPressed.value) {
         isSpaceKeyPressed.value = false;
-
-        // If we're currently dragging, end the drag operation
-        if (isDragging.value) {
-            isDragging.value = false;
+        const currentEditMode = editorModeStore.currentMode;
+        if (currentEditMode === EditorMode.HAND_TOOL) {
+            editorModeStore.setMode(EditorMode.DEFAULT);
         }
-
-        // Update cursor based on current state
-
-        // Only emit hand-tool-change event if the hand tool isn't active from button click
-
         emit('hand-tool-change', false);
-        updateCursor();
     }
 }
 
 // Handle mouse down in hand tool mode
 function handleMouseDown(event: MouseEvent) {
     if (isHandToolMode.value) {
-        isDragging.value = true;
+        isDragging = true;
         startPos.set(event.offsetX, event.offsetY);
         console.log('startPos', startPos);
         document.body.style.cursor = 'grabbing';
@@ -236,7 +167,7 @@ function handleMouseDown(event: MouseEvent) {
 
 // Handle mouse move for canvas dragging
 function handleMouseMove(event: MouseEvent) {
-    if (isDragging.value) {
+    if (isDragging) {
         const offsetX = event.offsetX;
         const offsetY = event.offsetY;
         const deltaX = offsetX - startPos.x;
@@ -249,22 +180,12 @@ function handleMouseMove(event: MouseEvent) {
 }
 
 // Handle mouse up to end dragging
-function handleMouseUp() {
-    if (isDragging.value) {
-        isDragging.value = false;
-        document.body.style.cursor = isHandToolMode.value ? 'grab' : 'default';
+function handleMouseUp(event: MouseEvent) {
+    if (isDragging) {
+        isDragging = false;
+        document.body.style.cursor = 'default';
     }
 }
-
-// Update cursor based on hand tool mode
-function updateCursor() {
-    document.body.style.cursor = isHandToolMode.value ? 'grab' : 'default';
-}
-
-// Watch for changes in hand tool mode to update cursor
-watch(isHandToolMode, (newValue) => {
-    updateCursor();
-});
 
 // Set up event listeners on component mount
 onMounted(() => {
@@ -274,7 +195,6 @@ onMounted(() => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     // Also handle case when mouse leaves the window
-    window.addEventListener('mouseleave', handleMouseUp);
 });
 
 // Clean up event listeners on component unmount
@@ -284,7 +204,6 @@ onUnmounted(() => {
     window.removeEventListener('mousedown', handleMouseDown);
     window.removeEventListener('mousemove', handleMouseMove);
     window.removeEventListener('mouseup', handleMouseUp);
-    window.removeEventListener('mouseleave', handleMouseUp);
     // Reset cursor
     document.body.style.cursor = 'default';
 });
@@ -346,18 +265,7 @@ function setZoomPercentage(percentage: number) {
     inputZoomPercentage.value = percentage.toString();
 }
 
-// Method to be called from parent to set hand tool state
-function setHandToolActive(active: boolean) {
-    editorModeStore.setHandToolActive(active);
-    updateCursor();
-}
 
-// Expose methods to parent component
-defineExpose({
-    setZoomValue,
-    setZoomPercentage,
-    setHandToolActive,
-});
 </script>
 
 <style scoped>

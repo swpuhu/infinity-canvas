@@ -26,6 +26,10 @@ export class SelectEventsHandler extends EventEmitter {
     }
     public selectStart = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
+        const currentMode = this._editorModeStore.currentMode;
+        if (currentMode !== EditorMode.DEFAULT) {
+            return;
+        }
         if (event.button === 2) {
             return;
         }
