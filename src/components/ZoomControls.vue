@@ -43,7 +43,7 @@
 
             <!-- Zoom level input -->
             <div class="zoom-level-input-container">
-                <input type="text" class="zoom-level-input" v-model="inputZoomPercentage" @blur="handleZoomInputBlur"
+                <input type="text" class="zoom-level-input" v-model="zoomPercentageProxy" @blur="handleZoomInputBlur"
                     @keyup.enter="handleZoomInputBlur" />
                 <span class="zoom-level-suffix">%</span>
             </div>
@@ -72,9 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import { Vec2 } from '@/common/Vec2';
-import { computed, defineEmits, onMounted, onUnmounted, ref, watch } from 'vue';
+
+import { computed, defineEmits, onMounted, onUnmounted, ref } from 'vue';
 import { EditorMode, useEditorModeStore } from '../store/EditorModeStore';
+import { useZoomStore } from '@/store/ZoomStore';
+import { vec2 } from 'gl-matrix';
+import eventBus from '@/common/eventBus';
 
 const emit = defineEmits([
     'zoom-change',
@@ -83,47 +86,48 @@ const emit = defineEmits([
     'canvas-drag',
     'canvas-drag-start',
 ]);
-const zoomValue = ref(0); // Default zoom value is 0 (100% scale)
-const zoomStep = 0.05; // Step size for zoom in/out operations, matching ZoomStore
 
 // Get the editor mode store
 const editorModeStore = useEditorModeStore();
+const zoomStore = useZoomStore();
+
+// 代理 zoomStore.scaleValue，读取时乘以100，写入时除以100
+const zoomPercentageProxy = computed({
+    get: () => Math.round(zoomStore.scaleValue * 100),
+    set: (value: number | string) => {
+        const numValue = typeof value === 'string' ? parseInt(value) : value;
+
+        // 验证输入
+        if (isNaN(numValue) || numValue <= 0) {
+            return; // 忽略无效输入
+        }
+
+        // 边界限制 (10% - 500%)
+        const minPercentage = 10;
+        const maxPercentage = 500;
+        const clampedValue = Math.max(minPercentage, Math.min(numValue, maxPercentage));
+
+        // 转换为 0-1 的小数并设置到 store
+        zoomStore.scaleValue = clampedValue / 100;
+    }
+});
 
 // Hand tool state
 const isSpaceKeyPressed = ref(false);
 let isDragging = false;  // 改为普通变量
-const startPos = new Vec2(0);
-const dragPos = new Vec2(0);
 
 // Computed property for hand tool active state from the store
 const isHandToolActive = computed(() => editorModeStore.currentMode === EditorMode.HAND_TOOL);
 
-// Computed property to check if hand tool mode is active (either by button click or space key)
-const isHandToolMode = computed(() => {
-    return isHandToolActive.value || isSpaceKeyPressed.value;
-});
-
-// Computed property to display zoom percentage
-const displayZoomPercentage = computed(() => {
-    return Math.round(Math.exp(zoomValue.value) * 100);
-});
-
-// Input field for zoom percentage
-const inputZoomPercentage = ref('100');
-
-// Watch for changes in the zoom value to update the input field
-watch(displayZoomPercentage, (newPercentage) => {
-    inputZoomPercentage.value = newPercentage.toString();
-});
 
 // Toggle hand tool mode
 function toggleHandTool() {
-    if (isHandToolMode) {
+    const currentMode = editorModeStore.currentMode;
+    if (currentMode === EditorMode.HAND_TOOL) {
         editorModeStore.setMode(EditorMode.DEFAULT);
     } else {
         editorModeStore.setMode(EditorMode.HAND_TOOL);
     }
-    emit('hand-tool-change', isHandToolMode);
 }
 
 // Handle space key press
@@ -135,7 +139,6 @@ function handleKeyDown(event: KeyboardEvent) {
             editorModeStore.setMode(EditorMode.HAND_TOOL);
             return;
         }
-        emit('hand-tool-change', true);
         // Prevent default space behavior (like scrolling the page)
         event.preventDefault();
     }
@@ -149,41 +152,34 @@ function handleKeyUp(event: KeyboardEvent) {
         if (currentEditMode === EditorMode.HAND_TOOL) {
             editorModeStore.setMode(EditorMode.DEFAULT);
         }
-        emit('hand-tool-change', false);
     }
 }
 
+let startPos = vec2.fromValues(0, 0);
 // Handle mouse down in hand tool mode
-function handleMouseDown(event: MouseEvent) {
-    if (isHandToolMode.value) {
+function handleMouseDown(event: PointerEvent) {
+    const currentMode = editorModeStore.currentMode;
+    if (currentMode === EditorMode.HAND_TOOL) {
         isDragging = true;
-        startPos.set(event.offsetX, event.offsetY);
-        console.log('startPos', startPos);
-        document.body.style.cursor = 'grabbing';
         event.preventDefault();
-        emit('canvas-drag-start', { x: startPos.x, y: startPos.y });
+        vec2.set(startPos, event.offsetX, event.offsetY);
+        eventBus.panCanvasStart();
     }
 }
 
 // Handle mouse move for canvas dragging
-function handleMouseMove(event: MouseEvent) {
+function handleMouseMove(event: PointerEvent) {
     if (isDragging) {
-        const offsetX = event.offsetX;
-        const offsetY = event.offsetY;
-        const deltaX = offsetX - startPos.x;
-        const deltaY = offsetY - startPos.y;
-        console.log(deltaX, deltaY);
-        emit('canvas-drag', { deltaX, deltaY });
-
         event.preventDefault();
+
+        eventBus.panCanvas(event.offsetX, event.offsetY, startPos[0], startPos[1]);
     }
 }
 
 // Handle mouse up to end dragging
-function handleMouseUp(event: MouseEvent) {
+function handleMouseUp(event: PointerEvent) {
     if (isDragging) {
         isDragging = false;
-        document.body.style.cursor = 'default';
     }
 }
 
@@ -191,9 +187,9 @@ function handleMouseUp(event: MouseEvent) {
 onMounted(() => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('pointerdown', handleMouseDown);
+    window.addEventListener('pointermove', handleMouseMove);
+    window.addEventListener('pointerup', handleMouseUp);
     // Also handle case when mouse leaves the window
 });
 
@@ -201,68 +197,39 @@ onMounted(() => {
 onUnmounted(() => {
     window.removeEventListener('keydown', handleKeyDown);
     window.removeEventListener('keyup', handleKeyUp);
-    window.removeEventListener('mousedown', handleMouseDown);
-    window.removeEventListener('mousemove', handleMouseMove);
-    window.removeEventListener('mouseup', handleMouseUp);
+    window.removeEventListener('pointerdown', handleMouseDown);
+    window.removeEventListener('pointermove', handleMouseMove);
+    window.removeEventListener('pointerup', handleMouseUp);
     // Reset cursor
     document.body.style.cursor = 'default';
 });
 
 // Handle zoom input blur or enter key press
 function handleZoomInputBlur() {
-    let percentage = parseInt(inputZoomPercentage.value);
-
-    // Validate input
-    if (isNaN(percentage) || percentage <= 0) {
-        // Reset to current zoom if invalid
-        inputZoomPercentage.value = displayZoomPercentage.value.toString();
-        return;
-    }
-
-    // Calculate min and max percentages based on zoom value limits
-    const minPercentage = Math.round(Math.exp(-2) * 100); // ~13.5%
-    const maxPercentage = Math.round(Math.exp(1.5) * 100); // ~448%
-
-    // Clamp percentage within valid range
-    percentage = Math.max(minPercentage, Math.min(percentage, maxPercentage));
-
-    // Update input field with clamped value
-    inputZoomPercentage.value = percentage.toString();
-
-    // Convert percentage to zoom value and emit change
-    const newZoomValue = Math.log(percentage / 100);
-    zoomValue.value = newZoomValue;
-    emit('zoom-value-change', newZoomValue);
+    // 触发重新渲染，确保显示有效值
+    // 代理计算属性已经处理了验证和边界检查
 }
 
 // Zoom in by one step
 function zoomIn() {
-    zoomValue.value = Math.min(zoomValue.value + zoomStep, 1.5);
-    emit('zoom-value-change', zoomValue.value);
+
 }
 
 // Zoom out by one step
 function zoomOut() {
-    zoomValue.value = Math.max(zoomValue.value - zoomStep, -2);
-    emit('zoom-value-change', zoomValue.value);
 }
 
 // Reset zoom to 100% (zoom value = 0)
 function resetZoom() {
-    zoomValue.value = 0;
-    emit('zoom-value-change', zoomValue.value);
 }
 
 // Method to be called from parent to update zoom value
 function setZoomValue(value: number) {
-    zoomValue.value = Math.max(-2, Math.min(value, 1.5));
 }
 
 // Method to be called from parent to update zoom percentage
 function setZoomPercentage(percentage: number) {
-    // Convert percentage to zoom value using natural logarithm
-    zoomValue.value = Math.log(percentage / 100);
-    inputZoomPercentage.value = percentage.toString();
+
 }
 
 

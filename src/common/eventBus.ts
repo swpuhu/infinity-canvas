@@ -58,6 +58,38 @@ const eventBus = {
     ) {
         eventEmitter.on('modifyNodeLayer', callback);
     },
+    panCanvasStart() {
+        eventEmitter.emit('panCanvasStart');
+    },
+    onPanCanvasStart(callback: () => void) {
+        eventEmitter.on('panCanvasStart', callback);
+    },
+
+    panCanvas(
+        screenX: number,
+        screenY: number,
+        startScreenX: number,
+        startScreenY: number
+    ) {
+        eventEmitter.emit(
+            'panCanvas',
+            screenX,
+            screenY,
+            startScreenX,
+            startScreenY
+        );
+    },
+
+    onPanCanvas(
+        callback: (
+            screenX: number,
+            screenY: number,
+            startScreenX: number,
+            startScreenY: number
+        ) => void
+    ) {
+        eventEmitter.on('panCanvas', callback);
+    },
 };
 
 export default eventBus;

@@ -9,8 +9,9 @@ export function WhiteboardSceneX(option: {
     canvasContainerRef: SNodeConfig.IRefSNode;
     virtualCanvasRef: SNodeConfig.IRefSNode;
     topLayerRef: SNodeConfig.IRefSNode;
+    outerContainerRef: SNodeConfig.IRefSNode;
 }) {
-    console.log('option.designSize.height', option.designSize.height)
+    console.log('option.designSize.height', option.designSize.height);
     const root = (
         <container
             name="root"
@@ -23,34 +24,36 @@ export function WhiteboardSceneX(option: {
                 ),
             }}
         >
-            <container
-                name="canvas-container"
-                transform={{
-                    scale: option.virtualCanvasScale,
-                }}
-                ref={option.canvasContainerRef}
-            >
-                <rect
-                    name="virtualCanvas"
-                    props={{
-                        width: option.designSize.width,
-                        height: option.designSize.height,
+            <container name="outer-container" ref={option.outerContainerRef}>
+                <container
+                    name="canvas-container"
+                    transform={{
+                        scale: option.virtualCanvasScale,
                     }}
-                    ref={option.virtualCanvasRef}
-                    style={{
-                        fill: 0xffffee,
+                    ref={option.canvasContainerRef}
+                >
+                    <rect
+                        name="virtualCanvas"
+                        props={{
+                            width: option.designSize.width,
+                            height: option.designSize.height,
+                        }}
+                        ref={option.virtualCanvasRef}
+                        style={{
+                            fill: 0xffffee,
+                        }}
+                        width={option.designSize.width}
+                        height={option.designSize.height}
+                    ></rect>
+                </container>
+                <container
+                    name="top-layer"
+                    ref={option.topLayerRef}
+                    transform={{
+                        position: new Vec2(0, 0),
                     }}
-                    width={option.designSize.width}
-                    height={option.designSize.height}
-                ></rect>
+                ></container>
             </container>
-            <container
-                name="top-layer"
-                ref={option.topLayerRef}
-                transform={{
-                    position: new Vec2(0, 0),
-                }}
-            ></container>
         </container>
     );
 

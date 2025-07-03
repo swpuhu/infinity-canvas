@@ -5,6 +5,8 @@ import { createElement } from './createElement';
 import SNode from './SNode';
 import { WhiteboardSceneX } from './UIComponent/WhiteboardSceneX';
 import { createNodeFromConfig, refSNode } from './util';
+import { useZoomStore } from '@/store/ZoomStore';
+import { ReadonlyVec2, vec2 } from 'gl-matrix';
 
 export class WhiteboardScene extends EventEmitter {
     public rootNode: SNode;
@@ -16,6 +18,10 @@ export class WhiteboardScene extends EventEmitter {
     private topLayerRef: SNodeConfig.IRefSNode;
 
     private canvasContainerRef: SNodeConfig.IRefSNode;
+
+    private outerContainerRef: SNodeConfig.IRefSNode;
+
+    private _zoomStore = useZoomStore();
 
     private option: SceneOptions;
 
@@ -35,6 +41,10 @@ export class WhiteboardScene extends EventEmitter {
         return this.canvasContainerRef.value!;
     }
 
+    get outerContainer(): SNode {
+        return this.outerContainerRef.value!;
+    }
+
     constructor(option: SceneOptions) {
         super();
         this.option = option;
@@ -48,7 +58,7 @@ export class WhiteboardScene extends EventEmitter {
         this.virtualCanvasRef = refSNode();
         this.topLayerRef = refSNode();
         this.canvasContainerRef = refSNode();
-
+        this.outerContainerRef = refSNode();
         const rootNodeConfig = (
             <WhiteboardSceneX
                 canvasSize={this.option.canvasSize}
@@ -57,6 +67,7 @@ export class WhiteboardScene extends EventEmitter {
                 canvasContainerRef={this.canvasContainerRef}
                 virtualCanvasRef={this.virtualCanvasRef}
                 topLayerRef={this.topLayerRef}
+                outerContainerRef={this.outerContainerRef}
             />
         );
 
@@ -111,10 +122,41 @@ export class WhiteboardScene extends EventEmitter {
             scale: virtualCanvasScale,
         });
 
+        this._zoomStore.scaleValue = virtualCanvasScale.x;
+
         this.emit(EventNames.RESIZE, virtualCanvasScale);
     }
 
     public getAllNodes(): SNode[] {
         return this.virtualCanvasRef.value!.children;
+    }
+
+    /**
+     * Convert screen coordinates to canvas coordinates
+     * @param screenX Screen X coordinate
+     * @param screenY Screen Y coordinate
+     * @returns Canvas coordinates
+     */
+    public screenToCanvasCoordinates(
+        screenX: number,
+        screenY: number
+    ): ReadonlyVec2 {
+        const rootContainer = this.rootNode;
+
+        const canvasHeight = this.availableSize.height;
+        console.log('canvasHeight', canvasHeight);
+
+        const worldY = canvasHeight - screenY;
+        const worldX = screenX;
+        console.log('screenX, screenY', screenX, screenY);
+        console.log('worldX', worldX);
+        console.log('worldY', worldY);
+        if (!rootContainer) {
+            return vec2.fromValues(screenX, screenY);
+        }
+
+        const canvasPos = rootContainer.toLocal([worldX, worldY]);
+
+        return vec2.fromValues(canvasPos[0], canvasPos[1]);
     }
 }

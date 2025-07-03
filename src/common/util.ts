@@ -305,3 +305,11 @@ export function getDistance(point1: ReadonlyVec2, point2: ReadonlyVec2) {
     const dy = point1[1] - point2[1];
     return Math.sqrt(dx * dx + dy * dy);
 }
+
+export function zoomToScale(zoomValue: number) {
+    return Math.exp(zoomValue);
+}
+
+export function scaleToZoom(scale: number) {
+    return Math.log(scale);
+}

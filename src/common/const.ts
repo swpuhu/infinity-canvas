@@ -22,3 +22,7 @@ export namespace VueCompConsts {
         FIT_WINDOW: 'fitWindow',
     };
 }
+
+export const MIN_ZOOM_VALUE = -2;
+export const MAX_ZOOM_VALUE = 1.5;
+export const ZOOM_STEP = 0.05;

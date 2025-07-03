@@ -13,6 +13,8 @@ import { useEditorModeStore } from '@/store/EditorModeStore';
 import { TextCreator } from './components/TextCreator';
 import { getCursorStyleString } from '@/common/util';
 import { LayerController } from './components/LayerController';
+import { ReadonlyVec2 } from 'gl-matrix';
+import { ZoomController } from './components/ZoomController';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
@@ -70,6 +72,7 @@ export class CanvasEditor {
         this._shapeCreator = new ShapeCreator(this);
         this._textCreator = new TextCreator(this);
         this._layerController = new LayerController(this._scene);
+        new ZoomController(this._scene);
 
         const editorModeStore = useEditorModeStore();
         editorModeStore.$subscribe((mutation, state) => {
@@ -249,24 +252,15 @@ export class CanvasEditor {
      * @param screenY Screen Y coordinate
      * @returns Canvas coordinates
      */
-    public screenToCanvasCoordinates(screenX: number, screenY: number): Vec2 {
+    public screenToCanvasCoordinates(
+        screenX: number,
+        screenY: number
+    ): ReadonlyVec2 {
         if (!this._scene) {
             throw new Error('scene is not initialized');
         }
 
-        const canvasContainer = this._scene.getCanvasNode();
-
-        const canvasHeight = this.canvas.height;
-
-        const worldY = canvasHeight - screenY;
-        const worldX = screenX;
-        if (!canvasContainer) {
-            return new Vec2(screenX, screenY);
-        }
-
-        const canvasPos = canvasContainer.toLocal([worldX, worldY]);
-
-        return new Vec2(canvasPos[0], canvasPos[1]);
+        return this._scene.screenToCanvasCoordinates(screenX, screenY);
     }
 
     public saveToImage() {
