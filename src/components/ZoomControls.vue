@@ -93,7 +93,7 @@ const zoomStore = useZoomStore();
 
 // 代理 zoomStore.scaleValue，读取时乘以100，写入时除以100
 const zoomPercentageProxy = computed({
-    get: () => Math.round(zoomStore.scaleValue * 100),
+    get: () => Math.round(zoomStore.canvasScale * zoomStore.zoomScale * 100),
     set: (value: number | string) => {
         const numValue = typeof value === 'string' ? parseInt(value) : value;
 
@@ -108,7 +108,7 @@ const zoomPercentageProxy = computed({
         const clampedValue = Math.max(minPercentage, Math.min(numValue, maxPercentage));
 
         // 转换为 0-1 的小数并设置到 store
-        zoomStore.scaleValue = clampedValue / 100;
+        zoomStore.zoomScale = clampedValue / zoomStore.canvasScale / 100;
     }
 });
 

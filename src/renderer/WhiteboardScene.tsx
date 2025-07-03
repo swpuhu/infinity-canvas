@@ -70,9 +70,15 @@ export class WhiteboardScene extends EventEmitter {
                 outerContainerRef={this.outerContainerRef}
             />
         );
-
         this.rootNode = createNodeFromConfig(rootNodeConfig);
-        console.log('rootNodeConfig', this.rootNode);
+
+        this._zoomStore.$subscribe((mutation, state) => {
+            // console.log('editorModeStore', editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);
+            const realScale = state.canvasScale * state.zoomScale;
+            this.canvasContainer.setTransform({
+                scale: new Vec2(state.canvasScale, state.canvasScale),
+            });
+        });
     }
 
     public getCanvasNode(): SNode {
@@ -118,11 +124,8 @@ export class WhiteboardScene extends EventEmitter {
         this.rootNode.height = canvasSize.height;
 
         console.log('virtualCanvasScale', virtualCanvasScale);
-        canvasContainer.setTransform({
-            scale: virtualCanvasScale,
-        });
 
-        this._zoomStore.scaleValue = virtualCanvasScale.x;
+        this._zoomStore.canvasScale = virtualCanvasScale.x;
 
         this.emit(EventNames.RESIZE, virtualCanvasScale);
     }
@@ -144,13 +147,9 @@ export class WhiteboardScene extends EventEmitter {
         const rootContainer = this.rootNode;
 
         const canvasHeight = this.availableSize.height;
-        console.log('canvasHeight', canvasHeight);
 
         const worldY = canvasHeight - screenY;
         const worldX = screenX;
-        console.log('screenX, screenY', screenX, screenY);
-        console.log('worldX', worldX);
-        console.log('worldY', worldY);
         if (!rootContainer) {
             return vec2.fromValues(screenX, screenY);
         }

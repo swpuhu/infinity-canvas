@@ -3,10 +3,7 @@ import { defineStore } from 'pinia';
 
 export const useZoomStore = defineStore('zoom', {
     state: () => ({
-        scaleValue: 1,
+        canvasScale: 1,
+        zoomScale: 1,
     }),
-
-    getters: {
-        zoomValue: (state) => scaleToZoom(state.scaleValue),
-    },
 });
