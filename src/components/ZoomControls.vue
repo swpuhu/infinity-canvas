@@ -78,6 +78,7 @@ import { EditorMode, useEditorModeStore } from '../store/EditorModeStore';
 import { useZoomStore } from '@/store/ZoomStore';
 import { vec2 } from 'gl-matrix';
 import eventBus from '@/common/eventBus';
+import { isCtrlKey } from '@/common/util';
 
 const emit = defineEmits([
     'zoom-change',
@@ -183,6 +184,16 @@ function handleMouseUp(event: PointerEvent) {
     }
 }
 
+
+function handleWheel(event: WheelEvent) {
+    if (isCtrlKey(event)) {
+        event.preventDefault();
+
+        console.log(event.offsetX, event.offsetY, event.deltaY);
+        eventBus.zoomCanvas(event.offsetX, event.offsetY, event.deltaY);
+    }
+}
+
 // Set up event listeners on component mount
 onMounted(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -190,6 +201,7 @@ onMounted(() => {
     window.addEventListener('pointerdown', handleMouseDown);
     window.addEventListener('pointermove', handleMouseMove);
     window.addEventListener('pointerup', handleMouseUp);
+    window.addEventListener('wheel', handleWheel, { passive: false });
     // Also handle case when mouse leaves the window
 });
 
@@ -200,8 +212,7 @@ onUnmounted(() => {
     window.removeEventListener('pointerdown', handleMouseDown);
     window.removeEventListener('pointermove', handleMouseMove);
     window.removeEventListener('pointerup', handleMouseUp);
-    // Reset cursor
-    document.body.style.cursor = 'default';
+    window.removeEventListener('wheel', handleWheel);
 });
 
 // Handle zoom input blur or enter key press

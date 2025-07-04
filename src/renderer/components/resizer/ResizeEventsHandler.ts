@@ -155,7 +155,7 @@ export class ResizeEventsHandler extends EventEmitter {
         const moveLocalPos = hostNode!.toLocal(
             fixedWorldPosition as ReadonlyVec2
         );
-        this._resizerUI.hide();
+        this._resizerUI.hideResizer();
 
         const diff = new Vec2(
             moveLocalPos[0] - this._resizeStartPos.x,
@@ -244,7 +244,7 @@ export class ResizeEventsHandler extends EventEmitter {
             pairNode.removeScale(dummyNode.width, dummyNode.height);
         });
         // this._currentNodes!.alignTo(this._resizerUI.node!);
-        // this._resizerUI.updateHandlerNodes();
+        this._resizerUI.updateHandlerNodes();
         this.emit(SNodeEvents.RESIZING);
     };
 
@@ -252,7 +252,7 @@ export class ResizeEventsHandler extends EventEmitter {
         if (!this._currentNodes || !this._isResizing) {
             return;
         }
-        this._resizerUI.show();
+        this._resizerUI.showResizer();
         this._resizerUI.updateHandlerNodes();
         eventBus.cancelSnapGuide();
 

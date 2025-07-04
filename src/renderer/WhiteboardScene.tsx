@@ -76,7 +76,7 @@ export class WhiteboardScene extends EventEmitter {
             // console.log('editorModeStore', editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);
             const realScale = state.canvasScale * state.zoomScale;
             this.canvasContainer.setTransform({
-                scale: new Vec2(state.canvasScale, state.canvasScale),
+                scale: new Vec2(realScale, realScale),
             });
         });
     }

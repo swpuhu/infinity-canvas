@@ -90,6 +90,16 @@ const eventBus = {
     ) {
         eventEmitter.on('panCanvas', callback);
     },
+
+    zoomCanvas(offsetX: number, offsetY: number, deltaY: number) {
+        eventEmitter.emit('zoomCanvas', offsetX, offsetY, deltaY);
+    },
+
+    onZoomCanvas(
+        callback: (offsetX: number, offsetY: number, deltaY: number) => void
+    ) {
+        eventEmitter.on('zoomCanvas', callback);
+    },
 };
 
 export default eventBus;
