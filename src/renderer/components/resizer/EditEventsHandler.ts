@@ -150,7 +150,7 @@ export class EditEventsHandler {
 
     public exitEditMode(): void {
         const currentMode = this._editorModeStore.currentMode;
-        console.log('exit edit mode', currentMode);
+        // console.log('exit edit mode', currentMode);
         if (currentMode !== EditorMode.TEXT_EDIT) {
             return;
         }

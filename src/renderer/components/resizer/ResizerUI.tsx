@@ -34,7 +34,7 @@ const blockStyle = {
     stroke: RESIZE_GIZMO_STROKE_COLOR,
     strokeWidth: 1,
 };
-const lineStyle = { stroke: GIZMO_LINE_COLOR, strokeWidth: 1 };
+const lineStyle = { fill: GIZMO_LINE_COLOR };
 const CommonResizePoint = (props: {
     name: string;
     ref: SNodeConfig.IRefSNode;
@@ -110,6 +110,7 @@ export class ResizerUI {
     private _resizeHandlerNodes: SNode[] = [];
     private _rotateHandlerNodes: SNode[] = [];
     private _lineContainers: SNode[] = [];
+    private _addShapeNodes: SNode[] = [];
 
     private _rotateRefs: SNodeConfig.IRefSNode[] = [
         refSNode(),
@@ -459,6 +460,12 @@ export class ResizerUI {
             this._bottomLineContainerRef.value!,
             this._topLineContainerRef.value!,
         ];
+        this._addShapeNodes = [
+            this._leftAddShapeRef.value!,
+            this._rightAddShapeRef.value!,
+            this._topAddShapeRef.value!,
+            this._bottomAddShapeRef.value!,
+        ];
         // this._lineNodes = [
         //     this._leftLineRef.value!,
         //     this._rightLineRef.value!,
@@ -503,6 +510,30 @@ export class ResizerUI {
             return;
         }
         this._root.active = false;
+    }
+
+    public hideResizer(): void {
+        this.resizeHandlerNodes.forEach((node) => {
+            node.active = false;
+        });
+        this._addShapeNodes.forEach((node) => {
+            node.active = false;
+        });
+        this._rotateHandlerNodes.forEach((node) => {
+            node.active = true;
+        });
+    }
+
+    public showResizer(): void {
+        this.resizeHandlerNodes.forEach((node) => {
+            node.active = true;
+        });
+        this._addShapeNodes.forEach((node) => {
+            node.active = true;
+        });
+        this._rotateHandlerNodes.forEach((node) => {
+            node.active = true;
+        });
     }
 
     public alignToNode(node: SNode): void {
@@ -550,10 +581,13 @@ export class ResizerUI {
             node.height = handlerHeight;
         });
         this._leftLineRef.value!.width = lineWidth;
-        this._leftLineRef.value!.height = t - b;
+        this._leftLineRef.value!.height = t - b + 2 * lineOffset;
         this._leftLineContainerRef.value!.width = lineHoverWidth;
         this._leftLineContainerRef.value!.height = t - b;
-        this._leftLineContainerRef.value!.position.set(l - lineOffset, b);
+        this._leftLineContainerRef.value!.position.set(
+            l - lineOffset,
+            b - lineOffset
+        );
 
         this.leftAddShapeNode.position.set(
             l - lineOffset - addShapeOffset,
@@ -563,10 +597,13 @@ export class ResizerUI {
         this.leftAddShapeNode.height = addShapeSize;
 
         this._bottomLineRef.value!.height = lineWidth;
-        this._bottomLineRef.value!.width = r - l;
+        this._bottomLineRef.value!.width = r - l + 2 * lineOffset;
         this._bottomLineContainerRef.value!.height = lineHoverWidth;
         this._bottomLineContainerRef.value!.width = r - l;
-        this._bottomLineContainerRef.value!.position.set(l, b - lineOffset);
+        this._bottomLineContainerRef.value!.position.set(
+            l - lineOffset,
+            b - lineOffset
+        );
         this.bottomAddShapeNode.position.set(
             midX,
             b - lineOffset - addShapeOffset
@@ -575,10 +612,13 @@ export class ResizerUI {
         this.bottomAddShapeNode.height = addShapeSize;
 
         this._rightLineRef.value!.width = lineWidth;
-        this._rightLineRef.value!.height = t - b;
+        this._rightLineRef.value!.height = t - b + 2 * lineOffset;
         this._rightLineContainerRef.value!.width = lineHoverWidth;
         this._rightLineContainerRef.value!.height = t - b;
-        this._rightLineContainerRef.value!.position.set(r + lineOffset, t);
+        this._rightLineContainerRef.value!.position.set(
+            r + lineOffset,
+            t + lineOffset
+        );
         this.rightAddShapeNode.position.set(
             r + lineOffset + addShapeOffset,
             midY
@@ -587,10 +627,13 @@ export class ResizerUI {
         this.rightAddShapeNode.height = addShapeSize;
 
         this._topLineRef.value!.height = lineWidth;
-        this._topLineRef.value!.width = r - l;
+        this._topLineRef.value!.width = r - l + 2 * lineOffset;
         this._topLineContainerRef.value!.height = lineHoverWidth;
         this._topLineContainerRef.value!.width = r - l;
-        this._topLineContainerRef.value!.position.set(r, t + lineOffset);
+        this._topLineContainerRef.value!.position.set(
+            r + lineOffset,
+            t + lineOffset
+        );
         this.topAddShapeNode.position.set(
             midX,
             t + lineOffset + addShapeOffset

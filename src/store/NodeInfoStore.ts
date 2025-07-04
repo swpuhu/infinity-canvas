@@ -6,7 +6,7 @@ export const useNodeInfoStore = defineStore('nodeInfo', () => {
 
     const setCurrentSelectedNodeIds = (nodeIds: string[]) => {
         currentSelectedNodeIds.value = nodeIds;
-        console.log('currentSelectedNodeIds', currentSelectedNodeIds.value);
+        // console.log('currentSelectedNodeIds', currentSelectedNodeIds.value);
     };
 
     return {

@@ -104,7 +104,7 @@ export class DragEventsHandler extends EventEmitter {
             localPos[0] - this._dragStartPos.x,
             localPos[1] - this._dragStartPos.y
         );
-        this._resizerUI.hide();
+        this._resizerUI.hideResizer();
 
         const newPos = vec2.fromValues(
             this._originPos.x + diff.x,
@@ -136,7 +136,7 @@ export class DragEventsHandler extends EventEmitter {
             this._dummyNodes.forEach((dummyNode) => {
                 this._pool.put(dummyNode);
             });
-            this._resizerUI.show();
+            this._resizerUI.showResizer();
             return;
         }
 
