@@ -124,21 +124,37 @@ export class HoverEventsHandler {
     private _bindEvents(): void {
         this._resizerUI.on(
             EventNames.ADD_SHAPE_HOVERED,
-            (node: SNode, direction: GIZMO_DIRECTIONS) => {
-                const arrow = this._createArrowPath(node, direction);
-
-                const canvasNode = this._editor.scene.getCanvasNode();
-                canvasNode.addChild(arrow);
-
-                this._tempArrowAndNode = arrow;
-            }
+            this._onAddShapeHovered
         );
 
-        this._resizerUI.on(EventNames.ADD_SHAPE_UNHOVERED, () => {
-            if (this._tempArrowAndNode) {
-                this._tempArrowAndNode.destroy();
-                this._tempArrowAndNode = null;
-            }
-        });
+        this._resizerUI.on(
+            EventNames.ADD_SHAPE_UNHOVERED,
+            this._onAddShapeUnhovered
+        );
+
+        this._resizerUI.on(
+            EventNames.ADD_SHAPE_CLICKED,
+            this._onAddShapeClicked
+        );
     }
+
+    private _onAddShapeHovered = (node: SNode, direction: GIZMO_DIRECTIONS) => {
+        const arrow = this._createArrowPath(node, direction);
+
+        const canvasNode = this._editor.scene.getCanvasNode();
+        canvasNode.addChild(arrow);
+
+        this._tempArrowAndNode = arrow;
+    };
+
+    private _onAddShapeUnhovered = () => {
+        if (this._tempArrowAndNode) {
+            this._tempArrowAndNode.destroy();
+            this._tempArrowAndNode = null;
+        }
+    };
+
+    private _onAddShapeClicked = (node: SNode, direction: GIZMO_DIRECTIONS) => {
+        console.log('onAddShapeClicked', node, direction);
+    };
 }

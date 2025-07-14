@@ -5,6 +5,7 @@ import {
     EnumRenderComponentType,
     IPoint,
     IPointData,
+    SNodeConfig,
     SNodeEvents,
     TransformOptions,
 } from '@/common/types';
@@ -68,6 +69,8 @@ class SNode extends EventEmitter {
     public aspectKeepMode = EnumAspectKeepMode.NONE;
 
     public renderType: EnumRenderComponentType = EnumRenderComponentType.NONE;
+
+    public type: SNodeConfig.NodeType = SNodeConfig.NodeType.CONTAINER;
 
     get active() {
         return this._active;

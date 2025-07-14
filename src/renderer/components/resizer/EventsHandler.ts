@@ -1,4 +1,4 @@
-import { EventNames, SNodeEvents } from '@/common/types';
+import { EventNames, SNodeConfig, SNodeEvents } from '@/common/types';
 import { visitNodeRecursive } from '@/common/util';
 import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
@@ -167,6 +167,9 @@ export class EventsHandler extends EventEmitter {
     protected _collectAllNodes(): SNode[] {
         const nodes: SNode[] = [];
         visitNodeRecursive(this._editor.scene.canvasLayer, (node) => {
+            if (node.type === SNodeConfig.NodeType.ARROW) {
+                return;
+            }
             if (node !== this._editor.scene.canvasLayer) {
                 const textComp = node.getComponent(SParagraph);
                 if (textComp && textComp.hasBelongToNode()) {

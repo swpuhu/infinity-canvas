@@ -247,6 +247,12 @@ export class ResizerUI {
                 SNodeEvents.PURE_POINTER_MOVE,
                 this._onPointerMove
             );
+
+            CanvasEventSystem.instance.addEventListener(
+                node,
+                SNodeEvents.POINTER_DOWN,
+                this._onAddShapeNodeClick
+            );
         });
 
         lineContainers.forEach((node) => {
@@ -299,12 +305,12 @@ export class ResizerUI {
                 this._prevHoveredAddShapeNode &&
                 addShapeNodes.includes(this._prevHoveredAddShapeNode)
             ) {
-                this.onAddShapeNodeHover(this._prevHoveredAddShapeNode, false);
+                this._onAddShapeNodeHover(this._prevHoveredAddShapeNode, false);
             }
 
             // 设置当前hover节点的颜色
             if (isAddShapeNode) {
-                this.onAddShapeNodeHover(currentTarget, true);
+                this._onAddShapeNodeHover(currentTarget, true);
                 this._prevHoveredAddShapeNode = currentTarget;
             } else {
                 this._prevHoveredAddShapeNode = null;
@@ -689,7 +695,7 @@ export class ResizerUI {
         });
     }
 
-    public onAddShapeNodeHover(node: SNode, isHover: boolean): void {
+    private _onAddShapeNodeHover(node: SNode, isHover: boolean): void {
         const color = isHover ? SHAPE_GIZMO_HOVER_COLOR : SHAPE_GIZMO_COLOR;
 
         // 计算尺寸 - hover时增加20%
@@ -726,4 +732,16 @@ export class ResizerUI {
             direction
         );
     }
+
+    private _onAddShapeNodeClick = (event: SNodeEvents.IPointerEvent): void => {
+        event.stopPropagation();
+        const node = event.currentTarget;
+        if (!node) {
+            return;
+        }
+        const index = this._addShapeNodes.indexOf(node);
+        const direction = this._getAddShapeNodeDirection(index);
+        const targetNode = this._currentTargetNodes[0];
+        this._emit(EventNames.ADD_SHAPE_CLICKED, targetNode, direction);
+    };
 }

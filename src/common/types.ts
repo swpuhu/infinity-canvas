@@ -84,6 +84,7 @@ export namespace EventNames {
 
     export const ADD_SHAPE_HOVERED = 'addShapeHovered';
     export const ADD_SHAPE_UNHOVERED = 'addShapeUnhovered';
+    export const ADD_SHAPE_CLICKED = 'addShapeClicked';
 }
 
 export namespace SNodeConfig {
