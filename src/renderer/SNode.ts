@@ -450,6 +450,7 @@ class SNode extends EventEmitter {
     }
 
     public destroy(): void {
+        this.removeFromParent();
         this._renderComps.forEach((renderComp) => {
             renderComp.destroy();
         });

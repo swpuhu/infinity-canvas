@@ -15,6 +15,7 @@ declare global {
             diamond: Omit<SNodeConfig.DiamondConfig, 'type'>;
             parallelogram: Omit<SNodeConfig.ParallelogramConfig, 'type'>;
             roundRect: Omit<SNodeConfig.RoundRectConfig, 'type'>;
+            arrow: Omit<SNodeConfig.ArrowConfig, 'type'>;
             'dash-line': Omit<SNodeConfig.DashLineConfig, 'type'>;
         }
     }

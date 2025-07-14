@@ -44,7 +44,16 @@ export function WhiteboardSceneX(option: {
                         }}
                         width={option.designSize.width}
                         height={option.designSize.height}
-                    ></rect>
+                    >
+                        {/* <arrow
+                            name="arrow"
+                            width={200}
+                            height={20}
+                            style={{
+                                fill: 0x777777,
+                            }}
+                        /> */}
+                    </rect>
                 </container>
                 <container
                     name="top-layer"

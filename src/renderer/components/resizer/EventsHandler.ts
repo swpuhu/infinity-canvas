@@ -13,6 +13,7 @@ import { RotateEventsHandler } from './RotateEventsHandler';
 import { SelectEventsHandler } from './SelectEventsHandler';
 import { SParagraph } from '@/renderer/RenderComponents/SParagraph';
 import eventBus from '@/common/eventBus';
+import { HoverEventsHandler } from './HoverEventsHandler';
 export class EventsHandler extends EventEmitter {
     private _dragEventsHandler: DragEventsHandler;
 
@@ -23,6 +24,8 @@ export class EventsHandler extends EventEmitter {
     private _editEventsHandler: EditEventsHandler;
 
     private _selectEventsHandler: SelectEventsHandler;
+
+    private _hoverEventsHandler: HoverEventsHandler;
 
     private _prevHitNode: SNode | null = null;
 
@@ -53,6 +56,8 @@ export class EventsHandler extends EventEmitter {
         this._editEventsHandler = new EditEventsHandler(_editor, _resizerUI);
 
         this._selectEventsHandler = new SelectEventsHandler(_editor);
+
+        this._hoverEventsHandler = new HoverEventsHandler(_editor, _resizerUI);
 
         this._bindEvents();
     }

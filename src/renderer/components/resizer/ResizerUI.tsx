@@ -14,6 +14,7 @@ import { refSNode } from '@/renderer/util';
 import { WhiteboardScene } from '@/renderer/WhiteboardScene';
 import { CanvasEventSystem } from '@/renderer/SEventManager';
 import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
+import EventEmitter from 'eventemitter3';
 
 const RESIZE_GIZMO_SIZE = 10;
 const ADD_SHAPE_GIZMO_SIZE = 10;
@@ -27,6 +28,12 @@ const SHAPE_GIZMO_OFFSET = 20;
 const GIZMO_LINE_WIDTH = 2;
 const GIZMO_LINE_HOVER_WIDTH = 10;
 const GIZMO_LINE_COLOR = 0x3670f4;
+export enum GIZMO_DIRECTIONS {
+    LEFT = 'left',
+    RIGHT = 'right',
+    TOP = 'top',
+    BOTTOM = 'bottom',
+}
 
 // 通用样式配置
 const blockStyle = {
@@ -85,6 +92,7 @@ const AddShapeNode = (props: { name: string; ref: SNodeConfig.IRefSNode }) => {
 
 export class ResizerUI {
     private _root: SNode | null = null;
+    private _eventEmitter: EventEmitter = new EventEmitter();
 
     private _lbNodeRef: SNodeConfig.IRefSNode = refSNode();
     private _ltNodeRef: SNodeConfig.IRefSNode = refSNode();
@@ -111,6 +119,14 @@ export class ResizerUI {
     private _rotateHandlerNodes: SNode[] = [];
     private _lineContainers: SNode[] = [];
     private _addShapeNodes: SNode[] = [];
+
+    public on(event: string, callback: (...args: any[]) => void): void {
+        this._eventEmitter.on(event, callback);
+    }
+
+    private _emit(event: string, ...args: any[]): void {
+        this._eventEmitter.emit(event, ...args);
+    }
 
     private _rotateRefs: SNodeConfig.IRefSNode[] = [
         refSNode(),
@@ -294,11 +310,11 @@ export class ResizerUI {
         const lineContainerIndex = this._lineContainers.indexOf(currentTarget);
 
         if (rotateNodeIndex !== -1) {
-            const direction = this._getDirection(rotateNodeIndex);
+            const direction = this._getResizerDirection(rotateNodeIndex);
             // console.log('currentTarget', currentTarget.name, direction);
             this._editorModeStore.setMode(EditorMode.PRE_ROTATE, direction);
         } else if (resizerNodeIndex !== -1) {
-            const direction = this._getDirection(resizerNodeIndex);
+            const direction = this._getResizerDirection(resizerNodeIndex);
             // console.log('currentTarget', currentTarget.name, direction);
             this._editorModeStore.setMode(EditorMode.PRE_RESIZE, direction);
         } else if (lineContainerIndex !== -1) {
@@ -330,7 +346,7 @@ export class ResizerUI {
             : 's';
     }
 
-    private _getDirection(nodeIndex: number): ResizeDirection {
+    private _getResizerDirection(nodeIndex: number): ResizeDirection {
         // index 0 -> lb
         // index 1 -> lt
         // index 2 -> rb
@@ -342,6 +358,16 @@ export class ResizerUI {
             : nodeIndex === 2
             ? 'ne'
             : 'se';
+    }
+
+    private _getAddShapeNodeDirection(nodeIndex: number): GIZMO_DIRECTIONS {
+        return nodeIndex === 0
+            ? GIZMO_DIRECTIONS.LEFT
+            : nodeIndex === 1
+            ? GIZMO_DIRECTIONS.RIGHT
+            : nodeIndex === 2
+            ? GIZMO_DIRECTIONS.TOP
+            : GIZMO_DIRECTIONS.BOTTOM;
     }
 
     get node() {
@@ -460,6 +486,12 @@ export class ResizerUI {
             this._bottomLineContainerRef.value!,
             this._topLineContainerRef.value!,
         ];
+        /**
+         * 0 -> left
+         * 1 -> right
+         * 2 -> top
+         * 3 -> bottom
+         */
         this._addShapeNodes = [
             this._leftAddShapeRef.value!,
             this._rightAddShapeRef.value!,
@@ -672,5 +704,15 @@ export class ResizerUI {
         // 修改节点尺寸
         node.width = currentSize;
         node.height = currentSize;
+
+        const index = this._addShapeNodes.indexOf(node);
+        const direction = this._getAddShapeNodeDirection(index);
+        this._emit(
+            isHover
+                ? EventNames.ADD_SHAPE_HOVERED
+                : EventNames.ADD_SHAPE_UNHOVERED,
+            node,
+            direction
+        );
     }
 }

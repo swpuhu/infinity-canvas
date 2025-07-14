@@ -11,6 +11,7 @@ import SNode from './SNode';
 import { SGeoTri } from './Geometry/SGeoTri';
 import { SGeoDiamond } from './Geometry/SGeoDiamond';
 import { SGeoParallelogram } from './Geometry/SGeoParallelogram';
+import { SGeoArrow } from './Geometry/SGeoArrow';
 const nodeNameRefMap = new Map<string, SNode>();
 
 export function refSNode(v?: SNode): SNodeConfig.IRefSNode {
@@ -83,6 +84,10 @@ function createNodeRecursive(config: SNodeConfig.Config): SNode {
         const parallelogramConfig = config as SNodeConfig.ParallelogramConfig;
         const parallelogram = node.addComponent(SGeoParallelogram);
         parallelogram.applyStyle(parallelogramConfig);
+    } else if (config.type === SNodeConfig.NodeType.ARROW) {
+        const arrowConfig = config as SNodeConfig.ArrowConfig;
+        const arrow = node.addComponent(SGeoArrow);
+        arrow.applyStyle(arrowConfig);
     }
     // 处理子元素
     config.children?.forEach((childConfig) => {

@@ -81,6 +81,9 @@ export namespace EventNames {
     export const RESIZE_START = 'resizeStart';
     export const DRAG_SELECT_NODE = 'dragSelectNode';
     export const DRAG_SELECT_END = 'dragSelectEnd';
+
+    export const ADD_SHAPE_HOVERED = 'addShapeHovered';
+    export const ADD_SHAPE_UNHOVERED = 'addShapeUnhovered';
 }
 
 export namespace SNodeConfig {
@@ -102,8 +105,7 @@ export namespace SNodeConfig {
         PENTAGON = 'pentagon',
         HEXAGON = 'hexagon',
         STAR = 'star',
-        ARROW_RIGHT = 'arrow-right',
-        ARROW_LEFT = 'arrow-left',
+        ARROW = 'arrow',
     }
 
     export type SGraphicsPropsConfig = {
@@ -186,11 +188,22 @@ export namespace SNodeConfig {
 
     export type ParagraphConfig = BaseConfig & SParagraphPropsConfig;
 
+    export type ArrowConfig = BaseConfig &
+        SGraphicsPropsAndStyle & {
+            type: NodeType.ARROW;
+        };
+
     export type NodeTypeMap = {
         [NodeType.RECT]: RectConfig;
         [NodeType.CONTAINER]: ContainerConfig;
         [NodeType.SPRITE]: SpriteConfig;
         [NodeType.ELLIPSE]: EllipseConfig;
+        [NodeType.TRI]: TriConfig;
+        [NodeType.DIAMOND]: DiamondConfig;
+        [NodeType.PARALLELOGRAM]: ParallelogramConfig;
+        [NodeType.ARROW]: ArrowConfig;
+        [NodeType.DASH_LINE]: DashLineConfig;
+        [NodeType.PARAGRAPH]: ParagraphConfig;
     };
 
     export type Config = NodeTypeMap[keyof NodeTypeMap];

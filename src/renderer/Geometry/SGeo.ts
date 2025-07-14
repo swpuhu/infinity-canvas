@@ -19,6 +19,8 @@ export class SGeo extends SRenderComponent {
     private _alpha: number = 1;
     protected onCreated(): void {}
 
+    protected onApplyStyle(): void {}
+
     protected _getShadowPaint(): Paint {
         if (!this.shadowPaint) {
             this.shadowPaint = new CanvasKitModule.CanvasKit.Paint();
@@ -99,6 +101,7 @@ export class SGeo extends SRenderComponent {
     }
 
     public applyStyle(options: SNodeConfig.SGraphicsPropsAndStyle): void {
+        this.options = options;
         let alpha = undefined;
         if (options.style?.alpha) {
             alpha = options.style.alpha;
@@ -116,6 +119,7 @@ export class SGeo extends SRenderComponent {
         if (options.style?.shadow) {
             this.shadow(options.style.shadow);
         }
+        this.onApplyStyle();
     }
 
     public shadow(options: ShadowOptions): void {

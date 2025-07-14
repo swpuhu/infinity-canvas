@@ -14,27 +14,16 @@ import { ReadonlyVec2 } from 'gl-matrix';
 import { SGeo } from '../Geometry/SGeo';
 import { CanvasEventSystem } from '../SEventManager';
 import { SParagraph } from '../RenderComponents/SParagraph';
+import { DEFAULT_SHAPE_STYLE } from '@/common/const';
+import { PresetShapes } from './PresetShapes';
 
 export class ShapeCreator {
-    private _presetShapes: Partial<Record<SNodeConfig.NodeType, SNode>> = {};
-    private _presetShapeConfigs: Partial<
-        Record<SNodeConfig.NodeType, SNodeConfig.Config>
-    > = {};
+    private _presetShapes = new PresetShapes();
     private _currentInsertShape: SNode | undefined = undefined;
     private editorModeStore: ReturnType<typeof useEditorModeStore>;
     private _canvasNode: SNode;
 
-    // 默认形状样式配置
-    private static readonly DEFAULT_SHAPE_STYLE = {
-        fill: 0xf0f4fc,
-        stroke: 0x000000,
-        strokeWidth: 2,
-        alpha: 0.5,
-    } as const;
-
     constructor(private _editor: CanvasEditor) {
-        this._createPresetShape();
-
         const editorModeStore = useEditorModeStore();
         this.editorModeStore = editorModeStore;
         const canvasNode = _editor.scene.getCanvasNode();
@@ -134,29 +123,9 @@ export class ShapeCreator {
 
     private insertShape(localPos: ReadonlyVec2) {
         const currentShape = this.editorModeStore.currentInsertShape;
-        let newNode: SNode | undefined = undefined;
-        if (currentShape === SNodeConfig.NodeType.RECT) {
-            const rect = createNodeFromConfig(this._presetShapeConfigs.rect!);
-            newNode = rect;
-        } else if (currentShape === SNodeConfig.NodeType.TRI) {
-            const tri = createNodeFromConfig(this._presetShapeConfigs.tri!);
-            newNode = tri;
-        } else if (currentShape === SNodeConfig.NodeType.ELLIPSE) {
-            const ellipse = createNodeFromConfig(
-                this._presetShapeConfigs.ellipse!
-            );
-            newNode = ellipse;
-        } else if (currentShape === SNodeConfig.NodeType.DIAMOND) {
-            const diamond = createNodeFromConfig(
-                this._presetShapeConfigs.diamond!
-            );
-            newNode = diamond;
-        } else if (currentShape === SNodeConfig.NodeType.PARALLELOGRAM) {
-            const parallelogram = createNodeFromConfig(
-                this._presetShapeConfigs.parallelogram!
-            );
-            newNode = parallelogram;
-        }
+        const newNode: SNode | undefined = this._presetShapes[
+            currentShape as keyof typeof this._presetShapes
+        ] as SNode;
 
         if (newNode) {
             newNode.position.set(localPos[0], localPos[1]);
@@ -185,55 +154,6 @@ export class ShapeCreator {
         if (this._currentInsertShape) {
             this._currentInsertShape.removeFromParent();
         }
-    }
-
-    private _createPresetShape() {
-        // 使用统一的样式配置
-        const commonStyle = ShapeCreator.DEFAULT_SHAPE_STYLE;
-
-        const rectConfig = (
-            <rect width={100} height={100} style={commonStyle}></rect>
-        );
-
-        const triConfig = (
-            <tri width={100} height={100} style={commonStyle}></tri>
-        );
-
-        const ellipseConfig = (
-            <ellipse width={100} height={100} style={commonStyle}></ellipse>
-        );
-
-        const diamondConfig = (
-            <diamond width={100} height={100} style={commonStyle}></diamond>
-        );
-
-        const parallelogramConfig = (
-            <parallelogram
-                width={100}
-                height={100}
-                style={commonStyle}
-            ></parallelogram>
-        );
-
-        // 保存配置（只保存ShapeType支持的形状）
-        this._presetShapeConfigs.rect = rectConfig;
-        this._presetShapeConfigs.tri = triConfig;
-        this._presetShapeConfigs.ellipse = ellipseConfig;
-        this._presetShapeConfigs.diamond = diamondConfig;
-        this._presetShapeConfigs.parallelogram = parallelogramConfig;
-
-        // 创建预设形状实例
-        const rect = createNodeFromConfig(rectConfig);
-        const tri = createNodeFromConfig(triConfig);
-        const ellipse = createNodeFromConfig(ellipseConfig);
-        const diamond = createNodeFromConfig(diamondConfig);
-        const parallelogram = createNodeFromConfig(parallelogramConfig);
-
-        this._presetShapes.rect = rect;
-        this._presetShapes.tri = tri;
-        this._presetShapes.ellipse = ellipse;
-        this._presetShapes.diamond = diamond;
-        this._presetShapes.parallelogram = parallelogram;
     }
 
     destroy() {
