@@ -14,11 +14,11 @@ import { ReadonlyVec2 } from 'gl-matrix';
 import { SGeo } from '../Geometry/SGeo';
 import { CanvasEventSystem } from '../SEventManager';
 import { SParagraph } from '../RenderComponents/SParagraph';
+import presetShapes from './PresetShapes';
 import { DEFAULT_SHAPE_STYLE } from '@/common/const';
-import { PresetShapes } from './PresetShapes';
 
 export class ShapeCreator {
-    private _presetShapes = new PresetShapes();
+    private _presetShapes = presetShapes;
     private _currentInsertShape: SNode | undefined = undefined;
     private editorModeStore: ReturnType<typeof useEditorModeStore>;
     private _canvasNode: SNode;
@@ -36,23 +36,11 @@ export class ShapeCreator {
             if (state.currentMode !== EditorMode.SHAPE_INSERT) {
                 return;
             }
-            if (state.currentInsertShape === SNodeConfig.NodeType.RECT) {
-                this._currentInsertShape = this._presetShapes.rect;
-            } else if (state.currentInsertShape === SNodeConfig.NodeType.TRI) {
-                this._currentInsertShape = this._presetShapes.tri;
-            } else if (
-                state.currentInsertShape === SNodeConfig.NodeType.ELLIPSE
-            ) {
-                this._currentInsertShape = this._presetShapes.ellipse;
-            } else if (
-                state.currentInsertShape === SNodeConfig.NodeType.DIAMOND
-            ) {
-                this._currentInsertShape = this._presetShapes.diamond;
-            } else if (
-                state.currentInsertShape === SNodeConfig.NodeType.PARALLELOGRAM
-            ) {
-                this._currentInsertShape = this._presetShapes.parallelogram;
-            }
+            const currentInsertShapeType = state.currentInsertShape;
+            this._currentInsertShape = this._presetShapes[
+                currentInsertShapeType as keyof typeof this._presetShapes
+            ] as SNode;
+
             if (this._currentInsertShape) {
                 canvasNode.addChild(this._currentInsertShape);
             }
@@ -122,24 +110,26 @@ export class ShapeCreator {
     }
 
     private insertShape(localPos: ReadonlyVec2) {
-        const currentShape = this.editorModeStore.currentInsertShape;
-        const newNode: SNode | undefined = this._presetShapes[
-            currentShape as keyof typeof this._presetShapes
-        ] as SNode;
+        const currentShapeType = this.editorModeStore.currentInsertShape;
 
-        if (newNode) {
-            newNode.position.set(localPos[0], localPos[1]);
-            this._canvasNode.addChild(newNode);
+        eventBus.insertPresetNodeIntoScene(
+            currentShapeType,
+            {
+                style: DEFAULT_SHAPE_STYLE,
+            },
+            (newNode) => {
+                newNode.position.set(localPos[0], localPos[1]);
+                this._canvasNode.addChild(newNode);
 
-            const geoComp = newNode.getComponent(SGeo);
-            if (geoComp) {
-                geoComp.setAlpha(1);
+                const geoComp = newNode.getComponent(SGeo);
+                if (geoComp) {
+                    geoComp.setAlpha(1);
+                }
+                this._addEventsToShapeNode(newNode);
+                this._exitShapeInsertMode();
+                eventBus.reDraw();
             }
-            this._addEventsToShapeNode(newNode);
-        }
-
-        this._exitShapeInsertMode();
-        eventBus.reDraw();
+        );
     }
 
     private _exitShapeInsertMode() {

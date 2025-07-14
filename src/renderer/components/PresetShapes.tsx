@@ -2,7 +2,7 @@ import { SNodeConfig } from '@/common/types';
 import { CanvasEditor } from '../Editor';
 import SNode from '../SNode';
 import { createElement } from '../createElement';
-import { DEFAULT_SHAPE_STYLE } from '@/common/const';
+import { DEFAULT_SHADOW_SHAPE_STYLE } from '@/common/const';
 import { createNodeFromConfig } from '../util';
 
 const presetShapeKeys: SNodeConfig.NodeType[] = [
@@ -14,7 +14,7 @@ const presetShapeKeys: SNodeConfig.NodeType[] = [
     SNodeConfig.NodeType.ARROW,
 ];
 
-export class PresetShapes {
+class PresetShapes {
     private _presetShapes: Partial<Record<SNodeConfig.NodeType, SNode>> = {};
     private _presetShapeConfigs: Partial<
         Record<SNodeConfig.NodeType, SNodeConfig.Config>
@@ -27,6 +27,7 @@ export class PresetShapes {
     readonly diamond!: SNode;
     readonly parallelogram!: SNode;
     readonly arrow!: SNode;
+    readonly container!: SNode;
 
     // 动态添加的形状配置属性类型声明
     readonly rectConfig!: SNodeConfig.RectConfig;
@@ -43,7 +44,7 @@ export class PresetShapes {
                 get: () => {
                     let node = this._presetShapes[key];
                     if (!node) {
-                        const config = this._getPresetShapeConfig(key);
+                        const config = this.getPresetShapeConfig(key);
                         node = createNodeFromConfig(config);
                     }
                     return node;
@@ -51,13 +52,13 @@ export class PresetShapes {
             });
             Object.defineProperty(this, key + 'Config', {
                 get: () => {
-                    return this._getPresetShapeConfig(key);
+                    return this.getPresetShapeConfig(key);
                 },
             });
         }
     }
 
-    private _getPresetShapeConfig(key: SNodeConfig.NodeType) {
+    public getPresetShapeConfig(key: SNodeConfig.NodeType) {
         const config = this._presetShapeConfigs[key];
         if (config) {
             return config;
@@ -65,14 +66,18 @@ export class PresetShapes {
         switch (key) {
             case SNodeConfig.NodeType.TRI:
                 return (
-                    <tri width={100} height={100} style={DEFAULT_SHAPE_STYLE} />
+                    <tri
+                        width={100}
+                        height={100}
+                        style={DEFAULT_SHADOW_SHAPE_STYLE}
+                    />
                 );
             case SNodeConfig.NodeType.ELLIPSE:
                 return (
                     <ellipse
                         width={100}
                         height={100}
-                        style={DEFAULT_SHAPE_STYLE}
+                        style={DEFAULT_SHADOW_SHAPE_STYLE}
                     />
                 );
             case SNodeConfig.NodeType.DIAMOND:
@@ -80,7 +85,7 @@ export class PresetShapes {
                     <diamond
                         width={100}
                         height={100}
-                        style={DEFAULT_SHAPE_STYLE}
+                        style={DEFAULT_SHADOW_SHAPE_STYLE}
                     />
                 );
             case SNodeConfig.NodeType.PARALLELOGRAM:
@@ -88,7 +93,7 @@ export class PresetShapes {
                     <parallelogram
                         width={100}
                         height={100}
-                        style={DEFAULT_SHAPE_STYLE}
+                        style={DEFAULT_SHADOW_SHAPE_STYLE}
                     />
                 );
             case SNodeConfig.NodeType.ARROW:
@@ -96,7 +101,7 @@ export class PresetShapes {
                     <arrow
                         width={100}
                         height={100}
-                        style={DEFAULT_SHAPE_STYLE}
+                        style={DEFAULT_SHADOW_SHAPE_STYLE}
                     />
                 );
             default:
@@ -105,9 +110,13 @@ export class PresetShapes {
                     <rect
                         width={100}
                         height={100}
-                        style={DEFAULT_SHAPE_STYLE}
+                        style={DEFAULT_SHADOW_SHAPE_STYLE}
                     />
                 );
         }
     }
 }
+
+const presetShapes = new PresetShapes();
+
+export default presetShapes;

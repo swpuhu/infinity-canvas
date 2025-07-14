@@ -1,5 +1,6 @@
 import SNode from '@/renderer/SNode';
 import EventEmitter from 'eventemitter3';
+import { SNodeConfig } from './types';
 
 const eventEmitter = new EventEmitter();
 const eventBus = {
@@ -99,6 +100,24 @@ const eventBus = {
         callback: (offsetX: number, offsetY: number, deltaY: number) => void
     ) {
         eventEmitter.on('zoomCanvas', callback);
+    },
+
+    insertPresetNodeIntoScene(
+        type: SNodeConfig.NodeType,
+        props: any,
+        replyFunc: (node: SNode) => void
+    ) {
+        eventEmitter.emit('insertPresetNodeIntoScene', type, props, replyFunc);
+    },
+
+    onInsertPresetNodeIntoScene(
+        callback: (
+            type: SNodeConfig.NodeType,
+            props: any,
+            replyFunc: (node: SNode) => void
+        ) => void
+    ) {
+        eventEmitter.on('insertPresetNodeIntoScene', callback);
     },
 };
 

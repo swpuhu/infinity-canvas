@@ -15,6 +15,7 @@ import { getCursorStyleString } from '@/common/util';
 import { LayerController } from './components/LayerController';
 import { ReadonlyVec2 } from 'gl-matrix';
 import { ZoomController } from './components/ZoomController';
+import { SceneManager } from './components/SceneManager';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
@@ -26,6 +27,7 @@ export class CanvasEditor {
     private _textCreator: TextCreator | null = null;
     private _snapGuide: SnapGuide | null = null;
     private _layerController: LayerController | null = null;
+    private _sceneManager: SceneManager | null = null;
     private _zoomValue: number = 0; // Default zoom value is 0 (100% scale)
     private _minZoomValue: number = -2; // Minimum zoom value (~13.5% scale)
     private _maxZoomValue: number = 1.5; // Maximum zoom value (~448% scale)
@@ -73,7 +75,7 @@ export class CanvasEditor {
         this._textCreator = new TextCreator(this);
         this._layerController = new LayerController(this._scene);
         new ZoomController(this._scene);
-
+        this._sceneManager = new SceneManager(this);
         const editorModeStore = useEditorModeStore();
         editorModeStore.$subscribe((mutation, state) => {
             // console.log('editorModeStore', editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);

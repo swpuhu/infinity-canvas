@@ -6,7 +6,7 @@ import { CanvasKitModule } from '@/lib/canvaskit';
 import SNode from '@/renderer/SNode';
 import { createElement } from '@/renderer/createElement';
 import { createNodeFromConfig } from '@/renderer/util';
-import { DEFAULT_SHAPE_STYLE } from '@/common/const';
+import { DEFAULT_SHADOW_SHAPE_STYLE } from '@/common/const';
 
 export class HoverEventsHandler {
     private _tempArrowAndNode: SNode | null = null;
@@ -113,7 +113,7 @@ export class HoverEventsHandler {
                             y: srcNode.anchor.y,
                         },
                     }}
-                    style={DEFAULT_SHAPE_STYLE}
+                    style={DEFAULT_SHADOW_SHAPE_STYLE}
                 />
             </container>
         );

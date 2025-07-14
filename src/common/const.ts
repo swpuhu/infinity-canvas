@@ -27,9 +27,16 @@ export const MIN_ZOOM_VALUE = -2;
 export const MAX_ZOOM_VALUE = 1.5;
 export const ZOOM_STEP = 0.05;
 
-export const DEFAULT_SHAPE_STYLE = {
+export const DEFAULT_SHADOW_SHAPE_STYLE = {
     fill: 0xf0f4fc,
     stroke: 0x000000,
     strokeWidth: 2,
     alpha: 0.5,
+} as const;
+
+export const DEFAULT_SHAPE_STYLE = {
+    fill: 0xf0f4fc,
+    stroke: 0x000000,
+    strokeWidth: 2,
+    alpha: 1,
 } as const;
