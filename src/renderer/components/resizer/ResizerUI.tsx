@@ -120,6 +120,8 @@ export class ResizerUI {
     private _lineContainers: SNode[] = [];
     private _addShapeNodes: SNode[] = [];
 
+    private _currentTargetNodes: SNode[] = [];
+
     public on(event: string, callback: (...args: any[]) => void): void {
         this._eventEmitter.on(event, callback);
     }
@@ -202,6 +204,10 @@ export class ResizerUI {
 
         this._scene.on(EventNames.RESIZE, this._onResize);
         this._bindEvents();
+    }
+
+    public setCurrentTargetNodes(nodes: SNode[]): void {
+        this._currentTargetNodes = nodes;
     }
 
     private _bindEvents(): void {
@@ -677,6 +683,10 @@ export class ResizerUI {
             ref.value!.width = rotateHandlerSize;
             ref.value!.height = rotateHandlerSize;
         });
+
+        this._addShapeNodes.forEach((node) => {
+            node.active = !(this._currentTargetNodes.length > 1);
+        });
     }
 
     public onAddShapeNodeHover(node: SNode, isHover: boolean): void {
@@ -707,11 +717,12 @@ export class ResizerUI {
 
         const index = this._addShapeNodes.indexOf(node);
         const direction = this._getAddShapeNodeDirection(index);
+        const targetNode = this._currentTargetNodes[0];
         this._emit(
             isHover
                 ? EventNames.ADD_SHAPE_HOVERED
                 : EventNames.ADD_SHAPE_UNHOVERED,
-            node,
+            targetNode,
             direction
         );
     }

@@ -62,12 +62,14 @@ export class ResizeGizmo {
 
         this._nodeInfoStore.setCurrentSelectedNodeIds(uuids);
 
+        this._uiComponent.setCurrentTargetNodes(targetNodes);
         this._uiComponent.show();
         this._uiComponent.updateHandlerNodes();
     }
 
     public unMount(): void {
         this._nodeInfoStore.setCurrentSelectedNodeIds([]);
+        this._uiComponent.setCurrentTargetNodes([]);
         this._uiComponent.hide();
     }
 

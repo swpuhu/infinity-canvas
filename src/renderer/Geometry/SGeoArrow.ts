@@ -30,7 +30,7 @@ export class SGeoArrow extends SGeo {
 
         // 箭头参数
         const arrowHeadWidth = Math.min(width * 0.3, 30); // 箭头头部宽度占总宽度的30%
-        const arrowBodyHeight = height * 0.4; // 箭头身体高度占总高度的40%
+        const arrowBodyHeight = height * 0.2; // 箭头身体高度占总高度的40%
         const arrowBodyWidth = width - arrowHeadWidth; // 箭头身体宽度
 
         // 箭头身体中心位置
