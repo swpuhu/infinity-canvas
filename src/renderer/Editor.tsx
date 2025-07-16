@@ -11,7 +11,7 @@ import { WhiteboardScene } from './WhiteboardScene';
 import { ShapeCreator } from './components/ShapeCreator';
 import { useEditorModeStore } from '@/store/EditorModeStore';
 import { TextCreator } from './components/TextCreator';
-import { getCursorStyleString } from '@/common/util';
+import { getCursorStyleString, getNodesByNodeIds } from '@/common/util';
 import { LayerController } from './components/LayerController';
 import { ReadonlyVec2 } from 'gl-matrix';
 import { ZoomController } from './components/ZoomController';
@@ -43,19 +43,30 @@ export class CanvasEditor {
             if (!nodeIds.length) {
                 return;
             }
-            const nodes = nodeIds
-                .map((id) => {
-                    const canvasNode = this._scene?.getCanvasNode();
-                    if (!canvasNode) {
-                        return null;
-                    }
-                    return canvasNode.getNodeByUUID(id);
-                })
-                .filter((node) => node !== null);
+            const canvasNode = this._scene?.getCanvasNode();
+            if (!canvasNode) {
+                return;
+            }
+            const nodes = getNodesByNodeIds(nodeIds, canvasNode);
             if (nodes.length === 0) {
                 return;
             }
-            this._renderer?.saveToImage(nodes, this._scene?.getCanvasNode()!);
+            this._renderer?.saveToImage(nodes, canvasNode);
+        });
+
+        eventBus.onSaveImageToClipboard((nodeIds) => {
+            if (!nodeIds.length) {
+                return;
+            }
+            const canvasNode = this._scene?.getCanvasNode();
+            if (!canvasNode) {
+                return;
+            }
+            const nodes = getNodesByNodeIds(nodeIds, canvasNode);
+            if (nodes.length === 0) {
+                return;
+            }
+            this._renderer?.saveImageToClipboard(nodes, canvasNode);
         });
     }
 

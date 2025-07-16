@@ -190,7 +190,7 @@ export class Renderer extends EventEmitter {
                         true
                     );
                 }
-                if (node.preSelected) {
+                if (node.preSelected && !isTemp) {
                     const rect = getRectByNode(node);
                     const globalScaleX = node.getGlobalScale().x;
                     if (globalScaleX !== this._prevGlobalScaleX) {
@@ -224,7 +224,10 @@ export class Renderer extends EventEmitter {
         // console.timeEnd('render');
     }
 
-    public saveToImage(nodes: SNode[], parentNode: SNode): void {
+    private _getCurrentNodesImage(
+        nodes: SNode[],
+        parentNode: SNode
+    ): Uint8Array | null {
         const originPos = nodes.map((node) => node.position.clone());
         const worldAABBs = nodes.map((node) => node.getWorldAABB(true));
         const minX = Math.min(...worldAABBs.map((aabb) => aabb[0]));
@@ -240,7 +243,7 @@ export class Renderer extends EventEmitter {
         const renderTarget = this.getRenderTarget(width, height);
 
         if (!renderTarget) {
-            return;
+            return null;
         }
 
         nodes.forEach((node, i) => {
@@ -262,6 +265,19 @@ export class Renderer extends EventEmitter {
         const bytes = image.encodeToBytes(
             CanvasKitModule.CanvasKit.ImageFormat.PNG
         );
+        renderTarget.delete();
+
+        nodes.forEach((node, i) => {
+            node.setTransform({
+                position: originPos[i],
+            });
+        });
+
+        return bytes;
+    }
+
+    public saveToImage(nodes: SNode[], parentNode: SNode): void {
+        const bytes = this._getCurrentNodesImage(nodes, parentNode);
         if (bytes) {
             const blob = new Blob([bytes], { type: 'image/png' });
             const url = URL.createObjectURL(blob);
@@ -273,14 +289,22 @@ export class Renderer extends EventEmitter {
             document.body.removeChild(a);
             setTimeout(() => URL.revokeObjectURL(url), 100);
         }
+    }
 
-        renderTarget.delete();
-
-        nodes.forEach((node, i) => {
-            node.setTransform({
-                position: originPos[i],
+    public saveImageToClipboard(nodes: SNode[], parentNode: SNode) {
+        const bytes = this._getCurrentNodesImage(nodes, parentNode);
+        if (bytes) {
+            const blob = new Blob([bytes], { type: 'image/png' });
+            // 创建 ClipboardItem
+            const clipboardItem = new ClipboardItem({
+                'image/png': blob,
             });
-        });
+
+            // 写入剪切板
+            navigator.clipboard.write([clipboardItem]).then(() => {
+                console.log('图片已成功复制到剪切板');
+            });
+        }
     }
 
     public destroy() {

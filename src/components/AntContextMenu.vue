@@ -7,11 +7,18 @@
                 @contextmenu.stop>
 
                 <!-- 导出为图片 -->
-                <a-menu-item key="exportImage" class="context-menu-item">
+                <a-menu-item v-if="hasSelectedNodes" key="exportImage" class="context-menu-item">
                     <template #icon>
                         <ExportOutlined />
                     </template>
                     <span>导出为图片</span>
+                </a-menu-item>
+                <!-- 复制到剪切板 -->
+                <a-menu-item v-if="hasSelectedNodes" key="copyToClipboard" class="context-menu-item">
+                    <template #icon>
+                        <CopyFilled />
+                    </template>
+                    <span>复制到剪切板</span>
                 </a-menu-item>
                 <!-- 粘贴 -->
                 <a-menu-item key="paste" class="context-menu-item">
@@ -38,7 +45,7 @@
                 </a-menu-item>
 
                 <!-- 层级菜单 - 支持子菜单 -->
-                <a-menu-item v-if="shouldShowLayerMenu" key="layer" class="context-menu-item submenu-item"
+                <a-menu-item v-if="hasSelectedNodes" key="layer" class="context-menu-item submenu-item"
                     @mouseenter="showSubmenu" @mouseleave="hideSubmenuDelayed">
                     <template #icon>
                         <BarsOutlined />
@@ -102,7 +109,7 @@
             </a-menu>
 
             <!-- 子菜单 -->
-            <div v-if="submenuVisible && shouldShowLayerMenu" :style="submenuStyle" class="context-submenu-wrapper"
+            <div v-if="submenuVisible && hasSelectedNodes" :style="submenuStyle" class="context-submenu-wrapper"
                 @mouseenter="clearSubmenuTimer" @mouseleave="hideSubmenuDelayed">
                 <a-menu @click="handleSubmenuClick" :selectable="false" class="context-menu-wrapper">
 
@@ -150,6 +157,7 @@ import {
     MinusOutlined,
     ExpandOutlined,
     OneToOneOutlined,
+    CopyFilled,
     CopyOutlined,
     ExportOutlined,
     BorderOutlined,
@@ -186,9 +194,10 @@ let submenuTimer: number | null = null
 const nodeInfoStore = useNodeInfoStore()
 
 // 计算是否显示层级菜单 - 只有在有选中节点时才显示
-const shouldShowLayerMenu = computed(() => {
+const hasSelectedNodes = computed(() => {
     return nodeInfoStore.currentSelectedNodeIds.length > 0
 })
+
 
 // 监听外部 visible 变化
 watch(() => props.visible, (newVal) => {
@@ -206,7 +215,7 @@ watch(visible, (newVal) => {
 })
 
 // 监听选中节点变化，当没有选中节点时隐藏子菜单
-watch(shouldShowLayerMenu, (newVal) => {
+watch(hasSelectedNodes, (newVal) => {
     if (!newVal && submenuVisible.value) {
         submenuVisible.value = false
         clearSubmenuTimer()
@@ -299,6 +308,10 @@ const handleMenuClick = ({ key }: { key: string }) => {
         const currentNodeIds = nodeInfoStore.currentSelectedNodeIds;
 
         eventBus.saveToImage(currentNodeIds);
+        return
+    } else if (key === 'copyToClipboard') {
+        const currentNodeIds = nodeInfoStore.currentSelectedNodeIds;
+        eventBus.saveImageToClipboard(currentNodeIds);
         return
     }
     emit('menuClick', key)

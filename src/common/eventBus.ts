@@ -127,6 +127,14 @@ const eventBus = {
     onSaveToImage(callback: (nodeIds: string[]) => void) {
         eventEmitter.on('saveAsImage', callback);
     },
+
+    saveImageToClipboard(nodeIds: string[]) {
+        eventEmitter.emit('saveImageToClipboard', nodeIds);
+    },
+
+    onSaveImageToClipboard(callback: (nodeIds: string[]) => void) {
+        eventEmitter.on('saveImageToClipboard', callback);
+    },
 };
 
 export default eventBus;

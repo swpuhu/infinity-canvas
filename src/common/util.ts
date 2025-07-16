@@ -313,3 +313,12 @@ export function zoomToScale(zoomValue: number) {
 export function scaleToZoom(scale: number) {
     return Math.log(scale);
 }
+
+export function getNodesByNodeIds(nodeIds: string[], parentNode: SNode) {
+    const nodes = nodeIds
+        .map((id) => {
+            return parentNode.getNodeByUUID(id);
+        })
+        .filter((node) => node !== null);
+    return nodes;
+}
