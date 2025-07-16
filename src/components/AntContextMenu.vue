@@ -2,8 +2,17 @@
     <!-- 使用绝对定位的菜单，而不是dropdown -->
     <teleport to="body">
         <div v-if="visible" class="context-menu-overlay" @click="hide" @contextmenu.prevent>
+
             <a-menu :style="menuStyle" @click="handleMenuClick" :selectable="false" class="context-menu-wrapper"
                 @contextmenu.stop>
+
+                <!-- 导出为图片 -->
+                <a-menu-item key="exportImage" class="context-menu-item">
+                    <template #icon>
+                        <ExportOutlined />
+                    </template>
+                    <span>导出为图片</span>
+                </a-menu-item>
                 <!-- 粘贴 -->
                 <a-menu-item key="paste" class="context-menu-item">
                     <template #icon>
@@ -142,6 +151,7 @@ import {
     ExpandOutlined,
     OneToOneOutlined,
     CopyOutlined,
+    ExportOutlined,
     BorderOutlined,
     BarsOutlined,
     RightOutlined,
@@ -151,6 +161,7 @@ import {
     DownOutlined
 } from '@ant-design/icons-vue'
 import { useNodeInfoStore } from '@/store/NodeInfoStore'
+import eventBus from '@/common/eventBus'
 
 interface ContextMenuProps {
     visible?: boolean
@@ -283,6 +294,11 @@ const handleMenuClick = ({ key }: { key: string }) => {
     console.log('菜单项被点击:', key);
     // 层级菜单项不处理点击，只显示子菜单
     if (key === 'layer') {
+        return
+    } else if (key === 'exportImage') {
+        const currentNodeIds = nodeInfoStore.currentSelectedNodeIds;
+
+        eventBus.saveToImage(currentNodeIds);
         return
     }
     emit('menuClick', key)

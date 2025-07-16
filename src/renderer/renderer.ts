@@ -138,7 +138,12 @@ export class Renderer extends EventEmitter {
         return this.surface?.getCanvas() as Canvas;
     }
 
-    public render(node?: SNode, surface?: Surface, isTemp?: boolean) {
+    public render(
+        node?: SNode,
+        surface?: Surface,
+        isTemp?: boolean,
+        isClear = true
+    ) {
         // console.time('render');
         const currentSurface = surface || this.surface;
         if (!currentSurface) {
@@ -154,7 +159,9 @@ export class Renderer extends EventEmitter {
         }
 
         const canvas = currentSurface.getCanvas();
-        canvas.clear([1, 1, 1, 1]);
+        if (isClear) {
+            canvas.clear([1, 1, 1, 0]);
+        }
 
         this.visitNode(
             this._currentRenderNode,
@@ -217,24 +224,38 @@ export class Renderer extends EventEmitter {
         // console.timeEnd('render');
     }
 
-    public saveToImage(node: SNode): void {
-        const renderTarget = this.getRenderTarget(node.width, node.height);
+    public saveToImage(nodes: SNode[], parentNode: SNode): void {
+        const originPos = nodes.map((node) => node.position.clone());
+        const worldAABBs = nodes.map((node) => node.getWorldAABB(true));
+        const minX = Math.min(...worldAABBs.map((aabb) => aabb[0]));
+        const minY = Math.min(...worldAABBs.map((aabb) => aabb[1]));
+        const maxX = Math.max(...worldAABBs.map((aabb) => aabb[2]));
+        const maxY = Math.max(...worldAABBs.map((aabb) => aabb[3]));
+
+        const lbPoint = parentNode.toLocal([minX, minY]);
+        const rtPoint = parentNode.toLocal([maxX, maxY]);
+        const width = rtPoint[0] - lbPoint[0] + 4;
+        const height = rtPoint[1] - lbPoint[1] + 4;
+
+        const renderTarget = this.getRenderTarget(width, height);
 
         if (!renderTarget) {
             return;
         }
 
-        node.needClip = false;
-        node.setTransform({
-            position: new Vec2(node.width / 2, node.height / 2),
-        });
-
-        node.getRenderComps()?.forEach((comp) => {
-            comp.disable();
-        });
-        this.render(node, renderTarget, true);
-        node.getRenderComps()?.forEach((comp) => {
-            comp.enable();
+        nodes.forEach((node, i) => {
+            const nodeWorldPos = node.toGlobal([0, 0]);
+            const nodeLocalPos = parentNode.toLocal(nodeWorldPos);
+            const x = nodeLocalPos[0] - lbPoint[0] + 2;
+            const y = nodeLocalPos[1] - lbPoint[1] + 2;
+            console.log(x, y);
+            node.setTransform({
+                position: {
+                    x,
+                    y,
+                },
+            });
+            this.render(node, renderTarget, true, i === 0);
         });
 
         const image = renderTarget.makeImageSnapshot();
@@ -254,9 +275,11 @@ export class Renderer extends EventEmitter {
         }
 
         renderTarget.delete();
-        node.needClip = true;
-        node.setTransform({
-            position: new Vec2(0, 0),
+
+        nodes.forEach((node, i) => {
+            node.setTransform({
+                position: originPos[i],
+            });
         });
     }
 

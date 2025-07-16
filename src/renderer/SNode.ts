@@ -13,6 +13,7 @@ import {
     angleToRadians,
     decomposeMatrix,
     moveIntoButStay,
+    visitNodeRecursive,
 } from '@/common/util';
 import { createUUID } from '@/common/uuid';
 import { Vec2 } from '@/common/Vec2';
@@ -289,23 +290,29 @@ class SNode extends EventEmitter {
         return [wLB, wLT, wRB, wRT];
     }
 
-    public getWorldAABB(): number[] {
+    public getWorldAABB(recursive: boolean = true): number[] {
         // Calculate the Axis-Aligned Bounding Box (AABB) in world coordinates
-        const worldPoints = this.getWorldPoints();
+        let worldPoints: ReadonlyVec2[] = [];
+        if (recursive) {
+            visitNodeRecursive(this, (node) => {
+                const _worldPoints = node.getWorldPoints();
+                for (const point of _worldPoints) {
+                    worldPoints.push(point);
+                }
+            });
+        } else {
+            worldPoints = this.getWorldPoints();
+        }
         let minX = Infinity;
         let minY = Infinity;
         let maxX = -Infinity;
         let maxY = -Infinity;
-
-        // Find the min and max coordinates from all corner points
         for (const point of worldPoints) {
             minX = Math.min(minX, point[0]);
             minY = Math.min(minY, point[1]);
             maxX = Math.max(maxX, point[0]);
             maxY = Math.max(maxY, point[1]);
         }
-
-        // Return the AABB as [left, top, right, bottom]
         return [minX, minY, maxX, maxY];
     }
 

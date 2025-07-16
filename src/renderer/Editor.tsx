@@ -35,6 +35,28 @@ export class CanvasEditor {
 
     constructor(private _canvas: HTMLCanvasElement) {
         _canvas.tabIndex = 1;
+        this._bindGlobalEvent();
+    }
+
+    private _bindGlobalEvent() {
+        eventBus.onSaveToImage((nodeIds) => {
+            if (!nodeIds.length) {
+                return;
+            }
+            const nodes = nodeIds
+                .map((id) => {
+                    const canvasNode = this._scene?.getCanvasNode();
+                    if (!canvasNode) {
+                        return null;
+                    }
+                    return canvasNode.getNodeByUUID(id);
+                })
+                .filter((node) => node !== null);
+            if (nodes.length === 0) {
+                return;
+            }
+            this._renderer?.saveToImage(nodes, this._scene?.getCanvasNode()!);
+        });
     }
 
     get canvas(): HTMLCanvasElement {
@@ -269,7 +291,8 @@ export class CanvasEditor {
         if (!this._scene) {
             throw new Error('scene is not initialized');
         }
-        this._renderer?.saveToImage(this._scene.getCanvasNode());
+        const canvasNode = this._scene.getCanvasNode();
+        this._renderer?.saveToImage(canvasNode.children, canvasNode);
     }
 
     get eventSystem() {

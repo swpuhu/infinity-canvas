@@ -119,6 +119,14 @@ const eventBus = {
     ) {
         eventEmitter.on('insertPresetNodeIntoScene', callback);
     },
+
+    saveToImage(nodeIds: string[]) {
+        eventEmitter.emit('saveAsImage', nodeIds);
+    },
+
+    onSaveToImage(callback: (nodeIds: string[]) => void) {
+        eventEmitter.on('saveAsImage', callback);
+    },
 };
 
 export default eventBus;
