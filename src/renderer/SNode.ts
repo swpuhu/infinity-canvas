@@ -88,6 +88,9 @@ class SNode extends EventEmitter {
     }
 
     set isLocked(value: boolean) {
+        if (value) {
+            this.preSelected = false;
+        }
         this._isLocked = value;
     }
 

@@ -62,6 +62,9 @@ export class RotateEventsHandler extends EventEmitter {
 
     private _onRotatePointerDown = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
+        if (this._resizerUI.isLocked()) {
+            return;
+        }
         this._isRotating = true;
         this._editorModeStore.setMode(EditorMode.ROTATING);
         changeAnchorButStay(this._resizerUI.node, {

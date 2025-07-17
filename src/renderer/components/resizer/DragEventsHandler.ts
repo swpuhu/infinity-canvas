@@ -70,6 +70,9 @@ export class DragEventsHandler extends EventEmitter {
         if (currentMode === EditorMode.TEXT_EDIT) {
             return;
         }
+        if (this._resizerUI.isLocked()) {
+            return;
+        }
 
         this._isDragging = true;
         this._dragStartEvent = event;
@@ -93,6 +96,7 @@ export class DragEventsHandler extends EventEmitter {
 
     protected _onDragPointerMove = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
+
         if (!this._currentNodes || !this._isDragging) {
             return;
         }

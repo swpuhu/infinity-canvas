@@ -29,10 +29,25 @@ export class ResizeGizmo {
             this._uiComponent,
             snapGuide
         );
+
         this._eventsHandler.on(EventNames.POINTER_DOWN_NODE, (node?: SNode) => {
             if (!node) {
                 this.unMount();
             } else {
+                // 先根据当前 node的 uuid查找 nodeInfoStore 中的 lockedNodeGroup 是否包含该 node的 uuid
+                const lockedNodeGroup = this._nodeInfoStore.lockedNodeGroup;
+                const group = lockedNodeGroup.find((group) =>
+                    group.includes(node.uuid)
+                );
+                if (group) {
+                    // 如果包含，则把同组的节点一起加入
+                    const allNodes = this._editor.scene.getAllNodes();
+                    const nodes = allNodes.filter((node) => {
+                        return group.includes(node.uuid);
+                    });
+                    this.mountToNode(nodes, true);
+                    return;
+                }
                 this.mountToNode([node]);
             }
         });
@@ -41,11 +56,12 @@ export class ResizeGizmo {
         });
     }
 
-    public mountToNode(targetNodes: SNode[]): void {
+    public mountToNode(targetNodes: SNode[], isLock = false): void {
         if (targetNodes.length === 0) {
             this.unMount();
             return;
         }
+        this._uiComponent.setLocked(isLock);
         if (targetNodes.length === 1) {
             this._uiComponent.alignToNode(targetNodes[0]);
         } else {

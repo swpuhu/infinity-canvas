@@ -263,16 +263,22 @@ const shouldShowToolbar = computed(() => {
 const selectedNodesLocked = computed(() => {
     // 明确依赖 currentSelectedNodeIds
     const currentSelectedNodeIds = nodeInfoStore.currentSelectedNodeIds
+    const id = currentSelectedNodeIds[0]
+
 
     // 首先检查是否应该显示工具栏
     if (!shouldShowToolbar.value) return false
 
     if (currentSelectedNodeIds.length === 0) return false
 
-    // 检查是否有任何锁定组包含当前选中的节点
-    return nodeInfoStore.lockedNodeGroup.some(lockedGroup =>
-        currentSelectedNodeIds.some(id => lockedGroup.includes(id))
-    )
+    // 找到包含当前选中的节点的锁定组
+    const lockedNodeGroup = nodeInfoStore.lockedNodeGroup;
+    for (const lockedGroup of lockedNodeGroup) {
+        if (lockedGroup.includes(id)) {
+            return true;
+        }
+    }
+    return false;
 })
 
 // 监听工具栏显示状态变化

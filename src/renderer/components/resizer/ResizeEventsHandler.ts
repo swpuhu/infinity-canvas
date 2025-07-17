@@ -69,7 +69,11 @@ export class ResizeEventsHandler extends EventEmitter {
 
     private _onResizePointerDown = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
+
         if (!this._currentNodes) {
+            return;
+        }
+        if (this._resizerUI.isLocked()) {
             return;
         }
 

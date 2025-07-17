@@ -122,6 +122,8 @@ export class ResizerUI {
 
     private _currentTargetNodes: SNode[] = [];
 
+    private _isLocked = false;
+
     public on(event: string, callback: (...args: any[]) => void): void {
         this._eventEmitter.on(event, callback);
     }
@@ -569,6 +571,9 @@ export class ResizerUI {
     }
 
     public showResizer(): void {
+        if (this._isLocked) {
+            return;
+        }
         this.resizeHandlerNodes.forEach((node) => {
             node.active = true;
         });
@@ -587,8 +592,20 @@ export class ResizerUI {
         this._root.alignTo(node, true);
     }
 
+    public setLocked(locked: boolean): void {
+        this._isLocked = locked;
+    }
+
+    public isLocked(): boolean {
+        return this._isLocked;
+    }
+
     public updateHandlerNodes(): void {
         if (!this._root) {
+            return;
+        }
+        if (this._isLocked) {
+            this.hideResizer();
             return;
         }
         const [l, b, r, t] = this._root.getLocalRect();
