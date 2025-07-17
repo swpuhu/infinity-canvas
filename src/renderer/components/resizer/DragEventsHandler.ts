@@ -123,6 +123,7 @@ export class DragEventsHandler extends EventEmitter {
             const pairNode = this._currentNodes[i];
             pairNode.alignTo(dummyNode);
         });
+        this._editorModeStore.setMode(EditorMode.DRAGGING);
         // this.emit(SNodeEvents.DRAGGING);
         // this._currentNodes!.alignTo(this._resizerUI.node!);
     };
@@ -131,6 +132,8 @@ export class DragEventsHandler extends EventEmitter {
         event.stopPropagation();
         this._prevFixedWorldPosition = null;
         eventBus.cancelSnapGuide();
+
+        this._editorModeStore.setMode(EditorMode.DEFAULT);
         if (this._isDragging) {
             this._isDragging = false;
             this._dummyNodes.forEach((dummyNode) => {

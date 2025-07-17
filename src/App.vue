@@ -14,11 +14,12 @@
                 <canvas ref="canvasRef"></canvas>
                 <ZoomControls ref="zoomControlsRef" />
                 <VerticalToolbar ref="verticalToolbarRef" />
+                <FloatingToolbar :get-editor="() => editor" />
             </div>
         </div>
 
         <!-- 右键菜单处理器 -->
-        <ContextMenuHandler ref="contextMenuHandler" :editor="editorWrapper.editor" :zoom-store="zoomStore"
+        <ContextMenuHandler ref="contextMenuHandler" :get-editor="() => editor" :zoom-store="zoomStore"
             :editor-mode-store="editorModeStore" :ui-store="uiStore" />
     </div>
 </template>
@@ -28,6 +29,7 @@ import { onMounted, onUnmounted, ref, reactive, } from 'vue';
 import UButton from './components/UButton.vue';
 import VerticalToolbar from './components/VerticalToolbar.vue';
 import ZoomControls from './components/ZoomControls.vue';
+import FloatingToolbar from './components/FloatingToolbar.vue';
 import { CanvasEditor } from './renderer/Editor';
 import { useEditorModeStore } from './store/EditorModeStore';
 import { useUIStore } from './store/UIStore';
@@ -46,7 +48,6 @@ const zoomStore = useZoomStore();
 const editorModeStore = useEditorModeStore();
 
 let editor: CanvasEditor | null = null;
-const editorWrapper = reactive({ editor: null as CanvasEditor | null });
 
 onMounted(async () => {
     try {
@@ -54,7 +55,6 @@ onMounted(async () => {
         // canvasEle.width = window.innerWidth;
         // canvasEle.height = window.innerHeight;
         editor = new CanvasEditor(canvasEle);
-        editorWrapper.editor = editor;
         await editor.init();
 
     } catch (error) {
@@ -65,7 +65,6 @@ onMounted(async () => {
 onUnmounted(() => {
     editor?.destroy();
     editor = null;
-    editorWrapper.editor = null;
 });
 
 

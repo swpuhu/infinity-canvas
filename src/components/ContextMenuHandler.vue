@@ -9,9 +9,10 @@ import { Vec2 } from '@/common/Vec2'
 import eventBus from '@/common/eventBus'
 import AntContextMenu from './AntContextMenu.vue'
 import { VueCompConsts } from '@/common/const'
+import { CanvasEditor } from '@/renderer/Editor'
 
 interface ContextMenuHandlerProps {
-    editor?: any
+    getEditor: () => CanvasEditor | null
     zoomStore?: any
     editorModeStore?: any
     uiStore?: any
@@ -30,7 +31,8 @@ const contextMenuRef = ref()
 function handleContextMenuClick(key: string) {
     console.log('菜单项点击:', key)
 
-    const { editor, zoomStore, editorModeStore, uiStore } = props
+    const { getEditor, zoomStore, editorModeStore, uiStore } = props
+    const editor = getEditor();
     console.log('key', key)
     switch (key) {
         case VueCompConsts.ContextMenuKeys.PASTE:
@@ -112,7 +114,8 @@ function handleContextMenuClick(key: string) {
 
 // 应用缩放
 function applyZoom() {
-    const { editor, zoomStore } = props
+    const { getEditor, zoomStore } = props
+    const editor = getEditor();
     if (!editor || !zoomStore) return
 
     editor.setZoomValue(zoomStore.zoomValue)
@@ -120,7 +123,8 @@ function applyZoom() {
 
 // 手势工具切换
 function handleHandToolChange(active: boolean) {
-    const { editorModeStore } = props
+    const { getEditor, editorModeStore } = props
+    const editor = getEditor();
     if (!editorModeStore) return
 
     editorModeStore.setHandToolActive(active)
@@ -128,7 +132,8 @@ function handleHandToolChange(active: boolean) {
 
 // 居中画布
 function handleCenterCanvas() {
-    const { editor } = props
+    const { getEditor } = props
+    const editor = getEditor();
     if (!editor) return
 
     // 重置画布位置到中心
@@ -152,7 +157,8 @@ function handleCenterCanvas() {
 
 // 保存图片
 function handleSave() {
-    const { editor } = props
+    const { getEditor } = props
+    const editor = getEditor();
     if (!editor) return
 
     try {

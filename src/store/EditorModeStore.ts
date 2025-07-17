@@ -12,6 +12,7 @@ export enum EditorMode {
     PRE_ROTATE = 'pre_rotate',
     RESIZING = 'resizing',
     ROTATING = 'rotating',
+    DRAGGING = 'dragging',
     // Add more modes as needed
 }
 

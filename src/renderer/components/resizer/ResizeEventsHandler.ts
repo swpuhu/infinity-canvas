@@ -16,6 +16,7 @@ import { SnapGuide } from '../SnapGuide';
 import { ResizerUI } from './ResizerUI';
 import { ReadonlyVec2 } from 'gl-matrix';
 import eventBus from '@/common/eventBus';
+import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 
 export class ResizeEventsHandler extends EventEmitter {
     private _currentHandleNode: SNode | null = null;
@@ -25,6 +26,8 @@ export class ResizeEventsHandler extends EventEmitter {
     private _resizeStartNodeSize: Vec2 = new Vec2(0, 0);
 
     private _resizeStartPos: Vec2 = new Vec2(0, 0);
+
+    private _editorModeStore = useEditorModeStore();
 
     private _originAnchor: IPointData = {
         x: 0,
@@ -225,17 +228,7 @@ export class ResizeEventsHandler extends EventEmitter {
         const scaleY = nextHeight / this._currentHeight;
         console.log('scaleX', scaleX);
         console.log('scaleY', scaleY);
-        // const dummyNodeWorldMat = this._resizerUI.dummyNode.getWorldMatrix();
-        // const { scale, position, rotation } =
-        //     decomposeMatrix(dummyNodeWorldMat);
-        // console.table({
-        //     name: this._resizerUI.dummyNode.name,
-        //     x: position.x,
-        //     y: position.y,
-        //     scaleX: scale.x,
-        //     scaleY: scale.y,
-        //     rotation,
-        // });
+
         this._resizerUI.dummyNode.scale.set(scaleX, scaleY);
 
         this._dummyNodes.forEach((dummyNode, i) => {
@@ -246,6 +239,7 @@ export class ResizeEventsHandler extends EventEmitter {
         // this._currentNodes!.alignTo(this._resizerUI.node!);
         this._resizerUI.updateHandlerNodes();
         this.emit(SNodeEvents.RESIZING);
+        this._editorModeStore.setMode(EditorMode.RESIZING);
     };
 
     private _onResizePointerUp = (event: SNodeEvents.IPointerEvent): void => {
@@ -265,6 +259,7 @@ export class ResizeEventsHandler extends EventEmitter {
             this._resizerUI.dummyNode.scale.set(1, 1);
             return;
         }
+        this._editorModeStore.setMode(EditorMode.DEFAULT);
         // changeAnchorButStay(this._currentNodes!, this._originAnchor);
     };
 
