@@ -96,11 +96,11 @@ export class SelectEventsHandler extends EventEmitter {
         // 清空之前选中的节点
         this._selectedNodes = [];
 
+        const unLockedNodes = this._editor.scene
+            .getAllNodes()
+            .filter((node) => !node.isLocked);
         // 遍历场景中的节点，检查是否与选框相交
-        this._findIntersectingNodes(
-            this._editor.scene.getAllNodes(),
-            selectRect
-        );
+        this._findIntersectingNodes(unLockedNodes, selectRect);
 
         this._hideUI();
 
