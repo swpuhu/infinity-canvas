@@ -2,169 +2,180 @@
     <teleport to="body">
         <div v-if="visible" class="floating-toolbar" :style="toolbarStyle" ref="toolbarRef">
             <div class="toolbar-container">
-                <!-- 形状选择工具 -->
-                <div class="tool-group">
-                    <a-dropdown placement="bottomLeft" :trigger="['click']">
-                        <a-button type="text" size="small" class="tool-button">
-                            <BorderOutlined />
-                            <DownOutlined class="dropdown-icon" />
-                        </a-button>
-                        <template #overlay>
-                            <a-menu @click="handleShapeSelect">
-                                <a-menu-item key="rectangle">
-                                    <BorderOutlined />
-                                    矩形
-                                </a-menu-item>
-                                <a-menu-item key="circle">
-                                    <StopOutlined />
-                                    圆形
-                                </a-menu-item>
-                                <a-menu-item key="triangle">
-                                    <CaretUpOutlined />
-                                    三角形
-                                </a-menu-item>
-                            </a-menu>
-                        </template>
-                    </a-dropdown>
-                </div>
-
-                <!-- 填充颜色 -->
-                <div class="tool-group">
-                    <a-dropdown placement="bottomLeft" :trigger="['click']">
-                        <a-button type="text" size="small" class="tool-button color-button">
-                            <div class="color-preview" :style="{ backgroundColor: fillColor }"></div>
-                            <DownOutlined class="dropdown-icon" />
-                        </a-button>
-                        <template #overlay>
-                            <div class="color-picker-panel">
-                                <div class="color-grid">
-                                    <div v-for="color in commonColors" :key="color" class="color-item"
-                                        :style="{ backgroundColor: color }" @click="handleFillColorSelect(color)"></div>
-                                </div>
-                            </div>
-                        </template>
-                    </a-dropdown>
-                </div>
-
-                <!-- 边框颜色 -->
-                <div class="tool-group">
-                    <a-dropdown placement="bottomLeft" :trigger="['click']">
-                        <a-button type="text" size="small" class="tool-button color-button">
-                            <div class="color-preview stroke" :style="{ backgroundColor: strokeColor }"></div>
-                            <DownOutlined class="dropdown-icon" />
-                        </a-button>
-                        <template #overlay>
-                            <div class="color-picker-panel">
-                                <div class="color-grid">
-                                    <div v-for="color in commonColors" :key="color" class="color-item"
-                                        :style="{ backgroundColor: color }" @click="handleStrokeColorSelect(color)">
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                    </a-dropdown>
-                </div>
-
-                <!-- 文字工具 -->
-                <div class="tool-group">
-                    <a-dropdown placement="bottomLeft" :trigger="['click']">
-                        <a-button type="text" size="small" class="tool-button text-button">
-                            <span class="text-icon">A</span>
-                            <DownOutlined class="dropdown-icon" />
-                        </a-button>
-                        <template #overlay>
-                            <a-menu @click="handleTextTool">
-                                <a-menu-item key="addText">
-                                    <EditOutlined />
-                                    添加文本
-                                </a-menu-item>
-                                <a-menu-item key="bold">
-                                    <BoldOutlined />
-                                    粗体
-                                </a-menu-item>
-                                <a-menu-item key="italic">
-                                    <ItalicOutlined />
-                                    斜体
-                                </a-menu-item>
-                            </a-menu>
-                        </template>
-                    </a-dropdown>
-                </div>
-
-                <!-- 字体大小 -->
-                <div class="tool-group">
-                    <a-dropdown placement="bottomLeft" :trigger="['click']">
-                        <a-button type="text" size="small" class="tool-button">
-                            <span class="font-size-text">{{ fontSize }}</span>
-                            <DownOutlined class="dropdown-icon" />
-                        </a-button>
-                        <template #overlay>
-                            <a-menu @click="handleFontSizeSelect">
-                                <a-menu-item v-for="size in fontSizes" :key="size" :value="size">
-                                    {{ size }}
-                                </a-menu-item>
-                            </a-menu>
-                        </template>
-                    </a-dropdown>
-                </div>
-
-                <!-- 对齐工具 -->
-                <div class="tool-group">
-                    <a-dropdown placement="bottomLeft" :trigger="['click']">
-                        <a-button type="text" size="small" class="tool-button">
-                            <AlignLeftOutlined />
-                            <DownOutlined class="dropdown-icon" />
-                        </a-button>
-                        <template #overlay>
-                            <a-menu @click="handleAlignSelect">
-                                <a-menu-item key="left">
-                                    <AlignLeftOutlined />
-                                    左对齐
-                                </a-menu-item>
-                                <a-menu-item key="center">
-                                    <AlignCenterOutlined />
-                                    居中对齐
-                                </a-menu-item>
-                                <a-menu-item key="right">
-                                    <AlignRightOutlined />
-                                    右对齐
-                                </a-menu-item>
-                            </a-menu>
-                        </template>
-                    </a-dropdown>
-                </div>
-
-                <!-- 评论工具 -->
-                <div class="tool-group">
-                    <a-button type="text" size="small" class="tool-button" @click="handleComment">
-                        <CommentOutlined />
+                <!-- 解锁按钮 - 只在节点被锁定时显示 -->
+                <div v-if="selectedNodesLocked" class="tool-group">
+                    <a-button type="text" size="small" class="tool-button" @click="handleUnlock">
+                        <UnlockOutlined />
                     </a-button>
                 </div>
 
-                <!-- 更多选项 -->
-                <div class="tool-group">
-                    <a-dropdown placement="bottomLeft" :trigger="['click']">
-                        <a-button type="text" size="small" class="tool-button">
-                            <MoreOutlined />
+                <!-- 当节点被锁定时，只显示解锁按钮，隐藏其他工具 -->
+                <template v-if="!selectedNodesLocked">
+                    <!-- 形状选择工具 -->
+                    <div class="tool-group">
+                        <a-dropdown placement="bottomLeft" :trigger="['click']">
+                            <a-button type="text" size="small" class="tool-button">
+                                <BorderOutlined />
+                                <DownOutlined class="dropdown-icon" />
+                            </a-button>
+                            <template #overlay>
+                                <a-menu @click="handleShapeSelect">
+                                    <a-menu-item key="rectangle">
+                                        <BorderOutlined />
+                                        矩形
+                                    </a-menu-item>
+                                    <a-menu-item key="circle">
+                                        <StopOutlined />
+                                        圆形
+                                    </a-menu-item>
+                                    <a-menu-item key="triangle">
+                                        <CaretUpOutlined />
+                                        三角形
+                                    </a-menu-item>
+                                </a-menu>
+                            </template>
+                        </a-dropdown>
+                    </div>
+
+                    <!-- 填充颜色 -->
+                    <div class="tool-group">
+                        <a-dropdown placement="bottomLeft" :trigger="['click']">
+                            <a-button type="text" size="small" class="tool-button color-button">
+                                <div class="color-preview" :style="{ backgroundColor: fillColor }"></div>
+                                <DownOutlined class="dropdown-icon" />
+                            </a-button>
+                            <template #overlay>
+                                <div class="color-picker-panel">
+                                    <div class="color-grid">
+                                        <div v-for="color in commonColors" :key="color" class="color-item"
+                                            :style="{ backgroundColor: color }" @click="handleFillColorSelect(color)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </a-dropdown>
+                    </div>
+
+                    <!-- 边框颜色 -->
+                    <div class="tool-group">
+                        <a-dropdown placement="bottomLeft" :trigger="['click']">
+                            <a-button type="text" size="small" class="tool-button color-button">
+                                <div class="color-preview stroke" :style="{ backgroundColor: strokeColor }"></div>
+                                <DownOutlined class="dropdown-icon" />
+                            </a-button>
+                            <template #overlay>
+                                <div class="color-picker-panel">
+                                    <div class="color-grid">
+                                        <div v-for="color in commonColors" :key="color" class="color-item"
+                                            :style="{ backgroundColor: color }" @click="handleStrokeColorSelect(color)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </a-dropdown>
+                    </div>
+
+                    <!-- 文字工具 -->
+                    <div class="tool-group">
+                        <a-dropdown placement="bottomLeft" :trigger="['click']">
+                            <a-button type="text" size="small" class="tool-button text-button">
+                                <span class="text-icon">A</span>
+                                <DownOutlined class="dropdown-icon" />
+                            </a-button>
+                            <template #overlay>
+                                <a-menu @click="handleTextTool">
+                                    <a-menu-item key="addText">
+                                        <EditOutlined />
+                                        添加文本
+                                    </a-menu-item>
+                                    <a-menu-item key="bold">
+                                        <BoldOutlined />
+                                        粗体
+                                    </a-menu-item>
+                                    <a-menu-item key="italic">
+                                        <ItalicOutlined />
+                                        斜体
+                                    </a-menu-item>
+                                </a-menu>
+                            </template>
+                        </a-dropdown>
+                    </div>
+
+                    <!-- 字体大小 -->
+                    <div class="tool-group">
+                        <a-dropdown placement="bottomLeft" :trigger="['click']">
+                            <a-button type="text" size="small" class="tool-button">
+                                <span class="font-size-text">{{ fontSize }}</span>
+                                <DownOutlined class="dropdown-icon" />
+                            </a-button>
+                            <template #overlay>
+                                <a-menu @click="handleFontSizeSelect">
+                                    <a-menu-item v-for="size in fontSizes" :key="size" :value="size">
+                                        {{ size }}
+                                    </a-menu-item>
+                                </a-menu>
+                            </template>
+                        </a-dropdown>
+                    </div>
+
+                    <!-- 对齐工具 -->
+                    <div class="tool-group">
+                        <a-dropdown placement="bottomLeft" :trigger="['click']">
+                            <a-button type="text" size="small" class="tool-button">
+                                <AlignLeftOutlined />
+                                <DownOutlined class="dropdown-icon" />
+                            </a-button>
+                            <template #overlay>
+                                <a-menu @click="handleAlignSelect">
+                                    <a-menu-item key="left">
+                                        <AlignLeftOutlined />
+                                        左对齐
+                                    </a-menu-item>
+                                    <a-menu-item key="center">
+                                        <AlignCenterOutlined />
+                                        居中对齐
+                                    </a-menu-item>
+                                    <a-menu-item key="right">
+                                        <AlignRightOutlined />
+                                        右对齐
+                                    </a-menu-item>
+                                </a-menu>
+                            </template>
+                        </a-dropdown>
+                    </div>
+
+                    <!-- 评论工具 -->
+                    <div class="tool-group">
+                        <a-button type="text" size="small" class="tool-button" @click="handleComment">
+                            <CommentOutlined />
                         </a-button>
-                        <template #overlay>
-                            <a-menu @click="handleMoreOptions">
-                                <a-menu-item key="copy">
-                                    <CopyOutlined />
-                                    复制
-                                </a-menu-item>
-                                <a-menu-item key="paste">
-                                    <FileAddOutlined />
-                                    粘贴
-                                </a-menu-item>
-                                <a-menu-item key="delete">
-                                    <DeleteOutlined />
-                                    删除
-                                </a-menu-item>
-                            </a-menu>
-                        </template>
-                    </a-dropdown>
-                </div>
+                    </div>
+
+                    <!-- 更多选项 -->
+                    <div class="tool-group">
+                        <a-dropdown placement="bottomLeft" :trigger="['click']">
+                            <a-button type="text" size="small" class="tool-button">
+                                <MoreOutlined />
+                            </a-button>
+                            <template #overlay>
+                                <a-menu @click="handleMoreOptions">
+                                    <a-menu-item key="copy">
+                                        <CopyOutlined />
+                                        复制
+                                    </a-menu-item>
+                                    <a-menu-item key="paste">
+                                        <FileAddOutlined />
+                                        粘贴
+                                    </a-menu-item>
+                                    <a-menu-item key="delete">
+                                        <DeleteOutlined />
+                                        删除
+                                    </a-menu-item>
+                                </a-menu>
+                            </template>
+                        </a-dropdown>
+                    </div>
+                </template>
             </div>
         </div>
     </teleport>
@@ -192,7 +203,8 @@ import {
     MoreOutlined,
     CopyOutlined,
     FileAddOutlined,
-    DeleteOutlined
+    DeleteOutlined,
+    UnlockOutlined
 } from '@ant-design/icons-vue'
 import { useEditorModeStore, EditorMode } from '@/store/EditorModeStore'
 
@@ -245,6 +257,18 @@ const shouldShowToolbar = computed(() => {
     return hasSelectedNodes && isDefaultMode
 })
 
+// 计算当前选中的节点是否被锁定
+const selectedNodesLocked = computed(() => {
+    const selectedIds = nodeInfoStore.currentSelectedNodeIds
+    if (selectedIds.length === 0) return false
+
+    // 检查是否有任何锁定组包含当前选中的节点
+    return nodeInfoStore.lockedNodeGroup.some(lockedGroup =>
+        selectedIds.every(id => lockedGroup.includes(id)) &&
+        lockedGroup.length === selectedIds.length
+    )
+})
+
 // 监听工具栏显示状态变化
 watch(
     shouldShowToolbar,
@@ -271,6 +295,19 @@ watch(
     () => props.getEditor(),
     () => {
         if (shouldShowToolbar.value) {
+            nextTick(() => {
+                updateToolbarPosition()
+            })
+        }
+    }
+)
+
+// 监听节点锁定状态变化
+watch(
+    selectedNodesLocked,
+    () => {
+        if (shouldShowToolbar.value) {
+            // 锁定状态变化会影响工具栏宽度，需要重新计算位置
             nextTick(() => {
                 updateToolbarPosition()
             })
@@ -413,6 +450,16 @@ const handleComment = () => {
 // 处理更多选项
 const handleMoreOptions = ({ key }: { key: string }) => {
     console.log('More option:', key)
+}
+
+// 处理解锁操作
+const handleUnlock = () => {
+    const selectedIds = nodeInfoStore.currentSelectedNodeIds
+    if (selectedIds.length > 0) {
+        // 调用 store 的解锁方法，将当前选中的节点组解锁
+        nodeInfoStore.setLockedNodeGroup(selectedIds, false)
+        console.log('Unlocked nodes:', selectedIds)
+    }
 }
 
 // 窗口大小改变时更新位置
