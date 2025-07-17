@@ -31,6 +31,14 @@
                     </div>
                 </a-menu-item>
 
+                <!-- 锁定 -->
+                <a-menu-item key="lock" class="context-menu-item" v-if="hasSelectedNodes">
+                    <template #icon>
+                        <LockOutlined />
+                    </template>
+                    <span>锁定</span>
+                </a-menu-item>
+
                 <a-menu-divider />
 
                 <!-- 添加文字 -->
@@ -106,6 +114,7 @@
                         <span class="shortcut">Shift + 1</span>
                     </div>
                 </a-menu-item>
+
             </a-menu>
 
             <!-- 子菜单 -->
@@ -154,6 +163,7 @@ import { ref, watch, computed } from 'vue'
 import {
     EditOutlined,
     PlusOutlined,
+    LockOutlined,
     MinusOutlined,
     ExpandOutlined,
     OneToOneOutlined,
@@ -312,6 +322,11 @@ const handleMenuClick = ({ key }: { key: string }) => {
     } else if (key === 'copyToClipboard') {
         const currentNodeIds = nodeInfoStore.currentSelectedNodeIds;
         eventBus.saveImageToClipboard(currentNodeIds);
+        return
+    } else if (key === 'lock') {
+        const currentNodeIds = nodeInfoStore.currentSelectedNodeIds;
+        // 锁定当前选中的节点组
+        nodeInfoStore.setLockedNodeGroup(currentNodeIds, true);
         return
     }
     emit('menuClick', key)

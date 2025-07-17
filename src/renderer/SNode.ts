@@ -67,6 +67,8 @@ class SNode extends EventEmitter {
 
     private _preSelected: boolean = false;
 
+    private _isLocked: boolean = false;
+
     public aspectKeepMode = EnumAspectKeepMode.NONE;
 
     public renderType: EnumRenderComponentType = EnumRenderComponentType.NONE;
@@ -79,6 +81,14 @@ class SNode extends EventEmitter {
 
     set active(value: boolean) {
         this._active = value;
+    }
+
+    get isLocked(): boolean {
+        return this._isLocked;
+    }
+
+    set isLocked(value: boolean) {
+        this._isLocked = value;
     }
 
     get activeInHierarchy(): boolean {

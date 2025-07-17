@@ -322,3 +322,13 @@ export function getNodesByNodeIds(nodeIds: string[], parentNode: SNode) {
         .filter((node) => node !== null);
     return nodes;
 }
+
+// 辅助函数：判断两个数组是否包含相同的元素（忽略顺序）
+export const arraysEqual = (arr1: string[], arr2: string[]) => {
+    if (arr1.length !== arr2.length) {
+        return false;
+    }
+    const sorted1 = [...arr1].sort();
+    const sorted2 = [...arr2].sort();
+    return sorted1.every((val, index) => val === sorted2[index]);
+};
