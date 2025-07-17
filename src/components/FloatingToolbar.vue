@@ -252,20 +252,26 @@ const toolbarStyle = computed((): CSSProperties => {
 
 // 计算是否应该显示工具栏
 const shouldShowToolbar = computed(() => {
-    const hasSelectedNodes = nodeInfoStore.currentSelectedNodeIds.length > 0
+    // 明确依赖 currentSelectedNodeIds
+    const currentSelectedNodeIds = nodeInfoStore.currentSelectedNodeIds
+    const hasSelectedNodes = currentSelectedNodeIds.length > 0
     const isDefaultMode = (editorModeStore.currentMode & EditorMode.DEFAULT) !== 0
     return hasSelectedNodes && isDefaultMode
 })
 
 // 计算当前选中的节点是否被锁定
 const selectedNodesLocked = computed(() => {
-    const selectedIds = nodeInfoStore.currentSelectedNodeIds
-    if (selectedIds.length === 0) return false
+    // 明确依赖 currentSelectedNodeIds
+    const currentSelectedNodeIds = nodeInfoStore.currentSelectedNodeIds
+
+    // 首先检查是否应该显示工具栏
+    if (!shouldShowToolbar.value) return false
+
+    if (currentSelectedNodeIds.length === 0) return false
 
     // 检查是否有任何锁定组包含当前选中的节点
     return nodeInfoStore.lockedNodeGroup.some(lockedGroup =>
-        selectedIds.every(id => lockedGroup.includes(id)) &&
-        lockedGroup.length === selectedIds.length
+        currentSelectedNodeIds.some(id => lockedGroup.includes(id))
     )
 })
 
@@ -313,6 +319,20 @@ watch(
             })
         }
     }
+)
+
+// 监听选中节点变化
+watch(
+    () => nodeInfoStore.currentSelectedNodeIds,
+    () => {
+        if (shouldShowToolbar.value) {
+            // 选中节点变化时重新计算位置
+            nextTick(() => {
+                updateToolbarPosition()
+            })
+        }
+    },
+    { deep: true }
 )
 
 // 更新工具栏位置
