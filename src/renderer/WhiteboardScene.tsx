@@ -148,7 +148,7 @@ export class WhiteboardScene extends EventEmitter {
 
         const canvasHeight = this.availableSize.height;
 
-        const worldY = canvasHeight - screenY;
+        const worldY = screenY;
         const worldX = screenX;
         if (!rootContainer) {
             return vec2.fromValues(screenX, screenY);

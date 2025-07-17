@@ -1,7 +1,7 @@
 <template>
     <div class="app">
         <div class="editor-container">
-            <div class="toolbar">
+            <div class="toolbar" ref="headerToolbarRef">
                 <div class="toolbar-head">
                     <UButton type="primary" @click="handleSave">保存</UButton>
                     <UButton type="primary" @click="handleAddText" :selected="uiStore.willAddText">添加文字</UButton>
@@ -11,10 +11,12 @@
                 </div>
             </div>
             <div class="canvas-container" @contextmenu="contextMenuHandler?.handleCanvasContextMenu">
-                <canvas ref="canvasRef"></canvas>
+                <canvas ref="canvasRef">
+                </canvas>
                 <ZoomControls ref="zoomControlsRef" />
                 <VerticalToolbar ref="verticalToolbarRef" />
-                <FloatingToolbar :get-editor="() => editor" />
+                <FloatingToolbar :get-editor="() => editor" :header-toolbar-ref="headerToolbarRef" />
+
             </div>
         </div>
 
@@ -46,6 +48,7 @@ const contextMenuHandler = ref<InstanceType<typeof ContextMenuHandler> | null>(n
 const uiStore = useUIStore();
 const zoomStore = useZoomStore();
 const editorModeStore = useEditorModeStore();
+const headerToolbarRef = ref<HTMLElement | null>(null);
 
 let editor: CanvasEditor | null = null;
 

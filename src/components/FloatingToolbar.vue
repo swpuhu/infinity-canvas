@@ -1,6 +1,6 @@
 <template>
     <teleport to="body">
-        <div v-if="visible" class="floating-toolbar" :style="toolbarStyle">
+        <div v-if="visible" class="floating-toolbar" :style="toolbarStyle" ref="toolbarRef">
             <div class="toolbar-container">
                 <!-- 形状选择工具 -->
                 <div class="tool-group">
@@ -198,7 +198,8 @@ import { useEditorModeStore, EditorMode } from '@/store/EditorModeStore'
 
 // Props
 interface FloatingToolbarProps {
-    getEditor: () => CanvasEditor | null
+    getEditor: () => CanvasEditor | null,
+    headerToolbarRef?: HTMLElement | null
 }
 
 const props = defineProps<FloatingToolbarProps>()
@@ -212,6 +213,8 @@ const toolbarPosition = ref({ x: 0, y: 0 })
 const fillColor = ref('#ffffff')
 const strokeColor = ref('#000000')
 const fontSize = ref(14)
+const toolbarRef = ref<HTMLElement | null>(null)
+let toolbarHeight = 50;
 
 // 常用颜色
 const commonColors = [
@@ -228,10 +231,10 @@ const fontSizes = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64, 72, 96]
 const toolbarStyle = computed((): CSSProperties => {
     return {
         position: 'fixed' as const,
-        left: `${toolbarPosition.value.x}px`,
-        top: `${toolbarPosition.value.y}px`,
+        left: '0px',
+        top: '0px',
         zIndex: 10000,
-        transform: 'translateX(-50%)'
+        transform: `translate(${toolbarPosition.value.x}px, ${toolbarPosition.value.y}px)`
     }
 })
 
@@ -247,10 +250,11 @@ watch(
     shouldShowToolbar,
     (shouldShow) => {
         if (shouldShow) {
-            // 延迟一帧执行，确保DOM更新完成
+            // 先显示工具栏
+            visible.value = true
+            // 延迟一帧执行，确保DOM更新完成后再计算位置
             nextTick(() => {
                 updateToolbarPosition()
-                visible.value = true
             })
         } else {
             visible.value = false
@@ -258,6 +262,9 @@ watch(
     },
     { immediate: true }
 )
+
+onMounted(() => {
+})
 
 // 监听编辑器变化
 watch(
@@ -274,6 +281,20 @@ watch(
 // 更新工具栏位置
 const updateToolbarPosition = () => {
     const editor = props.getEditor();
+    const toolbar = toolbarRef.value;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    const headerToolBarHeight = props.headerToolbarRef?.clientHeight ?? 0;
+
+    let toolbarWidth = 500;
+    let toolbarHeight = 50;
+    if (toolbar) {
+        toolbarWidth = toolbar.clientWidth;
+        toolbarHeight = toolbar.clientHeight;
+    }
+
+    console.log('toolbarWidth', toolbarWidth, 'toolbarHeight', toolbarHeight)
     if (!editor || !editor.scene) {
         // 如果没有编辑器引用，使用默认位置
         toolbarPosition.value = {
@@ -305,63 +326,41 @@ const updateToolbarPosition = () => {
         const worldRect = getWorldRect(selectedNodes)
         const [minX, minY, maxX, maxY] = worldRect
 
+        const margin = 16;
+
+
         // 计算节点的中心点和尺寸
         const nodeCenterX = (minX + maxX) / 2
         const nodeCenterY = (minY + maxY) / 2
-        const nodeWidth = maxX - minX
-        const nodeHeight = maxY - minY
 
-        // 工具栏尺寸（估算）
-        const toolbarWidth = 400
-        const toolbarHeight = 48
-        const margin = 16
+        let x = nodeCenterX - toolbarWidth / 2;
+        let y = maxY + headerToolBarHeight + margin;
 
-        // 计算最佳位置
-        let bestX = nodeCenterX
-        let bestY = minY - toolbarHeight - margin
-
-        // 边界检查和调整
-        const viewportWidth = window.innerWidth
-        const viewportHeight = window.innerHeight
-
-        // 水平边界检查
-        if (bestX - toolbarWidth / 2 < margin) {
-            bestX = margin + toolbarWidth / 2
-        } else if (bestX + toolbarWidth / 2 > viewportWidth - margin) {
-            bestX = viewportWidth - margin - toolbarWidth / 2
+        if (y > (windowHeight - headerToolBarHeight) / 2) {
+            y = minY + headerToolBarHeight - margin - toolbarHeight;
         }
 
-        // 垂直边界检查
-        if (bestY < margin) {
-            // 如果上方空间不足，尝试放在下方
-            const bottomY = maxY + margin
-            if (bottomY + toolbarHeight < viewportHeight - margin) {
-                bestY = bottomY
-            } else {
-                // 如果下方也不足，尝试放在左侧或右侧
-                const leftX = minX - toolbarWidth - margin
-                const rightX = maxX + margin
-
-                if (leftX > margin) {
-                    bestX = leftX + toolbarWidth / 2
-                    bestY = nodeCenterY
-                } else if (rightX + toolbarWidth < viewportWidth - margin) {
-                    bestX = rightX + toolbarWidth / 2
-                    bestY = nodeCenterY
-                } else {
-                    // 如果都不够，强制放在顶部
-                    bestY = margin
-                }
-            }
+        const toolbarLeft = x;
+        const toolbarTop = y;
+        const toolbarRight = toolbarLeft + toolbarWidth;
+        const toolbarBottom = toolbarTop + toolbarHeight;
+        if (toolbarLeft < 0) {
+            x -= toolbarLeft - margin;
+        }
+        if (toolbarTop < 0) {
+            y -= toolbarTop;
+        }
+        if (toolbarRight > windowWidth) {
+            x -= toolbarRight - windowWidth + margin;
+        }
+        if (toolbarBottom > windowHeight) {
+            y -= toolbarBottom - windowHeight;
         }
 
-        // 确保最终位置在屏幕范围内
-        bestX = Math.max(toolbarWidth / 2, Math.min(bestX, viewportWidth - toolbarWidth / 2))
-        bestY = Math.max(margin, Math.min(bestY, viewportHeight - toolbarHeight - margin))
 
         toolbarPosition.value = {
-            x: bestX,
-            y: bestY
+            x: x,
+            y: y
         }
     } catch (error) {
         console.error('更新工具栏位置时出错:', error)
