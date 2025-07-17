@@ -198,7 +198,7 @@ import { useEditorModeStore, EditorMode } from '@/store/EditorModeStore'
 
 // Props
 interface FloatingToolbarProps {
-    editor?: Ref<CanvasEditor | null>
+    getEditor: () => CanvasEditor | null
 }
 
 const props = defineProps<FloatingToolbarProps>()
@@ -238,7 +238,7 @@ const toolbarStyle = computed((): CSSProperties => {
 // 计算是否应该显示工具栏
 const shouldShowToolbar = computed(() => {
     const hasSelectedNodes = nodeInfoStore.currentSelectedNodeIds.length > 0
-    const isDefaultMode = editorModeStore.currentMode === EditorMode.DEFAULT
+    const isDefaultMode = (editorModeStore.currentMode & EditorMode.DEFAULT) !== 0
     return hasSelectedNodes && isDefaultMode
 })
 
@@ -261,7 +261,7 @@ watch(
 
 // 监听编辑器变化
 watch(
-    () => props.editor,
+    () => props.getEditor(),
     () => {
         if (shouldShowToolbar.value) {
             nextTick(() => {
@@ -273,7 +273,7 @@ watch(
 
 // 更新工具栏位置
 const updateToolbarPosition = () => {
-    const editor = props.editor?.value;
+    const editor = props.getEditor();
     if (!editor || !editor.scene) {
         // 如果没有编辑器引用，使用默认位置
         toolbarPosition.value = {

@@ -3,16 +3,16 @@ import { defineStore } from 'pinia';
 
 // Define editor mode types
 export enum EditorMode {
-    DEFAULT = 'default',
-    HAND_TOOL = 'hand_tool',
-    TEXT_EDIT = 'text_edit',
-    TEXT_INSERT = 'text_insert',
-    SHAPE_INSERT = 'shape_insert',
-    PRE_RESIZE = 'pre_resize',
-    PRE_ROTATE = 'pre_rotate',
-    RESIZING = 'resizing',
-    ROTATING = 'rotating',
-    DRAGGING = 'dragging',
+    DEFAULT = 0b00000000001,
+    TEXT_EDIT = 0b0000000010,
+    TEXT_INSERT = 0b0000000100,
+    SHAPE_INSERT = 0b0000001000,
+    PRE_RESIZE = 0b0000010000 | EditorMode.DEFAULT,
+    PRE_ROTATE = 0b0000100000 | EditorMode.DEFAULT,
+    RESIZING = 0b0001000000,
+    ROTATING = 0b0010000000,
+    DRAGGING = 0b0100000000,
+    HAND_TOOL = 0b1000000000,
     // Add more modes as needed
 }
 
