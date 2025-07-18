@@ -343,10 +343,10 @@ watch(
     }
 )
 
-// 监听选中节点变化
+// 监听选中节点变化和节点组数据变化
 watch(
-    () => nodeInfoStore.currentSelectedNodeIds,
-    (currentSelectedNodeIds) => {
+    [() => nodeInfoStore.currentSelectedNodeIds, () => nodeInfoStore.groupedNodeGroups],
+    ([currentSelectedNodeIds]) => {
         // 更新成组状态
         selectedNodesGrouped.value = nodeInfoStore.isGrouped(currentSelectedNodeIds)
 
