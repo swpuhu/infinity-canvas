@@ -85,6 +85,13 @@ export class CanvasEditor {
     }
 
     async init() {
+        // test code
+        setTimeout(() => {
+            const canvasNode = this._scene?.getCanvasNode();
+            const localPos = canvasNode?.toLocal([380, 280]);
+            console.log('localPos', localPos);
+        }, 1000);
+
         await CanvasKitModule.init();
         this._eventSystem = CanvasEventSystem.initialize(this._canvas);
         this._renderer = new Renderer(this._canvas);

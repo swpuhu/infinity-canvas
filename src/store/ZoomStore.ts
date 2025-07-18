@@ -12,6 +12,7 @@ export const useZoomStore = defineStore('zoom', {
 
     getters: {
         zoomValue: (state) => scaleToZoom(state.canvasScale * state.zoomScale),
+        scaleValue: (state) => state.canvasScale * state.zoomScale,
     },
 
     actions: {

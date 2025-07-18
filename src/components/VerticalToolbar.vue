@@ -24,10 +24,7 @@
                 </polygon>
                 <polygon v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.STAR"
                     points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"></polygon>
-                <path v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.ARROW_RIGHT"
-                    d="M5 12h14m-7-7 7 7-7 7"></path>
-                <path v-if="editorModeStore.getCurrentInsertShape === SNodeConfig.NodeType.ARROW_LEFT"
-                    d="M19 12H5m7-7-7 7 7 7"></path>
+
             </svg>
 
             <!-- 形状选择菜单 -->
@@ -52,9 +49,6 @@
                                 points="12,2 22,7 22,17 12,22 2,17 2,7"></polygon>
                             <polygon v-if="shape.type === SNodeConfig.NodeType.STAR"
                                 points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9"></polygon>
-                            <path v-if="shape.type === SNodeConfig.NodeType.ARROW_RIGHT" d="M5 12h14m-7-7 7 7-7 7">
-                            </path>
-                            <path v-if="shape.type === SNodeConfig.NodeType.ARROW_LEFT" d="M19 12H5m7-7-7 7 7 7"></path>
                         </svg>
                     </div>
                     <div class="shape-menu-more">
@@ -99,8 +93,6 @@ const shapes: { type: SNodeConfig.NodeType, name: string }[] = [
     { type: SNodeConfig.NodeType.PENTAGON, name: '五边形' },
     { type: SNodeConfig.NodeType.HEXAGON, name: '六边形' },
     { type: SNodeConfig.NodeType.STAR, name: '星形' },
-    { type: SNodeConfig.NodeType.ARROW_RIGHT, name: '右箭头' },
-    { type: SNodeConfig.NodeType.ARROW_LEFT, name: '左箭头' }
 ];
 
 // 计算shape工具的激活状态 - 需要同时满足工具类型和编辑模式

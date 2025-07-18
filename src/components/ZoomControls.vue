@@ -223,11 +223,12 @@ function handleZoomInputBlur() {
 
 // Zoom in by one step
 function zoomIn() {
-
+    eventBus.zoomCanvas(380, 280, 50);
 }
 
 // Zoom out by one step
 function zoomOut() {
+    eventBus.zoomCanvas(380, 280, -50);
 }
 
 // Reset zoom to 100% (zoom value = 0)

@@ -45,6 +45,20 @@ export function WhiteboardSceneX(option: {
                         width={option.designSize.width}
                         height={option.designSize.height}
                     >
+                        {/* test rect */}
+                        <rect
+                            transform={{
+                                position: {
+                                    x: 133,
+                                    y: -181,
+                                },
+                            }}
+                            width={100}
+                            height={100}
+                            style={{
+                                fill: 0x777777,
+                            }}
+                        />
                         {/* <arrow
                             name="arrow"
                             width={200}
