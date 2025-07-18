@@ -7,7 +7,7 @@ import { EventsHandler } from './resizer/EventsHandler';
 import { ResizerUI } from './resizer/ResizerUI';
 import { SnapGuide } from './SnapGuide';
 import { useNodeInfoStore } from '@/store/NodeInfoStore';
-import { watch } from 'vue';
+import { watch, WatchHandle } from 'vue';
 
 export class ResizeGizmo {
     private _scene: WhiteboardScene;
@@ -16,6 +16,8 @@ export class ResizeGizmo {
     private _uiComponent: ResizerUI;
 
     private _eventsHandler: EventsHandler;
+
+    private _lockedNodeGroupWatchHandle: WatchHandle;
 
     private _nodeInfoStore = useNodeInfoStore();
     constructor(editor: CanvasEditor, snapGuide: SnapGuide) {
@@ -56,15 +58,14 @@ export class ResizeGizmo {
             this.mountToNode(nodes);
         });
 
-        watch(
-            () => this._nodeInfoStore.lockedNodeGroup,
-            (lockedNodeGroups) => {
+        this._lockedNodeGroupWatchHandle = watch(
+            () => this._nodeInfoStore.currentSelectedNodeIds,
+            (currentSelectedNodeIds) => {
                 /**
                  * 如果当前选中节点不在 lockedNodeGroup 中，则解锁
                  * 如果当前选中节点在 lockedNodeGroup 中，则锁定
                  */
-                const currentSelectedNodeIds =
-                    this._nodeInfoStore.currentSelectedNodeIds;
+                const lockedNodeGroups = this._nodeInfoStore.lockedNodeGroup;
                 const isLocked = lockedNodeGroups.some((group) =>
                     group.includes(currentSelectedNodeIds[0])
                 );
@@ -107,5 +108,7 @@ export class ResizeGizmo {
         this._uiComponent.hide();
     }
 
-    public destroy(): void {}
+    public destroy(): void {
+        this._lockedNodeGroupWatchHandle.stop();
+    }
 }
