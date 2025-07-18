@@ -606,7 +606,8 @@ export class ResizerUI {
         }
         if (this._isLocked) {
             this.hideResizer();
-            return;
+        } else {
+            this.showResizer();
         }
         const [l, b, r, t] = this._root.getLocalRect();
         const { x: scaleX } = this._lbNodeRef.value!.getGlobalScale()!;

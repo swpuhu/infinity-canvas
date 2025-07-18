@@ -484,7 +484,6 @@ const handleUnlock = () => {
     if (selectedIds.length > 0) {
         // 调用 store 的解锁方法，将当前选中的节点组解锁
         nodeInfoStore.setLockedNodeGroup(selectedIds, false)
-        console.log('Unlocked nodes:', selectedIds)
     }
 }
 
@@ -508,6 +507,7 @@ onUnmounted(() => {
 .floating-toolbar {
     user-select: none;
     pointer-events: auto;
+    z-index: 1;
 }
 
 .toolbar-container {

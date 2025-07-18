@@ -7,6 +7,7 @@ import { EventsHandler } from './resizer/EventsHandler';
 import { ResizerUI } from './resizer/ResizerUI';
 import { SnapGuide } from './SnapGuide';
 import { useNodeInfoStore } from '@/store/NodeInfoStore';
+import { watch } from 'vue';
 
 export class ResizeGizmo {
     private _scene: WhiteboardScene;
@@ -54,6 +55,24 @@ export class ResizeGizmo {
         this._eventsHandler.on(EventNames.DRAG_SELECT_END, (nodes: SNode[]) => {
             this.mountToNode(nodes);
         });
+
+        watch(
+            () => this._nodeInfoStore.lockedNodeGroup,
+            (lockedNodeGroups) => {
+                /**
+                 * 如果当前选中节点不在 lockedNodeGroup 中，则解锁
+                 * 如果当前选中节点在 lockedNodeGroup 中，则锁定
+                 */
+                const currentSelectedNodeIds =
+                    this._nodeInfoStore.currentSelectedNodeIds;
+                const isLocked = lockedNodeGroups.some((group) =>
+                    group.includes(currentSelectedNodeIds[0])
+                );
+                this._uiComponent.setLocked(isLocked);
+                this._uiComponent.updateHandlerNodes();
+            },
+            { deep: true }
+        );
     }
 
     public mountToNode(targetNodes: SNode[], isLock = false): void {
@@ -61,7 +80,6 @@ export class ResizeGizmo {
             this.unMount();
             return;
         }
-        this._uiComponent.setLocked(isLock);
         if (targetNodes.length === 1) {
             this._uiComponent.alignToNode(targetNodes[0]);
         } else {
