@@ -6,20 +6,31 @@
             <a-menu :style="menuStyle" @click="handleMenuClick" :selectable="false" class="context-menu-wrapper"
                 @contextmenu.stop>
 
-                <!-- 导出为图片 -->
-                <a-menu-item v-if="hasSelectedNodes" key="exportImage" class="context-menu-item">
-                    <template #icon>
-                        <ExportOutlined />
-                    </template>
-                    <span>导出为图片</span>
+                <!-- 成组相关功能 -->
+                <a-menu-item key="group" v-if="hasSelectedNodes && canGroup">
+                    <TeamOutlined />
+                    成组
                 </a-menu-item>
-                <!-- 复制到剪切板 -->
-                <a-menu-item v-if="hasSelectedNodes" key="copyToClipboard" class="context-menu-item">
-                    <template #icon>
-                        <CopyFilled />
-                    </template>
-                    <span>复制到剪切板</span>
+
+                <a-menu-item key="ungroup" v-if="hasSelectedNodes && canUngroup">
+                    <DisconnectOutlined />
+                    解组
                 </a-menu-item>
+
+                <a-menu-divider />
+
+                <!-- 复制到剪贴板 - 只在有选中节点时显示 -->
+                <a-menu-item key="copyToClipboard" v-if="hasSelectedNodes">
+                    <CopyOutlined />
+                    复制到剪贴板
+                </a-menu-item>
+
+                <!-- 导出图片 - 只在有选中节点时显示 -->
+                <a-menu-item key="exportImage" v-if="hasSelectedNodes">
+                    <ExportOutlined />
+                    导出图片
+                </a-menu-item>
+
                 <!-- 粘贴 -->
                 <a-menu-item key="paste" class="context-menu-item">
                     <template #icon>
@@ -167,7 +178,6 @@ import {
     MinusOutlined,
     ExpandOutlined,
     OneToOneOutlined,
-    CopyFilled,
     CopyOutlined,
     ExportOutlined,
     BorderOutlined,
@@ -176,7 +186,9 @@ import {
     VerticalAlignTopOutlined,
     VerticalAlignBottomOutlined,
     UpOutlined,
-    DownOutlined
+    DownOutlined,
+    TeamOutlined,
+    DisconnectOutlined
 } from '@ant-design/icons-vue'
 import { useNodeInfoStore } from '@/store/NodeInfoStore'
 import eventBus from '@/common/eventBus'
@@ -206,6 +218,16 @@ const nodeInfoStore = useNodeInfoStore()
 // 计算是否显示层级菜单 - 只有在有选中节点时才显示
 const hasSelectedNodes = computed(() => {
     return nodeInfoStore.currentSelectedNodeIds.length > 0
+})
+
+// 计算是否可以成组
+const canGroup = computed(() => {
+    return nodeInfoStore.currentSelectedNodeIds.length > 1
+})
+
+// 计算是否可以解组
+const canUngroup = computed(() => {
+    return nodeInfoStore.currentSelectedNodeIds.length > 1
 })
 
 
@@ -313,6 +335,14 @@ const handleMenuClick = ({ key }: { key: string }) => {
     console.log('菜单项被点击:', key);
     // 层级菜单项不处理点击，只显示子菜单
     if (key === 'layer') {
+        return
+    } else if (key === 'group') {
+        const currentNodeIds = nodeInfoStore.currentSelectedNodeIds;
+        nodeInfoStore.groupNodes(currentNodeIds);
+        return
+    } else if (key === 'ungroup') {
+        const currentNodeIds = nodeInfoStore.currentSelectedNodeIds;
+        nodeInfoStore.ungroupNodes(currentNodeIds);
         return
     } else if (key === 'exportImage') {
         const currentNodeIds = nodeInfoStore.currentSelectedNodeIds;

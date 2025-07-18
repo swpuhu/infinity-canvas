@@ -69,6 +69,10 @@ class SNode extends EventEmitter {
 
     private _isLocked: boolean = false;
 
+    private _isGrouped: boolean = false;
+
+    private _groupId: string | null = null;
+
     public aspectKeepMode = EnumAspectKeepMode.NONE;
 
     public renderType: EnumRenderComponentType = EnumRenderComponentType.NONE;
@@ -92,6 +96,26 @@ class SNode extends EventEmitter {
             this.preSelected = false;
         }
         this._isLocked = value;
+    }
+
+    get isGrouped(): boolean {
+        return this._isGrouped;
+    }
+
+    set isGrouped(value: boolean) {
+        this._isGrouped = value;
+        if (!value) {
+            this._groupId = null;
+        }
+    }
+
+    get groupId(): string | null {
+        return this._groupId;
+    }
+
+    set groupId(value: string | null) {
+        this._groupId = value;
+        this._isGrouped = value !== null;
     }
 
     get activeInHierarchy(): boolean {

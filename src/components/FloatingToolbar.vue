@@ -9,8 +9,19 @@
                     </a-button>
                 </div>
 
-                <!-- 当节点被锁定时，只显示解锁按钮，隐藏其他工具 -->
-                <template v-if="!selectedNodesLocked">
+                <!-- 成组工具栏 - 只在节点成组时显示 -->
+                <template v-else-if="selectedNodesGrouped">
+                    <div class="tool-group">
+                        <a-button type="text" size="small" class="tool-button" @click="handleUngroup">
+                            <DisconnectOutlined />
+                            解组
+                        </a-button>
+                    </div>
+
+                </template>
+
+                <!-- 当节点被锁定或成组时，隐藏默认工具栏 -->
+                <template v-else-if="!selectedNodesLocked && !selectedNodesGrouped">
                     <!-- 形状选择工具 -->
                     <div class="tool-group">
                         <a-dropdown placement="bottomLeft" :trigger="['click']">
@@ -204,7 +215,9 @@ import {
     CopyOutlined,
     FileAddOutlined,
     DeleteOutlined,
-    UnlockOutlined
+    UnlockOutlined,
+    DisconnectOutlined,
+    LockOutlined
 } from '@ant-design/icons-vue'
 import { useEditorModeStore, EditorMode } from '@/store/EditorModeStore'
 
@@ -281,6 +294,9 @@ const selectedNodesLocked = computed(() => {
     return false;
 })
 
+// 计算当前选中的节点是否成组
+const selectedNodesGrouped = ref(false)
+
 // 监听工具栏显示状态变化
 watch(
     shouldShowToolbar,
@@ -330,7 +346,10 @@ watch(
 // 监听选中节点变化
 watch(
     () => nodeInfoStore.currentSelectedNodeIds,
-    () => {
+    (currentSelectedNodeIds) => {
+        // 更新成组状态
+        selectedNodesGrouped.value = nodeInfoStore.isGrouped(currentSelectedNodeIds)
+
         if (shouldShowToolbar.value) {
             // 选中节点变化时重新计算位置
             nextTick(() => {
@@ -338,7 +357,7 @@ watch(
             })
         }
     },
-    { deep: true }
+    { deep: true, immediate: true }
 )
 
 // 更新工具栏位置
@@ -485,6 +504,27 @@ const handleUnlock = () => {
         // 调用 store 的解锁方法，将当前选中的节点组解锁
         nodeInfoStore.setLockedNodeGroup(selectedIds, false)
     }
+}
+
+// 处理解组操作
+const handleUngroup = () => {
+    const selectedIds = nodeInfoStore.currentSelectedNodeIds
+    if (selectedIds.length > 0) {
+        nodeInfoStore.ungroupNodes(selectedIds)
+    }
+}
+
+// 处理编辑组操作
+const handleEditGroup = () => {
+    const selectedIds = nodeInfoStore.currentSelectedNodeIds
+    if (selectedIds.length > 0) {
+        nodeInfoStore.editGroup(selectedIds)
+    }
+}
+
+// 处理组选项
+const handleGroupOptions = ({ key }: { key: string }) => {
+    console.log('Group option:', key)
 }
 
 // 窗口大小改变时更新位置

@@ -102,7 +102,7 @@ export class EventsHandler extends EventEmitter {
         });
     }
 
-    private setCurrentNodes(nodes: SNode[]): void {
+    public setCurrentNodes(nodes: SNode[]): void {
         this._resizeEventsHandler.setCurrentNode(nodes);
         this._rotateEventsHandler.setCurrentNodes(nodes);
         this._dragEventsHandler.setCurrentNodes(nodes);
@@ -156,8 +156,6 @@ export class EventsHandler extends EventEmitter {
         this.emit(EventNames.POINTER_DOWN_NODE, hitNode);
         this._editEventsHandler.exitEditMode();
         if (hitNode) {
-            this.setCurrentNodes([hitNode]);
-
             this._dragEventsHandler.dragStart(event);
         } else {
             this._selectEventsHandler.selectStart(event);

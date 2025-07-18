@@ -51,6 +51,21 @@ export class ResizeGizmo {
                     this.mountToNode(nodes, true);
                     return;
                 }
+
+                // 检查节点是否在某个成组中
+                const groupInfo = this._nodeInfoStore.getNodeGroupInfo(
+                    node.uuid
+                );
+                if (groupInfo) {
+                    // 如果节点在组中，选中整个组
+                    const allNodes = this._editor.scene.getAllNodes();
+                    const groupNodes = allNodes.filter((n) => {
+                        return groupInfo.nodeIds.includes(n.uuid);
+                    });
+                    this.mountToNode(groupNodes);
+                    return;
+                }
+
                 this.mountToNode([node]);
             }
         });
@@ -81,6 +96,7 @@ export class ResizeGizmo {
             this.unMount();
             return;
         }
+        this._eventsHandler.setCurrentNodes(targetNodes);
         if (targetNodes.length === 1) {
             this._uiComponent.alignToNode(targetNodes[0]);
         } else {
