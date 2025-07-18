@@ -41,10 +41,6 @@ export class WhiteboardScene extends EventEmitter {
         return this.canvasContainerRef.value!;
     }
 
-    get outerContainer(): SNode {
-        return this.outerContainerRef.value!;
-    }
-
     constructor(option: SceneOptions) {
         super();
         this.option = option;

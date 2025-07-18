@@ -135,6 +135,14 @@ const eventBus = {
     onSaveImageToClipboard(callback: (nodeIds: string[]) => void) {
         eventEmitter.on('saveImageToClipboard', callback);
     },
+
+    showAllCanvasNode() {
+        eventEmitter.emit('showAllCanvasNode');
+    },
+
+    onShowAllCanvasNode(callback: () => void) {
+        eventEmitter.on('showAllCanvasNode', callback);
+    },
 };
 
 export default eventBus;

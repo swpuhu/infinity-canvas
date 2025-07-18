@@ -358,6 +358,9 @@ const handleMenuClick = ({ key }: { key: string }) => {
         // 锁定当前选中的节点组
         nodeInfoStore.setLockedNodeGroup(currentNodeIds, true);
         return
+    } else if (key === 'fitWindow') {
+        eventBus.showAllCanvasNode();
+        return
     }
     emit('menuClick', key)
     hide()

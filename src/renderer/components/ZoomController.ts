@@ -35,11 +35,19 @@ export class ZoomController {
 
     private _bindGlobalEvent() {
         eventBus.onPanCanvasStart(() => {
-            const outerContainer = this._scene.outerContainer;
+            const outerContainer = this._scene.canvasContainer;
             this._outerContainerStartPos = outerContainer.position.clone();
         });
         eventBus.onPanCanvas(this._onPanCanvas);
         eventBus.onZoomCanvas(this._onZoomCanvas);
+        eventBus.onShowAllCanvasNode(this._onShowAllCanvasNode);
+    }
+
+    private syncTopLayerAndCanvasNode(): void {
+        const topLayer = this._scene.topLayer;
+        const canvasNode = this._scene.getCanvasNode();
+
+        topLayer.alignTo(canvasNode);
     }
 
     private _onPanCanvas = (
@@ -59,22 +67,23 @@ export class ZoomController {
 
         const deltaX = canvasPos[0] - startCanvasPos[0];
         const deltaY = canvasPos[1] - startCanvasPos[1];
-        this._scene.outerContainer.position.set(
-            this._outerContainerStartPos.x + deltaX,
-            this._outerContainerStartPos.y + deltaY
-        );
+        const nextX = this._outerContainerStartPos.x + deltaX;
+        const nextY = this._outerContainerStartPos.y + deltaY;
+
+        this._scene.canvasContainer.position.set(nextX, nextY);
+        this.syncTopLayerAndCanvasNode();
     };
 
     private _onZoomCanvas = (
         screenX: number,
         screenY: number,
-        deltaY: number
+        deltaY: number,
+        newScale?: number
     ) => {
         const root = this._scene.rootNode;
         const canvasNode = this._scene.getCanvasNode();
         const canvasContainer = this._scene.canvasContainer;
-        const outerContainer = this._scene.outerContainer;
-        const topLayer = this._scene.topLayer;
+        const outerContainer = canvasContainer;
 
         // 计算鼠标在根节点坐标系中的位置（屏幕坐标转换为根节点局部坐标）
         const mouseInRootNode = root.toLocal([screenX, screenY]);
@@ -84,12 +93,11 @@ export class ZoomController {
 
         const currentZoomValue = this._zoomStore.zoomValue;
         const newZoomValue = currentZoomValue + deltaY * 0.001;
-        const newScaleValue = zoomToScale(newZoomValue);
+        const newScaleValue = newScale ?? zoomToScale(newZoomValue);
 
         // 应用新的缩放值
         this._zoomStore.setZoomValue(newZoomValue);
         canvasContainer.scale.set(newScaleValue, newScaleValue);
-        topLayer.scale.set(newScaleValue, newScaleValue);
 
         // 计算缩放后，虚拟画布上的那个点在世界坐标系中的新位置
         const mouseWorldPosAfterZoom = canvasNode.toGlobal(mouseInCanvasNode);
@@ -107,6 +115,18 @@ export class ZoomController {
             outerContainer.position.y - diffY
         );
 
+        this.syncTopLayerAndCanvasNode();
+
+        eventBus.reDraw();
+    };
+
+    private _onShowAllCanvasNode = () => {
+        const canvasNode = this._scene.getCanvasNode();
+
+        // 计算所有节点的世界边界框
+        const worldAABB = canvasNode.getWorldAABB(true);
+
+        console.log('worldAABB', worldAABB);
         eventBus.reDraw();
     };
 }
