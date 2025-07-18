@@ -604,6 +604,9 @@ export class ResizerUI {
         if (!this._root) {
             return;
         }
+        if (!this._root.active) {
+            return;
+        }
         if (this._isLocked) {
             this.hideResizer();
         } else {

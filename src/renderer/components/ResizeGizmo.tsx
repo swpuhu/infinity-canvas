@@ -8,6 +8,7 @@ import { ResizerUI } from './resizer/ResizerUI';
 import { SnapGuide } from './SnapGuide';
 import { useNodeInfoStore } from '@/store/NodeInfoStore';
 import { watch, WatchHandle } from 'vue';
+import { useZoomStore } from '@/store/ZoomStore';
 
 export class ResizeGizmo {
     private _scene: WhiteboardScene;
@@ -19,7 +20,10 @@ export class ResizeGizmo {
 
     private _lockedNodeGroupWatchHandle: WatchHandle;
 
+    private _zoomWatchHandle: WatchHandle;
+
     private _nodeInfoStore = useNodeInfoStore();
+    private _zoomStore = useZoomStore();
     constructor(editor: CanvasEditor, snapGuide: SnapGuide) {
         this._editor = editor;
         this._scene = editor.scene;
@@ -89,6 +93,13 @@ export class ResizeGizmo {
             },
             { deep: true }
         );
+
+        this._zoomWatchHandle = watch(
+            () => this._zoomStore.zoomValue,
+            () => {
+                this._uiComponent.updateHandlerNodes();
+            }
+        );
     }
 
     public mountToNode(targetNodes: SNode[], isLock = false): void {
@@ -126,5 +137,6 @@ export class ResizeGizmo {
 
     public destroy(): void {
         this._lockedNodeGroupWatchHandle.stop();
+        this._zoomWatchHandle.stop();
     }
 }

@@ -74,6 +74,7 @@ export class ZoomController {
         const canvasNode = this._scene.getCanvasNode();
         const canvasContainer = this._scene.canvasContainer;
         const outerContainer = this._scene.outerContainer;
+        const topLayer = this._scene.topLayer;
 
         // 计算鼠标在根节点坐标系中的位置（屏幕坐标转换为根节点局部坐标）
         const mouseInRootNode = root.toLocal([screenX, screenY]);
@@ -88,6 +89,7 @@ export class ZoomController {
         // 应用新的缩放值
         this._zoomStore.setZoomValue(newZoomValue);
         canvasContainer.scale.set(newScaleValue, newScaleValue);
+        topLayer.scale.set(newScaleValue, newScaleValue);
 
         // 计算缩放后，虚拟画布上的那个点在世界坐标系中的新位置
         const mouseWorldPosAfterZoom = canvasNode.toGlobal(mouseInCanvasNode);
