@@ -165,7 +165,10 @@ export class EventsHandler extends EventEmitter {
     protected _collectAllNodes(): SNode[] {
         const nodes: SNode[] = [];
         visitNodeRecursive(this._editor.scene.canvasLayer, (node) => {
-            if (node.type === SNodeConfig.NodeType.ARROW) {
+            if (
+                node.type === SNodeConfig.NodeType.ARROW ||
+                node.type === SNodeConfig.NodeType.IARROW
+            ) {
                 return;
             }
             if (node !== this._editor.scene.canvasLayer) {

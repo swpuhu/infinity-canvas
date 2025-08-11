@@ -27,5 +27,7 @@ export function createElement<T extends keyof JSX.IntrinsicElements>(
         ? SNodeConfig.DashLineConfig
         : T extends 'arrow'
         ? SNodeConfig.ArrowConfig
+        : T extends 'iarrow'
+        ? SNodeConfig.IArrowConfig
         : never;
 }

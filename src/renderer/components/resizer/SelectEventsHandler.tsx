@@ -1,4 +1,4 @@
-import { EventNames, SNodeEvents } from '@/common/types';
+import { EventNames, SNodeConfig, SNodeEvents } from '@/common/types';
 import { CanvasEditor } from '@/renderer/Editor';
 import SNode from '@/renderer/SNode';
 import { createNodeFromConfig } from '@/renderer/util';
@@ -98,7 +98,12 @@ export class SelectEventsHandler extends EventEmitter {
 
         const unLockedNodes = this._editor.scene
             .getAllNodes()
-            .filter((node) => !node.isLocked);
+            .filter(
+                (node) =>
+                    !node.isLocked &&
+                    node.type !== SNodeConfig.NodeType.ARROW &&
+                    node.type !== SNodeConfig.NodeType.IARROW
+            );
         // 遍历场景中的节点，检查是否与选框相交
         this._findIntersectingNodes(unLockedNodes, selectRect);
 

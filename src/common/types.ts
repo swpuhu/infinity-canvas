@@ -107,6 +107,7 @@ export namespace SNodeConfig {
         HEXAGON = 'hexagon',
         STAR = 'star',
         ARROW = 'arrow',
+        IARROW = 'iarrow',
     }
 
     export type SGraphicsPropsConfig = {
@@ -192,6 +193,12 @@ export namespace SNodeConfig {
     export type ArrowConfig = BaseConfig &
         SGraphicsPropsAndStyle & {
             type: NodeType.ARROW;
+        };
+
+    export type IArrowConfig = BaseConfig &
+        SGraphicsPropsAndStyle & {
+            type: NodeType.IARROW;
+            points: ReadonlyVec2[];
         };
 
     export type NodeTypeMap = {
