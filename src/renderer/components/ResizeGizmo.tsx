@@ -47,12 +47,6 @@ export class ResizeGizmo {
             if (!node) {
                 this.unMount();
             } else {
-                const iArrow = node.getComponent(SIArrow);
-                if (iArrow) {
-                    this._iArrowResizer.mountTo(iArrow);
-                    return;
-                }
-
                 // 先根据当前 node的 uuid查找 nodeInfoStore 中的 lockedNodeGroup 是否包含该 node的 uuid
                 const lockedNodeGroup = this._nodeInfoStore.lockedNodeGroup;
                 const group = lockedNodeGroup.find((group) =>
@@ -119,6 +113,12 @@ export class ResizeGizmo {
             this.unMount();
             return;
         }
+        const iArrow = targetNodes[0].getComponent(SIArrow);
+        if (iArrow) {
+            this._iArrowResizer.mountTo(iArrow);
+            return;
+        }
+
         this._eventsHandler.setCurrentNodes(targetNodes);
         if (targetNodes.length === 1) {
             this._uiComponent.alignToNode(targetNodes[0]);
@@ -142,6 +142,7 @@ export class ResizeGizmo {
     }
 
     public unMount(): void {
+        this._iArrowResizer.unMount();
         this._nodeInfoStore.setCurrentSelectedNodeIds([]);
         this._uiComponent.setCurrentTargetNodes([]);
         this._uiComponent.hide();

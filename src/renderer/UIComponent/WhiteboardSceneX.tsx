@@ -54,7 +54,7 @@ export function WhiteboardSceneX(option: {
                             }}
                             points={[
                                 [0, 0],
-                                [100, 0],
+                                [500, 0],
                             ]}
                         />
                     </rect>
