@@ -1,5 +1,5 @@
 import type SNode from '@/renderer/SNode';
-import { mat3, ReadonlyVec2 } from 'gl-matrix';
+import { mat3, ReadonlyVec2, vec2, vec3 } from 'gl-matrix';
 import { CursorStyle, EnumRenderComponentType, ResizeDirection } from './types';
 import { SParagraph } from '@/renderer/RenderComponents/SParagraph';
 
@@ -332,3 +332,23 @@ export const arraysEqual = (arr1: string[], arr2: string[]) => {
     const sorted2 = [...arr2].sort();
     return sorted1.every((val, index) => val === sorted2[index]);
 };
+
+export function getDistanceFromPointToLine(
+    p: ReadonlyVec2,
+    p1: ReadonlyVec2,
+    p2: ReadonlyVec2
+): number {
+    const vp1P = vec2.create();
+    const vp2P = vec2.create();
+    const vP1P2 = vec2.create();
+    vec2.sub(vp1P, p, p1);
+    vec2.sub(vp2P, p, p2);
+    vec2.sub(vP1P2, p2, p1);
+    const len = vec2.len(vP1P2);
+    vec2.normalize(vP1P2, vP1P2);
+    const dot = vec2.dot(vp1P, vP1P2);
+    if (dot < 0 || dot > len) {
+        return Math.min(vec2.len(vp1P), vec2.len(vp2P));
+    }
+    return Math.abs(vec2.cross(vec3.create(), vp1P, vP1P2)[2]);
+}

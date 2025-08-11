@@ -14,6 +14,7 @@ import { SelectEventsHandler } from './SelectEventsHandler';
 import { SParagraph } from '@/renderer/RenderComponents/SParagraph';
 import eventBus from '@/common/eventBus';
 import { HoverEventsHandler } from './HoverEventsHandler';
+import { SIArrow } from '@/renderer/RenderComponents/SIArrow';
 export class EventsHandler extends EventEmitter {
     private _dragEventsHandler: DragEventsHandler;
 
@@ -120,6 +121,7 @@ export class EventsHandler extends EventEmitter {
         }
 
         const allNodes = this._collectAllNodes();
+
         const hitNode: SNode | null = this._hitTest(event, allNodes);
         allNodes.forEach((node) => {
             node.preSelected = node === hitNode;
@@ -165,10 +167,7 @@ export class EventsHandler extends EventEmitter {
     protected _collectAllNodes(): SNode[] {
         const nodes: SNode[] = [];
         visitNodeRecursive(this._editor.scene.canvasLayer, (node) => {
-            if (
-                node.type === SNodeConfig.NodeType.ARROW ||
-                node.type === SNodeConfig.NodeType.IARROW
-            ) {
+            if (node.type === SNodeConfig.NodeType.ARROW) {
                 return;
             }
             if (node !== this._editor.scene.canvasLayer) {

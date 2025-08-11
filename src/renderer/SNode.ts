@@ -21,6 +21,7 @@ import { autobind } from 'core-decorators';
 import EventEmitter from 'eventemitter3';
 import { mat3, ReadonlyVec2, vec2 } from 'gl-matrix';
 import { alignToNode } from './util';
+import { SIArrow } from './RenderComponents/SIArrow';
 
 class SNode extends EventEmitter {
     private _children: SNode[] = [];
@@ -464,6 +465,11 @@ class SNode extends EventEmitter {
     public hitTest(worldPos: ReadonlyVec2): boolean {
         if (!this._active) {
             return false;
+        }
+
+        const iArrow = this.getComponent(SIArrow);
+        if (iArrow) {
+            return iArrow.hitTest(worldPos);
         }
 
         if (this.width === 0 || this.height === 0) {

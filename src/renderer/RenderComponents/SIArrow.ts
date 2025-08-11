@@ -3,7 +3,7 @@ import { ReadonlyVec2 } from 'gl-matrix';
 import { SRenderComponent } from './SRenderComponent';
 import { SNodeConfig } from '@/common/types';
 import { CanvasKitModule } from '@/lib/canvaskit';
-import { safeColor } from '@/common/util';
+import { getDistanceFromPointToLine, safeColor } from '@/common/util';
 
 export class SIArrow extends SRenderComponent {
     private _points: ReadonlyVec2[] = [];
@@ -34,6 +34,10 @@ export class SIArrow extends SRenderComponent {
     public setPoints(points: ReadonlyVec2[]) {
         this._points = points;
         this._pathIsDirty = true;
+    }
+
+    public getPoints(): ReadonlyVec2[] {
+        return this._points;
     }
 
     public addPoint(point: ReadonlyVec2, index: number) {
@@ -84,5 +88,23 @@ export class SIArrow extends SRenderComponent {
             return;
         }
         canvas.drawPath(this._path, this._paint);
+    }
+
+    public hitTest(worldPos: ReadonlyVec2): boolean {
+        if (!this._points.length || !this.node) {
+            return false;
+        }
+        const localPos = this.node.toLocal(worldPos);
+
+        for (let i = 0; i < this._points.length - 1; i++) {
+            const p1 = this._points[i];
+            const p2 = this._points[i + 1];
+            const distance = getDistanceFromPointToLine(localPos, p1, p2);
+            if (distance < 10) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

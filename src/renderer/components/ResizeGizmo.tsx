@@ -9,6 +9,8 @@ import { SnapGuide } from './SnapGuide';
 import { useNodeInfoStore } from '@/store/NodeInfoStore';
 import { watch, WatchHandle } from 'vue';
 import { useZoomStore } from '@/store/ZoomStore';
+import { SIArrow } from '../RenderComponents/SIArrow';
+import { IArrowResizer } from './resizer/IArrowResizer';
 
 export class ResizeGizmo {
     private _scene: WhiteboardScene;
@@ -17,6 +19,8 @@ export class ResizeGizmo {
     private _uiComponent: ResizerUI;
 
     private _eventsHandler: EventsHandler;
+
+    private _iArrowResizer: IArrowResizer;
 
     private _lockedNodeGroupWatchHandle: WatchHandle;
 
@@ -30,6 +34,8 @@ export class ResizeGizmo {
 
         this._uiComponent = new ResizerUI(this._scene);
 
+        this._iArrowResizer = new IArrowResizer(editor);
+
         this._scene.topLayer.addChild(this._uiComponent.node!);
         this._eventsHandler = new EventsHandler(
             editor,
@@ -41,6 +47,12 @@ export class ResizeGizmo {
             if (!node) {
                 this.unMount();
             } else {
+                const iArrow = node.getComponent(SIArrow);
+                if (iArrow) {
+                    this._iArrowResizer.mountTo(iArrow);
+                    return;
+                }
+
                 // 先根据当前 node的 uuid查找 nodeInfoStore 中的 lockedNodeGroup 是否包含该 node的 uuid
                 const lockedNodeGroup = this._nodeInfoStore.lockedNodeGroup;
                 const group = lockedNodeGroup.find((group) =>
