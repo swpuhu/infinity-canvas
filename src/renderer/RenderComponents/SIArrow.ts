@@ -1,5 +1,5 @@
 import { Canvas, Paint, Path } from 'canvaskit-wasm';
-import { ReadonlyVec2 } from 'gl-matrix';
+import { ReadonlyVec2, vec2 } from 'gl-matrix';
 import { SRenderComponent } from './SRenderComponent';
 import { SNodeConfig } from '@/common/types';
 import { CanvasKitModule } from '@/lib/canvaskit';
@@ -16,6 +16,8 @@ export class SIArrow extends SRenderComponent {
 
     private _options: SNodeConfig.SGraphicsStyleConfig = {};
 
+    public isOrigin = true;
+
     protected onCreated(): void {}
 
     public applyStyle(options: SNodeConfig.SGraphicsStyleConfig = {}) {
@@ -26,14 +28,50 @@ export class SIArrow extends SRenderComponent {
         this._paint = new CanvasKitModule.CanvasKit.Paint();
         this._paint.setColor(safeColor(options.stroke || 0x000000));
         this._paint.setStyle(CanvasKitModule.CanvasKit.PaintStyle.Stroke);
-        this._paint.setStrokeWidth(options.strokeWidth || 2);
+        this._paint.setStrokeWidth(options.strokeWidth || 4);
         this._paint.setStrokeCap(CanvasKitModule.CanvasKit.StrokeCap.Round);
         this._paint.setAntiAlias(true);
     }
 
     public setPoints(points: ReadonlyVec2[]) {
-        this._points = points;
+        if (points.length === 2) {
+            this._points = this._lerpPoints(points);
+        } else {
+            this._points = points;
+        }
         this._pathIsDirty = true;
+    }
+
+    private _lerpPoints(points: ReadonlyVec2[]): ReadonlyVec2[] {
+        const start = points[0];
+        const end = points[1];
+        // 如果是横平竖直就直接返回原始点
+        const dx = end[0] - start[0];
+        const dy = end[1] - start[1];
+        const isHorizontal = Math.abs(dx) >= Math.abs(dy);
+
+        if (isHorizontal && Math.abs(dy) < 1) {
+            return [start, end];
+        }
+
+        if (!isHorizontal && Math.abs(dx) < 1) {
+            return [start, end];
+        }
+
+        if (isHorizontal && dx > 1) {
+            const midX = start[0] + dx / 2;
+            return [
+                start,
+                vec2.fromValues(midX, start[1]),
+                vec2.fromValues(midX, end[1]),
+                end,
+            ];
+        }
+        if (!isHorizontal && dy > 1) {
+            return [start, vec2.fromValues(end[0], start[1]), end];
+        }
+        // 否则返回原始点
+        return [start, end];
     }
 
     public getPoints(): ReadonlyVec2[] {
@@ -68,8 +106,8 @@ export class SIArrow extends SRenderComponent {
         const dy = lastPoint[1] - prevPoint[1];
         const isHorizontal = Math.abs(dx) >= Math.abs(dy);
 
-        const arrowWidth = 15;
-        const arrowHalfHeight = 7;
+        const arrowWidth = 25;
+        const arrowHalfHeight = 15;
 
         if (isHorizontal) {
             const dir = Math.sign(dx) || 1; // 1: 向右，-1: 向左

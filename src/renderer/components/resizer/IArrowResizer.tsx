@@ -2,10 +2,11 @@ import { CanvasEditor } from '@/renderer/Editor';
 import { SIArrow } from '@/renderer/RenderComponents/SIArrow';
 import SNode from '@/renderer/SNode';
 import { createElement } from '@/renderer/createElement';
-import { createNodeFromConfig } from '@/renderer/util';
+import { createNodeFromConfig, refSNode } from '@/renderer/util';
 import { vec2 } from 'gl-matrix';
-import { SNodeEvents } from '@/common/types';
+import { SNodeConfig, SNodeEvents } from '@/common/types';
 import eventBus from '@/common/eventBus';
+import { CanvasEventSystem } from '@/renderer/SEventManager';
 
 const VERTICAL = 1;
 const HORIZONTAL = 0;
@@ -26,11 +27,45 @@ export class IArrowResizer {
     private _dragStartLocal: [number, number] | null = null;
     private _originPoints: [number, number][] = [];
 
+    private _startPoint: SNode | undefined = undefined;
+    private _endPoint: SNode | undefined = undefined;
+
     private _registeredControls = new Set<string>();
 
     constructor(private _editor: CanvasEditor) {
-        this._rootNode = new SNode();
+        const startRef = refSNode();
+        const endRef = refSNode();
+        const radius = 10;
+        const rootConfig = (
+            <container>
+                <ellipse
+                    name="start point"
+                    ref={startRef}
+                    width={radius}
+                    height={radius}
+                    style={{
+                        fill: 0xffffff,
+                        stroke: 0xff6600,
+                    }}
+                ></ellipse>
+                <ellipse
+                    name="end point"
+                    ref={endRef}
+                    width={radius}
+                    height={radius}
+                    style={{
+                        fill: 0xffffff,
+                        stroke: 0xff6600,
+                    }}
+                ></ellipse>
+            </container>
+        );
+        this._rootNode = createNodeFromConfig(rootConfig);
         this._editor.scene.topLayer.addChild(this._rootNode);
+
+        this._startPoint = startRef.value;
+        this._endPoint = endRef.value;
+        this._bindEvents();
     }
 
     private _attachControlEvents(control: SNode) {
@@ -40,6 +75,12 @@ export class IArrowResizer {
             SNodeEvents.POINTER_DOWN,
             this._onControlPointerDown
         );
+        CanvasEventSystem.instance.addEventListener(
+            control,
+            SNodeEvents.PURE_POINTER_MOVE,
+            this._onPurePointerMove
+        );
+
         this._registeredControls.add(control.uuid);
     }
 
@@ -77,7 +118,7 @@ export class IArrowResizer {
         if (this._rootNode) {
             this._rootNode.active = true;
         }
-        console.log('mountToArrow', arrow);
+        // console.log('mountToArrow', arrow);
         this._currentArrow = arrow;
         // 清理旧的控制节点
         this._clearControls();
@@ -104,12 +145,29 @@ export class IArrowResizer {
         }
 
         const points = arrow.getPoints();
+        if (points.length < 2) {
+            return;
+        }
+
+        const startPoint = points[0];
+        const lastPoint = points[points.length - 1];
+        const startWorldP = arrow.node!.toGlobal(startPoint);
+        const endWorldP = arrow.node!.toGlobal(lastPoint);
+        if (this._startPoint) {
+            const localStartP = this._rootNode!.toLocal(startWorldP);
+            this._startPoint.position.set(localStartP[0], localStartP[1]);
+        }
+        if (this._endPoint) {
+            const localEndP = this._rootNode!.toLocal(endWorldP);
+            this._endPoint.position.set(localEndP[0], localEndP[1]);
+        }
+
         for (let i = 1; i < points.length; i++) {
             const p1 = points[i - 1];
             const p2 = points[i];
             // 段长小于阈值则不创建控制点
             const segLen = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
-            if (segLen < 80) {
+            if (segLen < 50) {
                 continue;
             }
             const midPoint = vec2.fromValues(
@@ -243,6 +301,25 @@ export class IArrowResizer {
         // 正确清理控制节点
         this._clearControls();
     }
+
+    private _bindEvents(): void {
+        const points = [this._startPoint!, this._endPoint!];
+        points.forEach((node) =>
+            CanvasEventSystem.instance.addEventListener(
+                node,
+                SNodeEvents.PURE_POINTER_MOVE,
+                this._onPurePointerMove
+            )
+        );
+    }
+
+    private _onPurePointerMove = (event: SNodeEvents.IPointerEvent) => {
+        console.log('pure pointer move', event.target!.name);
+        if (!this._currentArrow || !this._rootNode) return;
+        const arrowNode = this._currentArrow.node!;
+        const worldPos = event.getWorldPosition();
+        const localPos = arrowNode.toLocal(worldPos);
+    };
 
     destroy(): void {
         this.unMount();

@@ -120,7 +120,9 @@ export class EventsHandler extends EventEmitter {
             return;
         }
 
-        const allNodes = this._collectAllNodes();
+        const allNodes = this._collectAllNodes(
+            (node) => node.type !== SNodeConfig.NodeType.IARROW
+        );
 
         const hitNode: SNode | null = this._hitTest(event, allNodes);
         allNodes.forEach((node) => {
@@ -164,9 +166,12 @@ export class EventsHandler extends EventEmitter {
         }
     };
 
-    protected _collectAllNodes(): SNode[] {
+    protected _collectAllNodes(filter?: (node: SNode) => boolean): SNode[] {
         const nodes: SNode[] = [];
         visitNodeRecursive(this._editor.scene.canvasLayer, (node) => {
+            if (filter && !filter(node)) {
+                return;
+            }
             if (node.type === SNodeConfig.NodeType.ARROW) {
                 return;
             }

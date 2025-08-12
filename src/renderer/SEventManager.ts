@@ -297,7 +297,7 @@ export class CanvasEventSystem {
         // if (type === SNodeEvents.POINTER_MOVE) {
         //     console.log(originalListeners);
         // }
-        this._sortListeners();
+        this._sortListeners(type);
     }
 
     addSystemEventListener<T extends keyof SNodeEvents.EventMap>(
@@ -345,11 +345,22 @@ export class CanvasEventSystem {
         }
         sNode.off(type, handler);
         // console.log(listeners);
-        this._sortListeners();
+        this._sortListeners(type);
     }
 
-    private _sortListeners() {
-        const listeners = this._listenersMap.get('pointerdown');
+    private _sortListeners(type?: keyof SNodeEvents.EventMap) {
+        if (type) {
+            const listeners = this._listenersMap.get(type);
+            if (!listeners) {
+                return;
+            }
+            listeners.sort((a, b) => {
+                return compareNodeDepth(a.node, b.node);
+            });
+            return;
+        }
+        // 兼容旧逻辑：若未指定类型，仅对 POINTER_DOWN 进行排序
+        const listeners = this._listenersMap.get(SNodeEvents.POINTER_DOWN);
         if (!listeners) {
             return;
         }
