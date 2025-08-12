@@ -63,19 +63,29 @@ export class SIArrow extends SRenderComponent {
             this._path.lineTo(this._points[i][0], this._points[i][1]);
         }
         const lastPoint = this._points[this._points.length - 1];
+        const prevPoint = this._points[this._points.length - 2];
+        const dx = lastPoint[0] - prevPoint[0];
+        const dy = lastPoint[1] - prevPoint[1];
+        const isHorizontal = Math.abs(dx) >= Math.abs(dy);
+
         const arrowWidth = 15;
         const arrowHalfHeight = 7;
 
-        this._path.moveTo(lastPoint[0], lastPoint[1]);
-        this._path.lineTo(
-            lastPoint[0] - arrowWidth,
-            lastPoint[1] - arrowHalfHeight
-        );
-        this._path.moveTo(lastPoint[0], lastPoint[1]);
-        this._path.lineTo(
-            lastPoint[0] - arrowWidth,
-            lastPoint[1] + arrowHalfHeight
-        );
+        if (isHorizontal) {
+            const dir = Math.sign(dx) || 1; // 1: 向右，-1: 向左
+            const backX = lastPoint[0] - dir * arrowWidth;
+            this._path.moveTo(lastPoint[0], lastPoint[1]);
+            this._path.lineTo(backX, lastPoint[1] - arrowHalfHeight);
+            this._path.moveTo(lastPoint[0], lastPoint[1]);
+            this._path.lineTo(backX, lastPoint[1] + arrowHalfHeight);
+        } else {
+            const dir = Math.sign(dy) || 1; // 1: 向下，-1: 向上
+            const backY = lastPoint[1] - dir * arrowWidth;
+            this._path.moveTo(lastPoint[0], lastPoint[1]);
+            this._path.lineTo(lastPoint[0] - arrowHalfHeight, backY);
+            this._path.moveTo(lastPoint[0], lastPoint[1]);
+            this._path.lineTo(lastPoint[0] + arrowHalfHeight, backY);
+        }
 
         this._pathIsDirty = false;
     }
