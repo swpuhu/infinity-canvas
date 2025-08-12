@@ -7,6 +7,7 @@ import { vec2 } from 'gl-matrix';
 import { SNodeConfig, SNodeEvents } from '@/common/types';
 import eventBus from '@/common/eventBus';
 import { CanvasEventSystem } from '@/renderer/SEventManager';
+import { SGeo } from '@/renderer/Geometry/SGeo';
 
 const VERTICAL = 1;
 const HORIZONTAL = 0;
@@ -20,6 +21,8 @@ export class IArrowResizer {
     private _usedControls: SNode[] = [];
 
     private _rootNode: SNode | null = null;
+
+    private _prevHoveredNode: SNode | null = null;
 
     // drag state
     private _dragging = false;
@@ -66,6 +69,7 @@ export class IArrowResizer {
         this._startPoint = startRef.value;
         this._endPoint = endRef.value;
         this._bindEvents();
+        this._enableResize();
     }
 
     private _attachControlEvents(control: SNode) {
@@ -314,12 +318,37 @@ export class IArrowResizer {
     }
 
     private _onPurePointerMove = (event: SNodeEvents.IPointerEvent) => {
-        console.log('pure pointer move', event.target!.name);
+        event.stopPropagation();
+        console.log('pure pointer move', event.currentTarget!.name);
         if (!this._currentArrow || !this._rootNode) return;
         const arrowNode = this._currentArrow.node!;
         const worldPos = event.getWorldPosition();
         const localPos = arrowNode.toLocal(worldPos);
+        if (event.target !== this._prevHoveredNode) {
+            this._onNodeHovered(this._prevHoveredNode, false);
+            this._onNodeHovered(event.target, true);
+        }
+
+        this._prevHoveredNode = event.target;
     };
+
+    private _onNodeHovered(node: SNode | null, isHover: boolean) {
+        if (!node) {
+            return;
+        }
+        const geo = node.getComponent(SGeo);
+        if (geo && node === this._startPoint) {
+            geo.fill({ color: isHover ? 0x000000 : 0xffffff });
+        }
+    }
+
+    private _enableResize(): void {
+        this._editor.eventSystem.addEventListener(
+            this._editor.scene.getCanvasNode(),
+            SNodeEvents.PURE_POINTER_MOVE,
+            this._onPurePointerMove
+        );
+    }
 
     destroy(): void {
         this.unMount();

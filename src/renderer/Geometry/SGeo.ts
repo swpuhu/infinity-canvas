@@ -66,7 +66,7 @@ export class SGeo extends SRenderComponent {
 
     public fill(options?: FillOptions): void {
         const paint = this._getFillPaint();
-        if (options?.color) {
+        if (options?.color !== undefined) {
             const color = safeColor(options.color);
             paint.setColor(color);
         }

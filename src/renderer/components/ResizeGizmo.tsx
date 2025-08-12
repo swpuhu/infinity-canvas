@@ -34,8 +34,6 @@ export class ResizeGizmo {
 
         this._uiComponent = new ResizerUI(this._scene);
 
-        this._iArrowResizer = new IArrowResizer(editor);
-
         this._scene.topLayer.addChild(this._uiComponent.node!);
         this._eventsHandler = new EventsHandler(
             editor,
@@ -106,6 +104,8 @@ export class ResizeGizmo {
                 this._uiComponent.updateHandlerNodes();
             }
         );
+
+        this._iArrowResizer = new IArrowResizer(editor);
     }
 
     public mountToNode(targetNodes: SNode[], isLock = false): void {
