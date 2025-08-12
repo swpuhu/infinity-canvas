@@ -53,6 +53,27 @@ export class IArrowResizer {
         }
         console.log('mountToArrow', arrow);
         this._currentArrow = arrow;
+        // 清理旧的控制节点
+        this._clearControls();
+        this._updateControls();
+    }
+
+    private _clearControls() {
+        // 将当前使用的控制节点从rootNode中移除并回收到池中
+        this._usedControls.forEach((control) => {
+            if (control.parent) {
+                control.parent.removeChild(control);
+            }
+        });
+        this._controls.push(...this._usedControls);
+        this._usedControls = [];
+    }
+
+    private _updateControls() {
+        const arrow = this._currentArrow;
+        if (!arrow) {
+            return;
+        }
 
         const points = arrow.getPoints();
         for (let i = 1; i < points.length; i++) {
@@ -82,7 +103,11 @@ export class IArrowResizer {
             this._rootNode.active = false;
         }
         this._currentArrow = null;
-        this._controls.push(...this._usedControls);
-        this._usedControls = [];
+        // 正确清理控制节点
+        this._clearControls();
+    }
+
+    destroy(): void {
+        this.unMount();
     }
 }

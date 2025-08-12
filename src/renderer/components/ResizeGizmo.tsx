@@ -151,5 +151,6 @@ export class ResizeGizmo {
     public destroy(): void {
         this._lockedNodeGroupWatchHandle.stop();
         this._zoomWatchHandle.stop();
+        this._iArrowResizer.destroy();
     }
 }
