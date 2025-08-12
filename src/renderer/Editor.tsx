@@ -165,6 +165,41 @@ export class CanvasEditor {
         this._renderer.render(scene.rootNode);
     }
 
+    public destroy(): void {
+        // 清理系统事件
+        if (this._eventSystem) {
+            this._eventSystem.destroy();
+            this._eventSystem = null;
+        }
+
+        // 取消全局事件绑定（如果后续有 onEnterEditMode 等订阅，也应对称 off，这里当前仅 reDraw 在 renderer 内处理）
+        // 清理渲染器与GL资源
+        if (this._renderer) {
+            this._renderer.destroy();
+            this._renderer = null;
+        }
+
+        // 组件清理（若有 destroy 方法则调用）
+        this._resizeGizmo = null;
+        this._shapeCreator = null;
+        this._textCreator = null;
+        this._snapGuide = null;
+        this._layerController = null;
+        this._sceneManager = null;
+
+        // 场景节点树清理
+        if (this._scene) {
+            const root = this._scene.rootNode;
+            root.removeChildren();
+            // 从根移除自身，如果有父
+            root.removeFromParent();
+            this._scene = null;
+        }
+
+        // 释放 CanvasKit 共享资源（Paint/FontMgr等）
+        CanvasKitModule.destroy();
+    }
+
     /**
      * Set the zoom value of the canvas
      * @param zoomValue Zoom value (can be negative)
@@ -318,14 +353,5 @@ export class CanvasEditor {
             throw new Error('editor is not initialized');
         }
         return this._eventSystem;
-    }
-
-    destroy() {
-        this._renderer?.destroy();
-        this._eventSystem?.destroy();
-        CanvasKitModule.destroy();
-        this._resizeGizmo?.destroy();
-        this._shapeCreator?.destroy();
-        eventBus.destroy();
     }
 }

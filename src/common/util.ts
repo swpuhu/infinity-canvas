@@ -344,11 +344,25 @@ export function getDistanceFromPointToLine(
     vec2.sub(vp1P, p, p1);
     vec2.sub(vp2P, p, p2);
     vec2.sub(vP1P2, p2, p1);
+
     const len = vec2.len(vP1P2);
-    vec2.normalize(vP1P2, vP1P2);
+    if (len === 0) {
+        // P1 and P2 are the same point
+        return vec2.len(vp1P);
+    }
+
+    // Use unnormalized vector for projection to keep scale consistent
     const dot = vec2.dot(vp1P, vP1P2);
-    if (dot < 0 || dot > len) {
+    const t = dot / (len * len);
+
+    if (t <= 0) {
         return Math.min(vec2.len(vp1P), vec2.len(vp2P));
     }
-    return Math.abs(vec2.cross(vec3.create(), vp1P, vP1P2)[2]);
+    if (t >= 1) {
+        return Math.min(vec2.len(vp1P), vec2.len(vp2P));
+    }
+
+    // Perpendicular distance to the line segment
+    const crossZ = vec2.cross(vec3.create(), vp1P, vP1P2)[2];
+    return Math.abs(crossZ) / len;
 }

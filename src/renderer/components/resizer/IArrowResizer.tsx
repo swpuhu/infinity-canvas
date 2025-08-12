@@ -24,13 +24,17 @@ export class IArrowResizer {
     }
 
     private _getNewControls(direction: DIRECTION): SNode {
-        if (this._controls.length) {
-            const control = this._controls.pop();
-            this._usedControls.push(control!);
-            return control!;
-        }
         const width = direction === VERTICAL ? 10 : 20;
         const height = direction === VERTICAL ? 20 : 10;
+        if (this._controls.length) {
+            const control = this._controls.pop()!;
+            // 同步尺寸，避免横竖切换导致尺寸不一致
+            control.setSize(width, height);
+            // 同步子节点（例如内部rect）的尺寸
+            control.children.forEach((child) => child.setSize(width, height));
+            this._usedControls.push(control);
+            return control;
+        }
         const controlConfig = (
             <container width={width} height={height}>
                 <rect
@@ -109,5 +113,15 @@ export class IArrowResizer {
 
     destroy(): void {
         this.unMount();
+        // 彻底移除root容器，避免空容器常驻
+        if (this._rootNode) {
+            this._rootNode.removeChildren();
+            this._rootNode.removeFromParent();
+            this._rootNode = null;
+        }
+        // 清理池与引用
+        this._controls = [];
+        this._usedControls = [];
+        this._currentArrow = null;
     }
 }
