@@ -13,6 +13,8 @@ export enum EditorMode {
     ROTATING = 0b0010000000,
     DRAGGING = 0b0100000000,
     HAND_TOOL = 0b1000000000,
+    PRE_MOVE_ARROW = 0b10000000000 | EditorMode.DEFAULT,
+    PRE_RESIZE_ARROW = 0b100000000000 | EditorMode.DEFAULT,
     // Add more modes as needed
 }
 
@@ -59,6 +61,10 @@ export const useEditorModeStore = defineStore('editorMode', {
                 return CursorStyle.ROTATE;
             } else if (this.currentMode === EditorMode.HAND_TOOL) {
                 return CursorStyle.HAND_TOOL;
+            } else if (this.currentMode === EditorMode.PRE_MOVE_ARROW) {
+                return CursorStyle.MOVE;
+            } else if (this.currentMode === EditorMode.PRE_RESIZE_ARROW) {
+                return CursorStyle.RESIZE;
             }
 
             return CursorStyle.DEFAULT;
@@ -74,7 +80,10 @@ export const useEditorModeStore = defineStore('editorMode', {
             // console.log('setMode', mode);
 
             this.currentMode = mode;
-            if (mode === EditorMode.PRE_RESIZE) {
+            if (
+                mode === EditorMode.PRE_RESIZE ||
+                mode === EditorMode.PRE_RESIZE_ARROW
+            ) {
                 this.resizeDirection = direction || 'none';
             }
         },

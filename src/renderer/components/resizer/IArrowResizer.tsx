@@ -8,6 +8,7 @@ import { SNodeConfig, SNodeEvents } from '@/common/types';
 import eventBus from '@/common/eventBus';
 import { CanvasEventSystem } from '@/renderer/SEventManager';
 import { SGeo } from '@/renderer/Geometry/SGeo';
+import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 
 const VERTICAL = 1;
 const HORIZONTAL = 0;
@@ -36,6 +37,8 @@ export class IArrowResizer {
     private _registeredControls = new Set<string>();
 
     private _isDraggingEndPoint = false;
+
+    private _editorModeStore = useEditorModeStore();
 
     constructor(private _editor: CanvasEditor) {
         const startRef = refSNode();
@@ -71,8 +74,6 @@ export class IArrowResizer {
         this._startPoint = startRef.value;
         this._endPoint = endRef.value;
 
-        console.log('startpoint, ', this._startPoint?.zIndex);
-        console.log('endpoint, ', this._endPoint?.zIndex);
         this._bindEvents();
         this._enableResize();
     }
@@ -399,12 +400,20 @@ export class IArrowResizer {
         console.log('hovered: ', isHover, node.name);
         const geo =
             node.getComponent(SGeo) || node.getComponentInChildren(SGeo);
-        if (
-            this._usedControls.includes(node) ||
-            node === this._startPoint ||
-            node === this._endPoint
-        ) {
+
+        if (this._usedControls.includes(node)) {
             geo && geo.fill({ color: isHover ? 0xff6600 : 0xffffff });
+            this._editorModeStore.setMode(
+                isHover ? EditorMode.PRE_RESIZE_ARROW : EditorMode.DEFAULT,
+                node.metadata.direction === VERTICAL ? 'ew' : 'ns'
+            );
+        } else if (node === this._startPoint || node === this._endPoint) {
+            geo && geo.fill({ color: isHover ? 0xff6600 : 0xffffff });
+            this._editorModeStore.setMode(
+                isHover ? EditorMode.PRE_MOVE_ARROW : EditorMode.DEFAULT
+            );
+        } else {
+            this._editorModeStore.setMode(EditorMode.DEFAULT);
         }
     }
 

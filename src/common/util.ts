@@ -277,6 +277,8 @@ export function getCursorStyleString(
         return 'text';
     } else if (cursorStyle === CursorStyle.HAND_TOOL) {
         return 'grab';
+    } else if (cursorStyle === CursorStyle.MOVE) {
+        return 'move';
     }
     return 'default';
 }

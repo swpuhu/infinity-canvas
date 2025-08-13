@@ -359,6 +359,7 @@ export enum CursorStyle {
     RESIZE = 'resize',
     ROTATE = 'rotate',
     HAND_TOOL = 'handTool',
+    MOVE = 'move',
 }
 
 // 定义调整大小的方向类型
@@ -371,4 +372,6 @@ export type ResizeDirection =
     | 's'
     | 'w'
     | 'e'
-    | 'none';
+    | 'none'
+    | 'ns'
+    | 'ew';
