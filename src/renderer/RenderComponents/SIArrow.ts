@@ -36,8 +36,10 @@ export class SIArrow extends SRenderComponent {
     public setPoints(points: ReadonlyVec2[]) {
         if (points.length === 2) {
             this._points = this._lerpPoints(points);
+            this.isOrigin = true;
         } else {
             this._points = points;
+            this.isOrigin = false;
         }
         this._pathIsDirty = true;
     }

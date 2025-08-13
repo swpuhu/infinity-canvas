@@ -44,6 +44,8 @@ export class IArrowResizer {
     private _arrowStartPos: [number, number] | null = null;
     private _controlsHiddenInDrag = false;
 
+    private _lastSecondDir = VERTICAL;
+
     private _editorModeStore = useEditorModeStore();
 
     private _setControlsVisible(visible: boolean) {
@@ -73,7 +75,7 @@ export class IArrowResizer {
     constructor(private _editor: CanvasEditor) {
         const startRef = refSNode();
         const endRef = refSNode();
-        const radius = 10;
+        const radius = 20;
         const rootConfig = (
             <container>
                 <ellipse
@@ -126,8 +128,8 @@ export class IArrowResizer {
     }
 
     private _getNewControls(direction: DIRECTION): SNode {
-        const width = direction === VERTICAL ? 10 : 20;
-        const height = direction === VERTICAL ? 20 : 10;
+        const width = direction === VERTICAL ? 20 : 50;
+        const height = direction === VERTICAL ? 50 : 20;
         if (this._controls.length) {
             const control = this._controls.shift()!;
             // 激活并同步尺寸
@@ -247,14 +249,50 @@ export class IArrowResizer {
         this._dragControl = control;
         event.stopPropagation();
 
+        // 如果是首段或末段，且长度>100，则在该段中间插入两个点，并将当前控制段切换为新中段
+        const pointsBefore = this._currentArrow.getPoints();
+        if (
+            (segmentIndex === 1 || segmentIndex === pointsBefore.length - 1) &&
+            pointsBefore.length >= 2
+        ) {
+            const p1 = pointsBefore[segmentIndex - 1];
+            const p2 = pointsBefore[segmentIndex];
+            const segLen = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+            if (segLen > 100) {
+                if (segmentIndex === 1) {
+                    const dx = p2[0] - p1[0];
+                    const dy = p2[1] - p1[1];
+                    const pt1 = vec2.fromValues(
+                        p1[0] + dx * 0.1,
+                        p1[1] + dy * 0.1
+                    );
+                    const newPoints = pointsBefore.slice();
+                    newPoints.splice(segmentIndex, 0, pt1, pt1);
+                    this._currentArrow.setPoints(newPoints);
+                    control.metadata.segmentIndex = segmentIndex + 2;
+                } else {
+                    const dx = p2[0] - p1[0];
+                    const dy = p2[1] - p1[1];
+                    const pt1 = vec2.fromValues(
+                        p2[0] - dx * 0.1,
+                        p2[1] - dy * 0.1
+                    );
+                    const newPoints = pointsBefore.slice();
+                    newPoints.splice(segmentIndex, 0, pt1, pt1);
+                    this._currentArrow.setPoints(newPoints);
+                }
+                // 将控制段改为新中段（pt1-pt2）
+            }
+        }
+
         const worldPos = event.getWorldPosition();
         const arrowNode = this._currentArrow.node!;
         const localPos = arrowNode.toLocal(worldPos);
         this._dragStartLocal = [localPos[0], localPos[1]];
 
         // 备份原始点位
-        const pts = this._currentArrow.getPoints();
-        this._originPoints = pts.map((p) => [p[0], p[1]]);
+        const ptsNow = this._currentArrow.getPoints();
+        this._originPoints = ptsNow.map((p) => [p[0], p[1]]);
         // 监听全局移动与抬起
         this._editor.eventSystem.addEventListener(
             this._editor.scene.getCanvasNode(),
@@ -366,6 +404,21 @@ export class IArrowResizer {
             SNodeEvents.POINTER_UP,
             this._onEndPointPointerUp
         );
+
+        const points = this._currentArrow.getPoints();
+        if (this._draggingEndKind === 'start') {
+            const isHorizontal =
+                Math.abs(points[1][0] - points[2][0]) >
+                Math.abs(points[1][1] - points[2][1]);
+            this._lastSecondDir = isHorizontal ? HORIZONTAL : VERTICAL;
+        } else {
+            const last = points.length - 1;
+            const isHorizontal =
+                Math.abs(points[last - 1][0] - points[last - 2][0]) >
+                Math.abs(points[last - 1][1] - points[last - 2][1]);
+            this._lastSecondDir = isHorizontal ? HORIZONTAL : VERTICAL;
+        }
+        console.log('lastSecondDir', this._lastSecondDir);
     };
 
     private _onEndPointerMove = (event: SNodeEvents.IPointerEvent) => {
@@ -386,15 +439,36 @@ export class IArrowResizer {
             .map((p) => [p[0], p[1]] as [number, number]);
         if (this._draggingEndKind === 'start') {
             points[0] = [localPos[0], localPos[1]];
+            if (!this._currentArrow.isOrigin) {
+                if (this._lastSecondDir === HORIZONTAL) {
+                    points[1][0] = points[0][0];
+                } else {
+                    points[1][1] = points[0][1];
+                }
+            }
             const lp = this._rootNode.toLocal(worldPos);
             this._startPoint && this._startPoint.position.set(lp[0], lp[1]);
         } else if (this._draggingEndKind === 'end') {
             const last = points.length - 1;
             points[last] = [localPos[0], localPos[1]];
+            if (!this._currentArrow.isOrigin) {
+                if (this._lastSecondDir === HORIZONTAL) {
+                    points[last - 1][0] = points[last][0];
+                } else {
+                    points[last - 1][1] = points[last][1];
+                }
+            }
             const lp = this._rootNode.toLocal(worldPos);
             this._endPoint && this._endPoint.position.set(lp[0], lp[1]);
         }
-        this._currentArrow.setPoints([points[0], points[points.length - 1]]);
+        if (this._currentArrow.isOrigin) {
+            this._currentArrow.setPoints([
+                points[0],
+                points[points.length - 1],
+            ]);
+        } else {
+            this._currentArrow.setPoints(points);
+        }
     };
 
     private _onEndPointPointerUp = (event: SNodeEvents.IPointerEvent) => {
