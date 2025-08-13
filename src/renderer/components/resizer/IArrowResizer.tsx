@@ -3,12 +3,13 @@ import { SIArrow } from '@/renderer/RenderComponents/SIArrow';
 import SNode from '@/renderer/SNode';
 import { createElement } from '@/renderer/createElement';
 import { createNodeFromConfig, refSNode } from '@/renderer/util';
-import { vec2 } from 'gl-matrix';
+import { vec2, ReadonlyVec2 } from 'gl-matrix';
 import { SNodeConfig, SNodeEvents } from '@/common/types';
 import eventBus from '@/common/eventBus';
 import { CanvasEventSystem } from '@/renderer/SEventManager';
 import { SGeo } from '@/renderer/Geometry/SGeo';
 import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
+import { visitNodeRecursive } from '@/common/util';
 
 const VERTICAL = 1;
 const HORIZONTAL = 0;
@@ -38,6 +39,9 @@ export class IArrowResizer {
 
     private _isDraggingEndPoint = false;
     private _draggingEndKind: 'start' | 'end' | null = null;
+    private _isDraggingArrow = false;
+    private _dragArrowStartWorld: [number, number] | null = null;
+    private _arrowStartPos: [number, number] | null = null;
 
     private _editorModeStore = useEditorModeStore();
 
@@ -184,7 +188,7 @@ export class IArrowResizer {
             const p2 = points[i];
             // 段长小于阈值则不创建控制点
             const segLen = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
-            if (segLen < 50) {
+            if (segLen < 100) {
                 continue;
             }
             const midPoint = vec2.fromValues(
@@ -378,6 +382,97 @@ export class IArrowResizer {
         );
     };
 
+    private _onCanvasPointerDown = (event: SNodeEvents.IPointerEvent) => {
+        if (!this._rootNode) return;
+        if (this._isDraggingEndPoint || this._dragging) return;
+        const worldPos = event.getWorldPosition();
+        // 支持直接点击线段开始拖拽：若当前无箭头，尝试拾取
+        if (!this._currentArrow) {
+            const picked = this._pickArrowAt(worldPos);
+            if (picked) {
+                this.mountTo(picked);
+            }
+        }
+        // 点击在箭头线段上才开始整体拖拽
+        if (!this._currentArrow || !this._currentArrow.hitTest(worldPos))
+            return;
+
+        this._isDraggingArrow = true;
+        this._dragArrowStartWorld = [worldPos[0], worldPos[1]];
+        const arrowNode = this._currentArrow.node!;
+        this._arrowStartPos = [arrowNode.position.x, arrowNode.position.y];
+        event.stopPropagation();
+
+        this._editor.eventSystem.addEventListener(
+            this._editor.scene.getCanvasNode(),
+            SNodeEvents.POINTER_MOVE,
+            this._onCanvasPointerMoveArrow
+        );
+        this._editor.eventSystem.addEventListener(
+            this._editor.scene.rootNode,
+            SNodeEvents.POINTER_UP,
+            this._onCanvasPointerUpArrow
+        );
+    };
+
+    private _pickArrowAt(worldPos: ReadonlyVec2): SIArrow | null {
+        let picked: SIArrow | null = null;
+        visitNodeRecursive(this._editor.scene.rootNode, (node) => {
+            if (picked) return;
+            const arrow = node.getComponent(SIArrow);
+            if (arrow && arrow.hitTest(worldPos)) {
+                picked = arrow;
+            }
+        });
+        return picked;
+    }
+
+    private _onCanvasPointerMoveArrow = (event: SNodeEvents.IPointerEvent) => {
+        if (
+            !this._isDraggingArrow ||
+            !this._currentArrow ||
+            !this._dragArrowStartWorld ||
+            !this._arrowStartPos
+        )
+            return;
+        const arrowNode = this._currentArrow.node!;
+        const parentNode = arrowNode.parent!;
+        const currWorld = event.getWorldPosition();
+
+        const startLocal = parentNode.toLocal(this._dragArrowStartWorld);
+        const currLocal = parentNode.toLocal(currWorld);
+        const dx = currLocal[0] - startLocal[0];
+        const dy = currLocal[1] - startLocal[1];
+        arrowNode.position.set(
+            this._arrowStartPos[0] + dx,
+            this._arrowStartPos[1] + dy
+        );
+
+        // 同步更新控制UI位置
+        this._clearControls();
+        this._updateControls();
+        eventBus.reDraw();
+    };
+
+    private _onCanvasPointerUpArrow = (event: SNodeEvents.IPointerEvent) => {
+        if (!this._isDraggingArrow) return;
+        this._isDraggingArrow = false;
+        this._dragArrowStartWorld = null;
+        this._arrowStartPos = null;
+        event.stopPropagation();
+
+        this._editor.eventSystem.removeEventListener(
+            this._editor.scene.getCanvasNode(),
+            SNodeEvents.POINTER_MOVE,
+            this._onCanvasPointerMoveArrow
+        );
+        this._editor.eventSystem.removeEventListener(
+            this._editor.scene.rootNode,
+            SNodeEvents.POINTER_UP,
+            this._onCanvasPointerUpArrow
+        );
+    };
+
     public unMount() {
         if (this._rootNode) {
             this._rootNode.active = false;
@@ -410,10 +505,6 @@ export class IArrowResizer {
         }
 
         if (!this._currentArrow || !this._rootNode) return;
-        const arrowNode = this._currentArrow.node!;
-        const worldPos = event.getWorldPosition();
-        const localPos = arrowNode.toLocal(worldPos);
-        console.log(event.currentTarget?.name);
         if (event.currentTarget !== this._prevHoveredNode) {
             this._onNodeHovered(this._prevHoveredNode, false);
             this._onNodeHovered(event.target, true);
@@ -451,6 +542,11 @@ export class IArrowResizer {
             this._editor.scene.getCanvasNode(),
             SNodeEvents.PURE_POINTER_MOVE,
             this._onPurePointerMove
+        );
+        this._editor.eventSystem.addEventListener(
+            this._editor.scene.getCanvasNode(),
+            SNodeEvents.POINTER_DOWN,
+            this._onCanvasPointerDown
         );
     }
 
