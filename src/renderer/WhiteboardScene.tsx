@@ -66,8 +66,10 @@ export class WhiteboardScene extends EventEmitter {
                 outerContainerRef={this.outerContainerRef}
             />
         );
+
         this.rootNode = createNodeFromConfig(rootNodeConfig);
 
+        this.virtualCanvasRef.value!.hitTest = () => true;
         this._zoomStore.$subscribe((mutation, state) => {
             // console.log('editorModeStore', editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);
             const realScale = state.canvasScale * state.zoomScale;

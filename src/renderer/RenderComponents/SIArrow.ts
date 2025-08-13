@@ -58,7 +58,7 @@ export class SIArrow extends SRenderComponent {
             return [start, end];
         }
 
-        if (isHorizontal && dx > 1) {
+        if (isHorizontal && Math.abs(dx) > 1) {
             const midX = start[0] + dx / 2;
             return [
                 start,
@@ -67,7 +67,7 @@ export class SIArrow extends SRenderComponent {
                 end,
             ];
         }
-        if (!isHorizontal && dy > 1) {
+        if (!isHorizontal && Math.abs(dy) > 1) {
             return [start, vec2.fromValues(end[0], start[1]), end];
         }
         // 否则返回原始点

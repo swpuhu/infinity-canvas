@@ -37,6 +37,7 @@ export class IArrowResizer {
     private _registeredControls = new Set<string>();
 
     private _isDraggingEndPoint = false;
+    private _draggingEndKind: 'start' | 'end' | null = null;
 
     private _editorModeStore = useEditorModeStore();
 
@@ -314,6 +315,8 @@ export class IArrowResizer {
     private _onEndPointPointerDown = (event: SNodeEvents.IPointerEvent) => {
         if (!this._currentArrow || !this._rootNode) return;
         this._isDraggingEndPoint = true;
+        this._draggingEndKind =
+            event.currentTarget === this._startPoint ? 'start' : 'end';
         event.stopPropagation();
 
         this._editor.eventSystem.addEventListener(
@@ -332,7 +335,27 @@ export class IArrowResizer {
         if (!this._isDraggingEndPoint) {
             return;
         }
-        console.log('end pointer move');
+        if (!this._currentArrow || !this._rootNode) return;
+        const arrowNode = this._currentArrow.node!;
+        const worldPos = event.getWorldPosition();
+        const localPos = arrowNode.toLocal(worldPos);
+
+        const points = this._currentArrow
+            .getPoints()
+            .map((p) => [p[0], p[1]] as [number, number]);
+        if (this._draggingEndKind === 'start') {
+            points[0] = [localPos[0], localPos[1]];
+            const lp = this._rootNode.toLocal(worldPos);
+            this._startPoint && this._startPoint.position.set(lp[0], lp[1]);
+        } else if (this._draggingEndKind === 'end') {
+            const last = points.length - 1;
+            points[last] = [localPos[0], localPos[1]];
+            const lp = this._rootNode.toLocal(worldPos);
+            this._endPoint && this._endPoint.position.set(lp[0], lp[1]);
+        }
+        this._currentArrow.setPoints([points[0], points[points.length - 1]]);
+        this._clearControls();
+        this._updateControls();
     };
 
     private _onEndPointPointerUp = (event: SNodeEvents.IPointerEvent) => {
@@ -340,6 +363,7 @@ export class IArrowResizer {
             return;
         }
         this._isDraggingEndPoint = false;
+        this._draggingEndKind = null;
         event.stopPropagation();
 
         this._editor.eventSystem.removeEventListener(
@@ -365,13 +389,18 @@ export class IArrowResizer {
 
     private _bindEvents(): void {
         const points = [this._startPoint!, this._endPoint!];
-        points.forEach((node) =>
+        points.forEach((node) => {
             CanvasEventSystem.instance.addEventListener(
                 node,
                 SNodeEvents.PURE_POINTER_MOVE,
                 this._onPurePointerMove
-            )
-        );
+            );
+            this._editor.eventSystem.addEventListener(
+                node,
+                SNodeEvents.POINTER_DOWN,
+                this._onEndPointPointerDown
+            );
+        });
     }
 
     private _onPurePointerMove = (event: SNodeEvents.IPointerEvent) => {
