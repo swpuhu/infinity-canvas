@@ -42,8 +42,33 @@ export class IArrowResizer {
     private _isDraggingArrow = false;
     private _dragArrowStartWorld: [number, number] | null = null;
     private _arrowStartPos: [number, number] | null = null;
+    private _controlsHiddenInDrag = false;
 
     private _editorModeStore = useEditorModeStore();
+
+    private _setControlsVisible(visible: boolean) {
+        // 仅隐藏/显示分段控制点，不影响起点与终点
+        this._usedControls.forEach((control) => {
+            control.active = visible;
+        });
+    }
+
+    private _updateEndpoints() {
+        if (!this._currentArrow || !this._rootNode) return;
+        const arrow = this._currentArrow;
+        const points = arrow.getPoints();
+        if (points.length < 2) return;
+        const startWorldP = arrow.node!.toGlobal(points[0]);
+        const endWorldP = arrow.node!.toGlobal(points[points.length - 1]);
+        if (this._startPoint) {
+            const localStartP = this._rootNode.toLocal(startWorldP);
+            this._startPoint.position.set(localStartP[0], localStartP[1]);
+        }
+        if (this._endPoint) {
+            const localEndP = this._rootNode.toLocal(endWorldP);
+            this._endPoint.position.set(localEndP[0], localEndP[1]);
+        }
+    }
 
     constructor(private _editor: CanvasEditor) {
         const startRef = refSNode();
@@ -247,6 +272,10 @@ export class IArrowResizer {
     private _onControlPointerMove = (event: SNodeEvents.IPointerEvent) => {
         if (!this._dragging || !this._currentArrow || !this._dragControl)
             return;
+        if (!this._controlsHiddenInDrag) {
+            this._setControlsVisible(false);
+            this._controlsHiddenInDrag = true;
+        }
         const segmentIndex = this._dragControl.metadata.segmentIndex as number;
         const direction = this._dragControl.metadata.direction as
             | DIRECTION
@@ -314,6 +343,10 @@ export class IArrowResizer {
             SNodeEvents.POINTER_UP,
             this._onControlPointerUp
         );
+        // 拖拽结束后重建控制点并显示
+        this._clearControls();
+        this._updateControls();
+        this._controlsHiddenInDrag = false;
     };
 
     private _onEndPointPointerDown = (event: SNodeEvents.IPointerEvent) => {
@@ -339,6 +372,10 @@ export class IArrowResizer {
         if (!this._isDraggingEndPoint) {
             return;
         }
+        if (!this._controlsHiddenInDrag) {
+            this._setControlsVisible(false);
+            this._controlsHiddenInDrag = true;
+        }
         if (!this._currentArrow || !this._rootNode) return;
         const arrowNode = this._currentArrow.node!;
         const worldPos = event.getWorldPosition();
@@ -358,8 +395,6 @@ export class IArrowResizer {
             this._endPoint && this._endPoint.position.set(lp[0], lp[1]);
         }
         this._currentArrow.setPoints([points[0], points[points.length - 1]]);
-        this._clearControls();
-        this._updateControls();
     };
 
     private _onEndPointPointerUp = (event: SNodeEvents.IPointerEvent) => {
@@ -380,6 +415,10 @@ export class IArrowResizer {
             SNodeEvents.POINTER_UP,
             this._onEndPointPointerUp
         );
+        // 拖拽结束后重建控制点并显示
+        this._clearControls();
+        this._updateControls();
+        this._controlsHiddenInDrag = false;
     };
 
     private _onCanvasPointerDown = (event: SNodeEvents.IPointerEvent) => {
@@ -435,6 +474,10 @@ export class IArrowResizer {
             !this._arrowStartPos
         )
             return;
+        if (!this._controlsHiddenInDrag) {
+            this._setControlsVisible(false);
+            this._controlsHiddenInDrag = true;
+        }
         const arrowNode = this._currentArrow.node!;
         const parentNode = arrowNode.parent!;
         const currWorld = event.getWorldPosition();
@@ -448,9 +491,8 @@ export class IArrowResizer {
             this._arrowStartPos[1] + dy
         );
 
-        // 同步更新控制UI位置
-        this._clearControls();
-        this._updateControls();
+        // 同步更新起点/终点位置，但保持控制点隐藏
+        this._updateEndpoints();
         eventBus.reDraw();
     };
 
@@ -471,6 +513,10 @@ export class IArrowResizer {
             SNodeEvents.POINTER_UP,
             this._onCanvasPointerUpArrow
         );
+        // 拖拽结束后重建控制点并显示
+        this._clearControls();
+        this._updateControls();
+        this._controlsHiddenInDrag = false;
     };
 
     public unMount() {
