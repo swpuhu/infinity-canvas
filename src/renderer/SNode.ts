@@ -12,6 +12,7 @@ import {
 import {
     angleToRadians,
     decomposeMatrix,
+    getNodeDepth,
     moveIntoButStay,
     visitNodeRecursive,
 } from '@/common/util';
@@ -22,6 +23,7 @@ import EventEmitter from 'eventemitter3';
 import { mat3, ReadonlyVec2, vec2 } from 'gl-matrix';
 import { alignToNode } from './util';
 import { SIArrow } from './RenderComponents/SIArrow';
+import eventBus from '@/common/eventBus';
 
 class SNode extends EventEmitter {
     private _children: SNode[] = [];
@@ -79,6 +81,8 @@ class SNode extends EventEmitter {
     public renderType: EnumRenderComponentType = EnumRenderComponentType.NONE;
 
     public type: SNodeConfig.NodeType = SNodeConfig.NodeType.CONTAINER;
+
+    public zIndex = -1;
 
     get active() {
         return this._active;
@@ -157,6 +161,13 @@ class SNode extends EventEmitter {
             this._scale.x,
             this._scale.y,
         ]);
+    }
+
+    private updateZIndex() {
+        this.zIndex = getNodeDepth(this);
+        for (const child of this._children) {
+            child.updateZIndex();
+        }
     }
 
     @autobind
@@ -360,7 +371,10 @@ class SNode extends EventEmitter {
         child.forEach((c) => {
             c._parent = this;
             c.updateWorldMatrix();
-            c.emit(SNodeEvents.HIERARCHY_CHANGE);
+            c.updateZIndex();
+            // TODO: 如果后续需要每节点监听该事件，可在事件总线上附带变更集合
+            // 改为合并触发，避免同一帧内多次抖动
+            eventBus.hierarchyChangeOncePerFrame();
         });
     }
 
@@ -402,6 +416,19 @@ class SNode extends EventEmitter {
         compCtr: new () => T
     ): T | null {
         return this._renderComps.find((comp) => comp instanceof compCtr) as T;
+    }
+
+    public getComponentInChildren<T extends SRenderComponent>(
+        compCtr: new () => T
+    ): T | null {
+        let result: T | null = null;
+        visitNodeRecursive(this, (node) => {
+            const comp = node._renderComps.find(
+                (comp) => comp instanceof compCtr
+            );
+            result = comp as T;
+        });
+        return result;
     }
 
     public removeChildren(): void {

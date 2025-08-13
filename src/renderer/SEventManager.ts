@@ -79,6 +79,8 @@ export class CanvasEventSystem {
         this._systemListenersMap.set(SNodeEvents.KEY_UP, []);
         this._systemListenersMap.set(SNodeEvents.WHEEL, []);
         this._systemListenersMap.set(SNodeEvents.POINTER_MOVE, []);
+
+        eventBus.onHierarchyChange(this._sortListeners);
     }
 
     private _preventDefaultBehavior(): void {
@@ -348,26 +350,24 @@ export class CanvasEventSystem {
         this._sortListeners(type);
     }
 
-    private _sortListeners(type?: keyof SNodeEvents.EventMap) {
+    private _sortListeners = (type?: keyof SNodeEvents.EventMap) => {
         if (type) {
             const listeners = this._listenersMap.get(type);
             if (!listeners) {
                 return;
             }
             listeners.sort((a, b) => {
-                return compareNodeDepth(a.node, b.node);
+                return b.node.zIndex - a.node.zIndex;
             });
             return;
         }
-        // 兼容旧逻辑：若未指定类型，仅对 POINTER_DOWN 进行排序
-        const listeners = this._listenersMap.get(SNodeEvents.POINTER_DOWN);
-        if (!listeners) {
-            return;
+        // 若未指定类型，则重排所有事件类型的监听器
+        for (const [_, listeners] of this._listenersMap.entries()) {
+            listeners.sort((a, b) => {
+                return b.node.zIndex - a.node.zIndex;
+            });
         }
-        listeners.sort((a, b) => {
-            return compareNodeDepth(a.node, b.node);
-        });
-    }
+    };
 
     destroy() {
         this.canvas.removeEventListener(

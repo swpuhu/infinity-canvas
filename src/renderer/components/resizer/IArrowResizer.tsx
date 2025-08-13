@@ -35,6 +35,8 @@ export class IArrowResizer {
 
     private _registeredControls = new Set<string>();
 
+    private _isDraggingEndPoint = false;
+
     constructor(private _editor: CanvasEditor) {
         const startRef = refSNode();
         const endRef = refSNode();
@@ -68,12 +70,16 @@ export class IArrowResizer {
 
         this._startPoint = startRef.value;
         this._endPoint = endRef.value;
+
+        console.log('startpoint, ', this._startPoint?.zIndex);
+        console.log('endpoint, ', this._endPoint?.zIndex);
         this._bindEvents();
         this._enableResize();
     }
 
     private _attachControlEvents(control: SNode) {
         if (this._registeredControls.has(control.uuid)) return;
+        console.log('_attachControlEvents', control.name);
         this._editor.eventSystem.addEventListener(
             control,
             SNodeEvents.POINTER_DOWN,
@@ -92,22 +98,27 @@ export class IArrowResizer {
         const width = direction === VERTICAL ? 10 : 20;
         const height = direction === VERTICAL ? 20 : 10;
         if (this._controls.length) {
-            const control = this._controls.pop()!;
+            const control = this._controls.shift()!;
             // 激活并同步尺寸
             control.active = true;
             control.setSize(width, height);
             control.children.forEach((child) => child.setSize(width, height));
-            this._attachControlEvents(control);
+            // this._attachControlEvents(control);
             this._usedControls.push(control);
             return control;
         }
         const controlConfig = (
-            <container width={width} height={height}>
+            <container
+                width={width}
+                height={height}
+                name={'segmentControl' + this._usedControls.length}
+            >
                 <rect
                     width={width}
                     height={height}
                     style={{
-                        fill: 0xcccccc,
+                        fill: 0xffffff,
+                        stroke: 0xff6600,
                     }}
                 />
             </container>
@@ -214,7 +225,8 @@ export class IArrowResizer {
         const pts = this._currentArrow.getPoints();
         this._originPoints = pts.map((p) => [p[0], p[1]]);
         // 监听全局移动与抬起
-        this._editor.eventSystem.addSystemEventListener(
+        this._editor.eventSystem.addEventListener(
+            this._editor.scene.getCanvasNode(),
             SNodeEvents.POINTER_MOVE,
             this._onControlPointerMove
         );
@@ -286,7 +298,8 @@ export class IArrowResizer {
         this._dragStartLocal = null;
         this._originPoints = [];
         // 移除系统监听
-        this._editor.eventSystem.removeSystemEventListener(
+        this._editor.eventSystem.removeEventListener(
+            this._editor.scene.getCanvasNode(),
             SNodeEvents.POINTER_MOVE,
             this._onControlPointerMove
         );
@@ -294,6 +307,49 @@ export class IArrowResizer {
             this._editor.scene.rootNode,
             SNodeEvents.POINTER_UP,
             this._onControlPointerUp
+        );
+    };
+
+    private _onEndPointPointerDown = (event: SNodeEvents.IPointerEvent) => {
+        if (!this._currentArrow || !this._rootNode) return;
+        this._isDraggingEndPoint = true;
+        event.stopPropagation();
+
+        this._editor.eventSystem.addEventListener(
+            this._editor.scene.getCanvasNode(),
+            SNodeEvents.PURE_POINTER_MOVE,
+            this._onEndPointerMove
+        );
+        this._editor.eventSystem.addEventListener(
+            this._editor.scene.rootNode,
+            SNodeEvents.POINTER_UP,
+            this._onEndPointPointerUp
+        );
+    };
+
+    private _onEndPointerMove = (event: SNodeEvents.IPointerEvent) => {
+        if (!this._isDraggingEndPoint) {
+            return;
+        }
+        console.log('end pointer move');
+    };
+
+    private _onEndPointPointerUp = (event: SNodeEvents.IPointerEvent) => {
+        if (!this._isDraggingEndPoint) {
+            return;
+        }
+        this._isDraggingEndPoint = false;
+        event.stopPropagation();
+
+        this._editor.eventSystem.removeEventListener(
+            this._editor.scene.getCanvasNode(),
+            SNodeEvents.PURE_POINTER_MOVE,
+            this._onEndPointerMove
+        );
+        this._editor.eventSystem.removeEventListener(
+            this._editor.scene.rootNode,
+            SNodeEvents.POINTER_UP,
+            this._onEndPointPointerUp
         );
     };
 
@@ -319,12 +375,16 @@ export class IArrowResizer {
 
     private _onPurePointerMove = (event: SNodeEvents.IPointerEvent) => {
         event.stopPropagation();
-        console.log('pure pointer move', event.currentTarget!.name);
+        if (this._isDraggingEndPoint) {
+            return;
+        }
+
         if (!this._currentArrow || !this._rootNode) return;
         const arrowNode = this._currentArrow.node!;
         const worldPos = event.getWorldPosition();
         const localPos = arrowNode.toLocal(worldPos);
-        if (event.target !== this._prevHoveredNode) {
+        console.log(event.currentTarget?.name);
+        if (event.currentTarget !== this._prevHoveredNode) {
             this._onNodeHovered(this._prevHoveredNode, false);
             this._onNodeHovered(event.target, true);
         }
@@ -336,9 +396,15 @@ export class IArrowResizer {
         if (!node) {
             return;
         }
-        const geo = node.getComponent(SGeo);
-        if (geo && node === this._startPoint) {
-            geo.fill({ color: isHover ? 0x000000 : 0xffffff });
+        console.log('hovered: ', isHover, node.name);
+        const geo =
+            node.getComponent(SGeo) || node.getComponentInChildren(SGeo);
+        if (
+            this._usedControls.includes(node) ||
+            node === this._startPoint ||
+            node === this._endPoint
+        ) {
+            geo && geo.fill({ color: isHover ? 0xff6600 : 0xffffff });
         }
     }
 

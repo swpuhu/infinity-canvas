@@ -32,6 +32,27 @@ const eventBus = {
         eventEmitter.on('exitEditMode', callback);
     },
 
+    // 每帧合并触发一次层级变更事件
+    hierarchyChangeOncePerFrame: (() => {
+        let scheduled = false;
+        return () => {
+            if (scheduled) return;
+            scheduled = true;
+            requestAnimationFrame(() => {
+                scheduled = false;
+                eventEmitter.emit('hierarchyChange');
+            });
+        };
+    })(),
+
+    onHierarchyChange(callback: () => void) {
+        eventEmitter.on('hierarchyChange', callback);
+    },
+
+    offHierarchyChange(callback: () => void) {
+        eventEmitter.off('hierarchyChange', callback);
+    },
+
     cancelSnapGuide() {
         eventEmitter.emit('cancelSnapGuide');
     },

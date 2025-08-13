@@ -137,6 +137,25 @@ export function compareNodeDepth(nodeA: SNode, nodeB: SNode) {
     return 0; // 完全相同的位置
 }
 
+/**
+ * 计算节点的深度（根为0，根的直接子节点为1，以此类推）
+ */
+export function getNodeDepth(node: SNode): number {
+    // 基于100进制编码根->节点路径，保证更深层级得到更大的数值
+    const indices: number[] = [];
+    let child: SNode | undefined = node;
+    while (child && child.parent) {
+        const parentNode = child.parent as SNode;
+        indices.unshift(parentNode.children.indexOf(child) + 1);
+        child = parentNode;
+    }
+    let value = 0;
+    for (const idx of indices) {
+        value = value * 100 + idx;
+    }
+    return value;
+}
+
 export function visitNodeRecursive(
     node: SNode,
     callback: (node: SNode) => void
