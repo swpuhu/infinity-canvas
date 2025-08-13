@@ -396,7 +396,7 @@ export class IArrowResizer {
 
         this._editor.eventSystem.addEventListener(
             this._editor.scene.getCanvasNode(),
-            SNodeEvents.PURE_POINTER_MOVE,
+            SNodeEvents.POINTER_MOVE,
             this._onEndPointerMove
         );
         this._editor.eventSystem.addEventListener(
@@ -433,6 +433,7 @@ export class IArrowResizer {
         const arrowNode = this._currentArrow.node!;
         const worldPos = event.getWorldPosition();
         const localPos = arrowNode.toLocal(worldPos);
+        console.log(localPos);
 
         const points = this._currentArrow
             .getPoints()
@@ -481,7 +482,7 @@ export class IArrowResizer {
 
         this._editor.eventSystem.removeEventListener(
             this._editor.scene.getCanvasNode(),
-            SNodeEvents.PURE_POINTER_MOVE,
+            SNodeEvents.POINTER_MOVE,
             this._onEndPointerMove
         );
         this._editor.eventSystem.removeEventListener(
