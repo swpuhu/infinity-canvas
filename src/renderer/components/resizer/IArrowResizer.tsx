@@ -48,6 +48,9 @@ export class IArrowResizer {
 
     private _editorModeStore = useEditorModeStore();
 
+    // 吸附阈值（可配置）
+    private _snapThreshold: number = 10;
+
     private _setControlsVisible(visible: boolean) {
         // 仅隐藏/显示分段控制点，不影响起点与终点
         this._usedControls.forEach((control) => {
@@ -72,7 +75,13 @@ export class IArrowResizer {
         }
     }
 
-    constructor(private _editor: CanvasEditor) {
+    constructor(
+        private _editor: CanvasEditor,
+        options?: { snapThreshold?: number }
+    ) {
+        if (options && typeof options.snapThreshold === 'number') {
+            this._snapThreshold = options.snapThreshold;
+        }
         const startRef = refSNode();
         const endRef = refSNode();
         const radius = 20;
@@ -336,8 +345,100 @@ export class IArrowResizer {
         const newPoints = this._originPoints.map(
             (p) => [p[0], p[1]] as [number, number]
         );
-        // 移动该段的两个端点
+
+        // 计算移动后的临时点位
+        const tempPoints = [...newPoints];
         const i = segmentIndex;
+        tempPoints[i - 1] = [
+            this._originPoints[i - 1][0] + dx,
+            this._originPoints[i - 1][1] + dy,
+        ];
+        tempPoints[i] = [
+            this._originPoints[i][0] + dx,
+            this._originPoints[i][1] + dy,
+        ];
+
+        // 吸附逻辑：检查与前后第二个线段是否共线
+        let snapOffset = 0;
+
+        // 检查前面第二个线段（如果存在）
+        if (i >= 3) {
+            // 确保前面有足够的点
+            const beforeSecondSegmentStart = tempPoints[i - 3];
+            const beforeSecondSegmentEnd = tempPoints[i - 2];
+
+            // 计算前面第二个线段的方向
+            const beforeSecondDir = this._getSegmentDirection(
+                beforeSecondSegmentStart,
+                beforeSecondSegmentEnd
+            );
+
+            // 如果方向相同，进行吸附检查
+            if (beforeSecondDir === direction) {
+                if (direction === HORIZONTAL) {
+                    // 水平线段，检查Y坐标
+                    const beforeSecondY = beforeSecondSegmentStart[1];
+                    const currentY = tempPoints[i - 1][1];
+                    const distance = Math.abs(currentY - beforeSecondY);
+                    if (distance < this._snapThreshold) {
+                        snapOffset = beforeSecondY - currentY;
+                    }
+                } else if (direction === VERTICAL) {
+                    // 垂直线段，检查X坐标
+                    const beforeSecondX = beforeSecondSegmentStart[0];
+                    const currentX = tempPoints[i - 1][0];
+                    const distance = Math.abs(currentX - beforeSecondX);
+                    if (distance < this._snapThreshold) {
+                        snapOffset = beforeSecondX - currentX;
+                    }
+                }
+            }
+        }
+
+        // 检查后面第二个线段（如果存在）
+        if (snapOffset === 0 && i + 2 < tempPoints.length) {
+            // 确保后面有足够的点
+            const afterSecondSegmentStart = tempPoints[i + 1];
+            const afterSecondSegmentEnd = tempPoints[i + 2];
+
+            // 计算后面第二个线段的方向
+            const afterSecondDir = this._getSegmentDirection(
+                afterSecondSegmentStart,
+                afterSecondSegmentEnd
+            );
+
+            // 如果方向相同，进行吸附检查
+            if (afterSecondDir === direction) {
+                if (direction === HORIZONTAL) {
+                    // 水平线段，检查Y坐标
+                    const afterSecondY = afterSecondSegmentStart[1];
+                    const currentY = tempPoints[i - 1][1];
+                    const distance = Math.abs(currentY - afterSecondY);
+                    if (distance < this._snapThreshold) {
+                        snapOffset = afterSecondY - currentY;
+                    }
+                } else if (direction === VERTICAL) {
+                    // 垂直线段，检查X坐标
+                    const afterSecondX = afterSecondSegmentStart[0];
+                    const currentX = tempPoints[i - 1][0];
+                    const distance = Math.abs(currentX - afterSecondX);
+                    if (distance < this._snapThreshold) {
+                        snapOffset = afterSecondX - currentX;
+                    }
+                }
+            }
+        }
+
+        // 应用吸附偏移
+        if (snapOffset !== 0) {
+            if (direction === HORIZONTAL) {
+                dy += snapOffset;
+            } else if (direction === VERTICAL) {
+                dx += snapOffset;
+            }
+        }
+
+        // 移动该段的两个端点
         newPoints[i - 1] = [
             this._originPoints[i - 1][0] + dx,
             this._originPoints[i - 1][1] + dy,
@@ -362,6 +463,20 @@ export class IArrowResizer {
 
         eventBus.reDraw();
     };
+
+    // 对外提供阈值设置
+    public setSnapThreshold(value: number) {
+        this._snapThreshold = value;
+    }
+
+    private _getSegmentDirection(
+        start: [number, number],
+        end: [number, number]
+    ): DIRECTION {
+        const dx = Math.abs(end[0] - start[0]);
+        const dy = Math.abs(end[1] - start[1]);
+        return dx > dy ? HORIZONTAL : VERTICAL;
+    }
 
     private _onControlPointerUp = (_event: SNodeEvents.IPointerEvent) => {
         if (!this._dragging) return;

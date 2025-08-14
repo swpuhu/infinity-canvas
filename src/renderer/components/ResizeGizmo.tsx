@@ -108,6 +108,11 @@ export class ResizeGizmo {
         this._iArrowResizer = new IArrowResizer(editor);
     }
 
+    // 配置箭头控制点拖拽的吸附阈值（单位：像素）
+    public setArrowSnapThreshold(value: number): void {
+        this._iArrowResizer.setSnapThreshold(value);
+    }
+
     public mountToNode(targetNodes: SNode[], isLock = false): void {
         if (targetNodes.length === 0) {
             this.unMount();
