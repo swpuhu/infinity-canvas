@@ -104,10 +104,17 @@ export class SIArrow extends SRenderComponent {
         }
         const lastPoint = this._points[this._points.length - 1];
         const prevPoint = this._points[this._points.length - 2];
-        const dx = lastPoint[0] - prevPoint[0];
-        const dy = lastPoint[1] - prevPoint[1];
-        const isHorizontal = Math.abs(dx) >= Math.abs(dy);
+        let dx = lastPoint[0] - prevPoint[0];
+        let dy = lastPoint[1] - prevPoint[1];
 
+        // 如果最后两个点重合，则使用前一个点的方向
+        if (Math.abs(dx) < 5 && Math.abs(dy) < 5 && this._points.length > 2) {
+            const prevPrevPoint = this._points[this._points.length - 3];
+            dx = lastPoint[0] - prevPrevPoint[0];
+            dy = lastPoint[1] - prevPrevPoint[1];
+        }
+
+        const isHorizontal = Math.abs(dx) >= Math.abs(dy);
         const arrowWidth = 25;
         const arrowHalfHeight = 15;
 
