@@ -50,6 +50,8 @@ export class IArrowResizer {
 
     // 吸附阈值（可配置）
     private _snapThreshold: number = 10;
+    // 合并阈值（像素）：用于判断线段长度是否近似为0
+    private _mergeThreshold: number = 1;
 
     private _setControlsVisible(visible: boolean) {
         // 仅隐藏/显示分段控制点，不影响起点与终点
@@ -481,6 +483,12 @@ export class IArrowResizer {
     private _onControlPointerUp = (_event: SNodeEvents.IPointerEvent) => {
         if (!this._dragging) return;
         console.log('control pointer up');
+        // 在清理拖拽状态前尝试进行相邻线段合并
+        if (this._currentArrow && this._dragControl) {
+            const segIndex = (this._dragControl.metadata.segmentIndex as number) || 0;
+            this._mergeNearZeroSegmentsAround(segIndex);
+        }
+        
         this._dragging = false;
         this._dragControl = null;
         this._dragStartLocal = null;
@@ -501,302 +509,381 @@ export class IArrowResizer {
         this._updateControls();
         this._controlsHiddenInDrag = false;
     };
-
-    private _onEndPointPointerDown = (event: SNodeEvents.IPointerEvent) => {
-        if (!this._currentArrow || !this._rootNode) return;
-        this._isDraggingEndPoint = true;
-        this._draggingEndKind =
-            event.currentTarget === this._startPoint ? 'start' : 'end';
-        event.stopPropagation();
-
-        this._editor.eventSystem.addEventListener(
-            this._editor.scene.getCanvasNode(),
-            SNodeEvents.POINTER_MOVE,
-            this._onEndPointerMove
-        );
-        this._editor.eventSystem.addEventListener(
-            this._editor.scene.rootNode,
-            SNodeEvents.POINTER_UP,
-            this._onEndPointPointerUp
-        );
-
-        const points = this._currentArrow.getPoints();
-        if (this._draggingEndKind === 'start') {
-            const isHorizontal =
-                Math.abs(points[1][0] - points[2][0]) >
-                Math.abs(points[1][1] - points[2][1]);
-            this._lastSecondDir = isHorizontal ? HORIZONTAL : VERTICAL;
-        } else {
-            const last = points.length - 1;
-            const isHorizontal =
-                Math.abs(points[last - 1][0] - points[last - 2][0]) >
-                Math.abs(points[last - 1][1] - points[last - 2][1]);
-            this._lastSecondDir = isHorizontal ? HORIZONTAL : VERTICAL;
-        }
-        console.log('lastSecondDir', this._lastSecondDir);
-    };
-
-    private _onEndPointerMove = (event: SNodeEvents.IPointerEvent) => {
-        if (!this._isDraggingEndPoint) {
-            return;
-        }
-        if (!this._controlsHiddenInDrag) {
-            this._setControlsVisible(false);
-            this._controlsHiddenInDrag = true;
-        }
-        if (!this._currentArrow || !this._rootNode) return;
-        const arrowNode = this._currentArrow.node!;
-        const worldPos = event.getWorldPosition();
-        const localPos = arrowNode.toLocal(worldPos);
-        console.log(localPos);
-
+    // 合并当前控制段相邻、长度近似为0的线段
+    private _mergeNearZeroSegmentsAround(segmentIndex: number): void {
+        if (!this._currentArrow) return;
         const points = this._currentArrow
             .getPoints()
             .map((p) => [p[0], p[1]] as [number, number]);
-        if (this._draggingEndKind === 'start') {
-            points[0] = [localPos[0], localPos[1]];
-            if (!this._currentArrow.isOrigin) {
-                if (this._lastSecondDir === HORIZONTAL) {
-                    points[1][0] = points[0][0];
-                } else {
-                    points[1][1] = points[0][1];
-                }
+        if (points.length < 3) return; // 少于3个点不能合并
+
+        // segmentIndex 表示被控制的线段是 [i-1] -> [i]
+        let i = segmentIndex;
+        let changed = false;
+
+        const dist = (a: [number, number], b: [number, number]) => {
+            const dx = a[0] - b[0];
+            const dy = a[1] - b[1];
+            return Math.hypot(dx, dy);
+        };
+
+        // 检查并删除长度近似为0的线段
+        // 检查前一条线段：points[i-2] -> points[i-1]
+        if (i - 2 >= 0) {
+            const dPrev = dist(points[i - 2], points[i - 1]);
+            if (dPrev <= this._mergeThreshold) {
+                // 删除 points[i-1]，使得 [i-2] 直接连接到 [i]
+                points.splice(i - 1, 1);
+                i -= 1; // 被控制的段索引左移
+                changed = true;
             }
-            const lp = this._rootNode.toLocal(worldPos);
-            this._startPoint && this._startPoint.position.set(lp[0], lp[1]);
-        } else if (this._draggingEndKind === 'end') {
-            const last = points.length - 1;
-            points[last] = [localPos[0], localPos[1]];
-            if (!this._currentArrow.isOrigin) {
-                if (this._lastSecondDir === HORIZONTAL) {
-                    points[last - 1][0] = points[last][0];
-                } else {
-                    points[last - 1][1] = points[last][1];
-                }
-            }
-            const lp = this._rootNode.toLocal(worldPos);
-            this._endPoint && this._endPoint.position.set(lp[0], lp[1]);
         }
-        if (this._currentArrow.isOrigin) {
-            this._currentArrow.setPoints([
-                points[0],
-                points[points.length - 1],
-            ]);
-        } else {
+
+        // 检查后一条线段：points[i] -> points[i+1]
+        if (i + 1 < points.length - 1) {
+            const dNext = dist(points[i], points[i + 1]);
+            if (dNext <= this._mergeThreshold) {
+                // 删除 points[i]，使得 [i-1] 直接连接到 [i+1]
+                points.splice(i, 1);
+                changed = true;
+            }
+        }
+
+        // 删除操作完成后，进一步检查是否有可合并的共线线段
+        if (changed) {
+            this._mergeCollinearSegments(points);
             this._currentArrow.setPoints(points);
+            eventBus.reDraw();
         }
-    };
+    }
 
-    private _onEndPointPointerUp = (event: SNodeEvents.IPointerEvent) => {
-        if (!this._isDraggingEndPoint) {
-            return;
-        }
-        this._isDraggingEndPoint = false;
-        this._draggingEndKind = null;
-        event.stopPropagation();
-
-        this._editor.eventSystem.removeEventListener(
-            this._editor.scene.getCanvasNode(),
-            SNodeEvents.POINTER_MOVE,
-            this._onEndPointerMove
-        );
-        this._editor.eventSystem.removeEventListener(
-            this._editor.scene.rootNode,
-            SNodeEvents.POINTER_UP,
-            this._onEndPointPointerUp
-        );
-        // 拖拽结束后重建控制点并显示
-        this._clearControls();
-        this._updateControls();
-        this._controlsHiddenInDrag = false;
-    };
-
-    private _onCanvasPointerDown = (event: SNodeEvents.IPointerEvent) => {
-        if (!this._rootNode) return;
-        if (this._isDraggingEndPoint || this._dragging) return;
-        const worldPos = event.getWorldPosition();
-        // 支持直接点击线段开始拖拽：若当前无箭头，尝试拾取
-        if (!this._currentArrow) {
-            const picked = this._pickArrowAt(worldPos);
-            if (picked) {
-                this.mountTo(picked);
+    // 合并共线线段：删除共线中间点
+    private _mergeCollinearSegments(points: [number, number][]): void {
+        if (points.length < 3) return;
+    
+        // 判断三点是否共线的辅助函数
+        const areCollinear = (
+            p1: [number, number], 
+            p2: [number, number], 
+            p3: [number, number]
+        ): boolean => {
+            // 使用叉积判断共线：(p2-p1) × (p3-p1) = 0
+            const v1x = p2[0] - p1[0];
+            const v1y = p2[1] - p1[1];
+            const v2x = p3[0] - p1[0];
+            const v2y = p3[1] - p1[1];
+            const crossProduct = Math.abs(v1x * v2y - v1y * v2x);
+            // 使用小的阈值判断是否近似共线
+            return crossProduct < 0.1;
+        };
+    
+        let i = 1;
+        while (i < points.length - 1) {
+            if (areCollinear(points[i - 1], points[i], points[i + 1])) {
+                // 中间点可以被删除，因为三点共线
+                points.splice(i, 1);
+                // 不递增i，因为删除后需要重新检查当前位置
+            } else {
+                i++;
             }
         }
-        // 点击在箭头线段上才开始整体拖拽
-        if (!this._currentArrow || !this._currentArrow.hitTest(worldPos))
-            return;
-
-        this._isDraggingArrow = true;
-        this._dragArrowStartWorld = [worldPos[0], worldPos[1]];
-        const arrowNode = this._currentArrow.node!;
-        this._arrowStartPos = [arrowNode.position.x, arrowNode.position.y];
-        event.stopPropagation();
-
-        this._editor.eventSystem.addEventListener(
-            this._editor.scene.getCanvasNode(),
-            SNodeEvents.POINTER_MOVE,
-            this._onCanvasPointerMoveArrow
-        );
-        this._editor.eventSystem.addEventListener(
-            this._editor.scene.rootNode,
-            SNodeEvents.POINTER_UP,
-            this._onCanvasPointerUpArrow
-        );
-    };
-
-    private _pickArrowAt(worldPos: ReadonlyVec2): SIArrow | null {
-        let picked: SIArrow | null = null;
-        visitNodeRecursive(this._editor.scene.rootNode, (node) => {
-            if (picked) return;
-            const arrow = node.getComponent(SIArrow);
-            if (arrow && arrow.hitTest(worldPos)) {
-                picked = arrow;
-            }
-        });
-        return picked;
     }
 
-    private _onCanvasPointerMoveArrow = (event: SNodeEvents.IPointerEvent) => {
-        if (
-            !this._isDraggingArrow ||
-            !this._currentArrow ||
-            !this._dragArrowStartWorld ||
-            !this._arrowStartPos
-        )
-            return;
-        if (!this._controlsHiddenInDrag) {
-            this._setControlsVisible(false);
-            this._controlsHiddenInDrag = true;
-        }
-        const arrowNode = this._currentArrow.node!;
-        const parentNode = arrowNode.parent!;
-        const currWorld = event.getWorldPosition();
+     private _onEndPointPointerDown = (event: SNodeEvents.IPointerEvent) => {
+         if (!this._currentArrow || !this._rootNode) return;
+         this._isDraggingEndPoint = true;
+         this._draggingEndKind =
+             event.currentTarget === this._startPoint ? 'start' : 'end';
+         event.stopPropagation();
 
-        const startLocal = parentNode.toLocal(this._dragArrowStartWorld);
-        const currLocal = parentNode.toLocal(currWorld);
-        const dx = currLocal[0] - startLocal[0];
-        const dy = currLocal[1] - startLocal[1];
-        arrowNode.position.set(
-            this._arrowStartPos[0] + dx,
-            this._arrowStartPos[1] + dy
-        );
+         this._editor.eventSystem.addEventListener(
+             this._editor.scene.getCanvasNode(),
+             SNodeEvents.POINTER_MOVE,
+             this._onEndPointerMove
+         );
+         this._editor.eventSystem.addEventListener(
+             this._editor.scene.rootNode,
+             SNodeEvents.POINTER_UP,
+             this._onEndPointPointerUp
+         );
 
-        // 同步更新起点/终点位置，但保持控制点隐藏
-        this._updateEndpoints();
-        eventBus.reDraw();
-    };
+         const points = this._currentArrow.getPoints();
+         if (this._draggingEndKind === 'start') {
+             const isHorizontal =
+                 Math.abs(points[1][0] - points[2][0]) >
+                 Math.abs(points[1][1] - points[2][1]);
+             this._lastSecondDir = isHorizontal ? HORIZONTAL : VERTICAL;
+         } else {
+             const last = points.length - 1;
+             const isHorizontal =
+                 Math.abs(points[last - 1][0] - points[last - 2][0]) >
+                 Math.abs(points[last - 1][1] - points[last - 2][1]);
+             this._lastSecondDir = isHorizontal ? HORIZONTAL : VERTICAL;
+         }
+         console.log('lastSecondDir', this._lastSecondDir);
+     };
 
-    private _onCanvasPointerUpArrow = (event: SNodeEvents.IPointerEvent) => {
-        if (!this._isDraggingArrow) return;
-        this._isDraggingArrow = false;
-        this._dragArrowStartWorld = null;
-        this._arrowStartPos = null;
-        event.stopPropagation();
+     private _onEndPointerMove = (event: SNodeEvents.IPointerEvent) => {
+         if (!this._isDraggingEndPoint) {
+             return;
+         }
+         if (!this._controlsHiddenInDrag) {
+             this._setControlsVisible(false);
+             this._controlsHiddenInDrag = true;
+         }
+         if (!this._currentArrow || !this._rootNode) return;
+         const arrowNode = this._currentArrow.node!;
+         const worldPos = event.getWorldPosition();
+         const localPos = arrowNode.toLocal(worldPos);
+         console.log(localPos);
 
-        this._editor.eventSystem.removeEventListener(
-            this._editor.scene.getCanvasNode(),
-            SNodeEvents.POINTER_MOVE,
-            this._onCanvasPointerMoveArrow
-        );
-        this._editor.eventSystem.removeEventListener(
-            this._editor.scene.rootNode,
-            SNodeEvents.POINTER_UP,
-            this._onCanvasPointerUpArrow
-        );
-        // 拖拽结束后重建控制点并显示
-        this._clearControls();
-        this._updateControls();
-        this._controlsHiddenInDrag = false;
-    };
+         const points = this._currentArrow
+             .getPoints()
+             .map((p) => [p[0], p[1]] as [number, number]);
+         if (this._draggingEndKind === 'start') {
+             points[0] = [localPos[0], localPos[1]];
+             if (!this._currentArrow.isOrigin) {
+                 if (this._lastSecondDir === HORIZONTAL) {
+                     points[1][0] = points[0][0];
+                 } else {
+                     points[1][1] = points[0][1];
+                 }
+             }
+             const lp = this._rootNode.toLocal(worldPos);
+             this._startPoint && this._startPoint.position.set(lp[0], lp[1]);
+         } else if (this._draggingEndKind === 'end') {
+             const last = points.length - 1;
+             points[last] = [localPos[0], localPos[1]];
+             if (!this._currentArrow.isOrigin) {
+                 if (this._lastSecondDir === HORIZONTAL) {
+                     points[last - 1][0] = points[last][0];
+                 } else {
+                     points[last - 1][1] = points[last][1];
+                 }
+             }
+             const lp = this._rootNode.toLocal(worldPos);
+             this._endPoint && this._endPoint.position.set(lp[0], lp[1]);
+         }
+         if (this._currentArrow.isOrigin) {
+             this._currentArrow.setPoints([
+                 points[0],
+                 points[points.length - 1],
+             ]);
+         } else {
+             this._currentArrow.setPoints(points);
+         }
+     };
 
-    public unMount() {
-        if (this._rootNode) {
-            this._rootNode.active = false;
-        }
-        this._currentArrow = null;
-        // 正确清理控制节点
-        this._clearControls();
-    }
+     private _onEndPointPointerUp = (event: SNodeEvents.IPointerEvent) => {
+         if (!this._isDraggingEndPoint) {
+             return;
+         }
+         this._isDraggingEndPoint = false;
+         this._draggingEndKind = null;
+         event.stopPropagation();
 
-    private _bindEvents(): void {
-        const points = [this._startPoint!, this._endPoint!];
-        points.forEach((node) => {
-            CanvasEventSystem.instance.addEventListener(
-                node,
-                SNodeEvents.PURE_POINTER_MOVE,
-                this._onPurePointerMove
-            );
-            this._editor.eventSystem.addEventListener(
-                node,
-                SNodeEvents.POINTER_DOWN,
-                this._onEndPointPointerDown
-            );
-        });
-    }
+         this._editor.eventSystem.removeEventListener(
+             this._editor.scene.getCanvasNode(),
+             SNodeEvents.POINTER_MOVE,
+             this._onEndPointerMove
+         );
+         this._editor.eventSystem.removeEventListener(
+             this._editor.scene.rootNode,
+             SNodeEvents.POINTER_UP,
+             this._onEndPointPointerUp
+         );
+         // 拖拽结束后重建控制点并显示
+         this._clearControls();
+         this._updateControls();
+         this._controlsHiddenInDrag = false;
+     };
 
-    private _onPurePointerMove = (event: SNodeEvents.IPointerEvent) => {
-        event.stopPropagation();
-        if (this._isDraggingEndPoint) {
-            return;
-        }
+     private _onCanvasPointerDown = (event: SNodeEvents.IPointerEvent) => {
+         if (!this._rootNode) return;
+         if (this._isDraggingEndPoint || this._dragging) return;
+         const worldPos = event.getWorldPosition();
+         // 支持直接点击线段开始拖拽：若当前无箭头，尝试拾取
+         if (!this._currentArrow) {
+             const picked = this._pickArrowAt(worldPos);
+             if (picked) {
+                 this.mountTo(picked);
+             }
+         }
+         // 点击在箭头线段上才开始整体拖拽
+         if (!this._currentArrow || !this._currentArrow.hitTest(worldPos))
+             return;
 
-        if (!this._currentArrow || !this._rootNode) return;
-        if (event.currentTarget !== this._prevHoveredNode) {
-            this._onNodeHovered(this._prevHoveredNode, false);
-            this._onNodeHovered(event.target, true);
-        }
+         this._isDraggingArrow = true;
+         this._dragArrowStartWorld = [worldPos[0], worldPos[1]];
+         const arrowNode = this._currentArrow.node!;
+         this._arrowStartPos = [arrowNode.position.x, arrowNode.position.y];
+         event.stopPropagation();
 
-        this._prevHoveredNode = event.target;
-    };
+         this._editor.eventSystem.addEventListener(
+             this._editor.scene.getCanvasNode(),
+             SNodeEvents.POINTER_MOVE,
+             this._onCanvasPointerMoveArrow
+         );
+         this._editor.eventSystem.addEventListener(
+             this._editor.scene.rootNode,
+             SNodeEvents.POINTER_UP,
+             this._onCanvasPointerUpArrow
+         );
+     };
 
-    private _onNodeHovered(node: SNode | null, isHover: boolean) {
-        if (!node) {
-            return;
-        }
-        console.log('hovered: ', isHover, node.name);
-        const geo =
-            node.getComponent(SGeo) || node.getComponentInChildren(SGeo);
+     private _pickArrowAt(worldPos: ReadonlyVec2): SIArrow | null {
+         let picked: SIArrow | null = null;
+         visitNodeRecursive(this._editor.scene.rootNode, (node) => {
+             if (picked) return;
+             const arrow = node.getComponent(SIArrow);
+             if (arrow && arrow.hitTest(worldPos)) {
+                 picked = arrow;
+             }
+         });
+         return picked;
+     }
 
-        if (this._usedControls.includes(node)) {
-            geo && geo.fill({ color: isHover ? 0xff6600 : 0xffffff });
-            this._editorModeStore.setMode(
-                isHover ? EditorMode.PRE_RESIZE_ARROW : EditorMode.DEFAULT,
-                node.metadata.direction === VERTICAL ? 'ew' : 'ns'
-            );
-        } else if (node === this._startPoint || node === this._endPoint) {
-            geo && geo.fill({ color: isHover ? 0xff6600 : 0xffffff });
-            this._editorModeStore.setMode(
-                isHover ? EditorMode.PRE_MOVE_ARROW : EditorMode.DEFAULT
-            );
-        } else {
-            this._editorModeStore.setMode(EditorMode.DEFAULT);
-        }
-    }
+     private _onCanvasPointerMoveArrow = (event: SNodeEvents.IPointerEvent) => {
+         if (
+             !this._isDraggingArrow ||
+             !this._currentArrow ||
+             !this._dragArrowStartWorld ||
+             !this._arrowStartPos
+         )
+             return;
+         if (!this._controlsHiddenInDrag) {
+             this._setControlsVisible(false);
+             this._controlsHiddenInDrag = true;
+         }
+         const arrowNode = this._currentArrow.node!;
+         const parentNode = arrowNode.parent!;
+         const currWorld = event.getWorldPosition();
 
-    private _enableResize(): void {
-        this._editor.eventSystem.addEventListener(
-            this._editor.scene.getCanvasNode(),
-            SNodeEvents.PURE_POINTER_MOVE,
-            this._onPurePointerMove
-        );
-        this._editor.eventSystem.addEventListener(
-            this._editor.scene.getCanvasNode(),
-            SNodeEvents.POINTER_DOWN,
-            this._onCanvasPointerDown
-        );
-    }
+         const startLocal = parentNode.toLocal(this._dragArrowStartWorld);
+         const currLocal = parentNode.toLocal(currWorld);
+         const dx = currLocal[0] - startLocal[0];
+         const dy = currLocal[1] - startLocal[1];
+         arrowNode.position.set(
+             this._arrowStartPos[0] + dx,
+             this._arrowStartPos[1] + dy
+         );
 
-    destroy(): void {
-        this.unMount();
-        // 彻底移除root容器，避免空容器常驻
-        if (this._rootNode) {
-            this._rootNode.removeChildren();
-            this._rootNode.removeFromParent();
-            this._rootNode = null;
-        }
-        // 清理池与引用
-        this._controls = [];
-        this._usedControls = [];
-        this._currentArrow = null;
-    }
+         // 同步更新起点/终点位置，但保持控制点隐藏
+         this._updateEndpoints();
+         eventBus.reDraw();
+     };
+
+     private _onCanvasPointerUpArrow = (event: SNodeEvents.IPointerEvent) => {
+         if (!this._isDraggingArrow) return;
+         this._isDraggingArrow = false;
+         this._dragArrowStartWorld = null;
+         this._arrowStartPos = null;
+         event.stopPropagation();
+
+         this._editor.eventSystem.removeEventListener(
+             this._editor.scene.getCanvasNode(),
+             SNodeEvents.POINTER_MOVE,
+             this._onCanvasPointerMoveArrow
+         );
+         this._editor.eventSystem.removeEventListener(
+             this._editor.scene.rootNode,
+             SNodeEvents.POINTER_UP,
+             this._onCanvasPointerUpArrow
+         );
+         // 拖拽结束后重建控制点并显示
+         this._clearControls();
+         this._updateControls();
+         this._controlsHiddenInDrag = false;
+     };
+
+     public unMount() {
+         if (this._rootNode) {
+             this._rootNode.active = false;
+         }
+         this._currentArrow = null;
+         // 正确清理控制节点
+         this._clearControls();
+     }
+
+     private _bindEvents(): void {
+         const points = [this._startPoint!, this._endPoint!];
+         points.forEach((node) => {
+             CanvasEventSystem.instance.addEventListener(
+                 node,
+                 SNodeEvents.PURE_POINTER_MOVE,
+                 this._onPurePointerMove
+             );
+             this._editor.eventSystem.addEventListener(
+                 node,
+                 SNodeEvents.POINTER_DOWN,
+                 this._onEndPointPointerDown
+             );
+         });
+     }
+
+     private _onPurePointerMove = (event: SNodeEvents.IPointerEvent) => {
+         event.stopPropagation();
+         if (this._isDraggingEndPoint) {
+             return;
+         }
+
+         if (!this._currentArrow || !this._rootNode) return;
+         if (event.currentTarget !== this._prevHoveredNode) {
+             this._onNodeHovered(this._prevHoveredNode, false);
+             this._onNodeHovered(event.target, true);
+         }
+
+         this._prevHoveredNode = event.target;
+     };
+
+     private _onNodeHovered(node: SNode | null, isHover: boolean) {
+         if (!node) {
+             return;
+         }
+         console.log('hovered: ', isHover, node.name);
+         const geo =
+             node.getComponent(SGeo) || node.getComponentInChildren(SGeo);
+
+         if (this._usedControls.includes(node)) {
+             geo && geo.fill({ color: isHover ? 0xff6600 : 0xffffff });
+             this._editorModeStore.setMode(
+                 isHover ? EditorMode.PRE_RESIZE_ARROW : EditorMode.DEFAULT,
+                 node.metadata.direction === VERTICAL ? 'ew' : 'ns'
+             );
+         } else if (node === this._startPoint || node === this._endPoint) {
+             geo && geo.fill({ color: isHover ? 0xff6600 : 0xffffff });
+             this._editorModeStore.setMode(
+                 isHover ? EditorMode.PRE_MOVE_ARROW : EditorMode.DEFAULT
+             );
+         } else {
+             this._editorModeStore.setMode(EditorMode.DEFAULT);
+         }
+     }
+
+     private _enableResize(): void {
+         this._editor.eventSystem.addEventListener(
+             this._editor.scene.getCanvasNode(),
+             SNodeEvents.PURE_POINTER_MOVE,
+             this._onPurePointerMove
+         );
+         this._editor.eventSystem.addEventListener(
+             this._editor.scene.getCanvasNode(),
+             SNodeEvents.POINTER_DOWN,
+             this._onCanvasPointerDown
+         );
+     }
+
+     destroy(): void {
+         this.unMount();
+         // 彻底移除root容器，避免空容器常驻
+         if (this._rootNode) {
+             this._rootNode.removeChildren();
+             this._rootNode.removeFromParent();
+             this._rootNode = null;
+         }
+         // 清理池与引用
+         this._controls = [];
+         this._usedControls = [];
+         this._currentArrow = null;
+     }
 }
