@@ -95,6 +95,19 @@ export class SIArrow extends SRenderComponent {
         if (this._points.length < 2) {
             return;
         }
+
+        // 计算起点和终点的距离
+        const start = this._points[0];
+        const end = this._points[this._points.length - 1];
+        const ddx = end[0] - start[0];
+        const ddy = end[1] - start[1];
+        const distance = Math.sqrt(ddx * ddx + ddy * ddy);
+
+        // 如果距离小于阈值则返回
+        if (distance < 5) {
+            return;
+        }
+
         if (this._path) {
             this._path.delete();
         }

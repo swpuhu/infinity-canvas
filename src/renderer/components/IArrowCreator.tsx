@@ -134,6 +134,11 @@ export class IArrowCreator {
     private _exitArrowInsertMode() {
         this.editorModeStore.setMode(EditorMode.DEFAULT);
         if (this._presetIArrowNode && this._presetIArrowNode.parent) {
+            const arrow = this._presetIArrowNode.getComponent(SIArrow);
+            arrow?.setPoints([
+                [0, 0],
+                [0, 0],
+            ]);
             this._presetIArrowNode.removeFromParent();
         }
     }
