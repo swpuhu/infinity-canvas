@@ -16,6 +16,7 @@ import { LayerController } from './components/LayerController';
 import { ReadonlyVec2 } from 'gl-matrix';
 import { ZoomController } from './components/ZoomController';
 import { SceneManager } from './components/SceneManager';
+import { IArrowCreator } from './components/IArrowCreator';
 
 export class CanvasEditor {
     private _renderer: Renderer | null = null;
@@ -25,6 +26,7 @@ export class CanvasEditor {
     private _resizeGizmo: ResizeGizmo | null = null;
     private _shapeCreator: ShapeCreator | null = null;
     private _textCreator: TextCreator | null = null;
+    private _iArrowCreator: IArrowCreator | null = null;
     private _snapGuide: SnapGuide | null = null;
     private _layerController: LayerController | null = null;
     private _sceneManager: SceneManager | null = null;
@@ -113,6 +115,7 @@ export class CanvasEditor {
         this._resizeGizmo = new ResizeGizmo(this, this._snapGuide);
         this._shapeCreator = new ShapeCreator(this);
         this._textCreator = new TextCreator(this);
+        this._iArrowCreator = new IArrowCreator(this);
         this._layerController = new LayerController(this._scene);
         new ZoomController(this._scene);
         this._sceneManager = new SceneManager(this);
