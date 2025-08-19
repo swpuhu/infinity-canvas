@@ -27,16 +27,21 @@ export const MIN_ZOOM_VALUE = -2;
 export const MAX_ZOOM_VALUE = 1.5;
 export const ZOOM_STEP = 0.05;
 
+export const DEFAULT_SHADOW_FILL = 0xf0f4fc;
+export const DEFAULT_SHADOW_STROKE = 0x000000;
+export const DEFAULT_SHADOW_STROKE_WIDTH = 2;
+export const DEFAULT_SHADOW_ALPHA = 0.5;
+
 export const DEFAULT_SHADOW_SHAPE_STYLE = {
-    fill: 0xf0f4fc,
-    stroke: 0x000000,
-    strokeWidth: 2,
-    alpha: 0.5,
+    fill: DEFAULT_SHADOW_FILL,
+    stroke: DEFAULT_SHADOW_STROKE,
+    strokeWidth: DEFAULT_SHADOW_STROKE_WIDTH,
+    alpha: DEFAULT_SHADOW_ALPHA,
 } as const;
 
 export const DEFAULT_SHAPE_STYLE = {
-    fill: 0xf0f4fc,
-    stroke: 0x000000,
-    strokeWidth: 2,
+    fill: DEFAULT_SHADOW_FILL,
+    stroke: DEFAULT_SHADOW_STROKE,
+    strokeWidth: DEFAULT_SHADOW_STROKE_WIDTH,
     alpha: 1,
 } as const;

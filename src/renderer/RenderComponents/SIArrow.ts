@@ -29,6 +29,7 @@ export class SIArrow extends SRenderComponent {
         this._paint.setColor(safeColor(options.stroke || 0x000000));
         this._paint.setStyle(CanvasKitModule.CanvasKit.PaintStyle.Stroke);
         this._paint.setStrokeWidth(options.strokeWidth || 4);
+        this._paint.setAlphaf(options.alpha || 1);
         this._paint.setStrokeCap(CanvasKitModule.CanvasKit.StrokeCap.Round);
         this._paint.setAntiAlias(true);
     }

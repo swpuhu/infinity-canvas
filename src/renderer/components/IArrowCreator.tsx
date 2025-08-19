@@ -5,20 +5,19 @@ import SNode from '../SNode';
 import { createNodeFromConfig } from '../util';
 import eventBus from '@/common/eventBus';
 import { ReadonlyVec2 } from 'gl-matrix';
-import { SGeo } from '../Geometry/SGeo';
-import { CanvasEventSystem } from '../SEventManager';
-import { SParagraph } from '../RenderComponents/SParagraph';
-import {
-    EnumParaLayoutMode,
-    EnumParaResizeMode,
-    SNodeConfig,
-    SNodeEvents,
-} from '@/common/types';
+import { SNodeEvents } from '@/common/types';
+import { SIArrow } from '../RenderComponents/SIArrow';
+import { DEFAULT_SHADOW_ALPHA, DEFAULT_SHADOW_STROKE } from '@/common/const';
 
 export class IArrowCreator {
-    private _currentInsertArrow: SNode | undefined = undefined;
     private editorModeStore: ReturnType<typeof useEditorModeStore>;
+    private _presetIArrowNode: SNode | null = null;
     private _canvasNode: SNode;
+
+    private _pointerDownCount = 0;
+
+    private _startPos: ReadonlyVec2 = [0, 0];
+    private _endPos: ReadonlyVec2 = [0, 0];
 
     constructor(private _editor: CanvasEditor) {
         const editorModeStore = useEditorModeStore();
@@ -26,39 +25,27 @@ export class IArrowCreator {
         const canvasNode = _editor.scene.getCanvasNode();
         this._canvasNode = canvasNode;
 
-        editorModeStore.$subscribe((mutation, state) => {
-            this.removeCurrentInsertArrow();
-            if (state.currentMode !== EditorMode.ARROW_INSERT) {
-                return;
-            }
-
-            // Create a preview arrow for insertion
-            const arrowConfig: SNodeConfig.IArrowConfig = {
-                type: SNodeConfig.NodeType.IARROW,
-                name: 'arrow-preview',
-                points: [
-                    [0, 0],
-                    [100, 0]
-                ],
-                style: {
-                    stroke: [0, 0, 0, 1],
-                    strokeWidth: 2,
-                },
-            };
-            this._currentInsertArrow = createNodeFromConfig(arrowConfig);
-
-            if (this._currentInsertArrow) {
-                canvasNode.addChild(this._currentInsertArrow);
-            }
-        });
+        this._createPresetArrow();
+        editorModeStore.$subscribe(this.onEditorModeChange);
 
         _editor.eventSystem.addSystemEventListener(
             SNodeEvents.POINTER_DOWN,
             (event: any) => {
-                if (editorModeStore.isToolActive(EditorMode.ARROW_INSERT)) {
-                    const worldPos = event.getWorldPosition();
-                    const localPos = canvasNode.toLocal(worldPos);
-                    this.insertArrow(localPos);
+                if (!editorModeStore.isToolActive(EditorMode.ARROW_INSERT)) {
+                    return;
+                }
+
+                this._pointerDownCount++;
+                const worldPos = event.getWorldPosition();
+                const localPos = canvasNode.toLocal(worldPos);
+                if (this._pointerDownCount === 1) {
+                    this._startPos = localPos;
+                    return;
+                }
+                if (this._pointerDownCount === 2) {
+                    this._endPos = localPos;
+                    this.insertArrow(this._startPos, this._endPos);
+                    this._pointerDownCount = 0;
                 }
             }
         );
@@ -66,117 +53,88 @@ export class IArrowCreator {
         _editor.eventSystem.addSystemEventListener(
             SNodeEvents.POINTER_MOVE,
             (event: any) => {
-                if (
-                    editorModeStore.isToolActive(EditorMode.ARROW_INSERT) &&
-                    this._currentInsertArrow
-                ) {
+                if (editorModeStore.isToolActive(EditorMode.ARROW_INSERT)) {
                     const worldPos = event.getWorldPosition();
                     const localPos = canvasNode.toLocal(worldPos);
-                    this.updatePreviewArrow(localPos);
+                    if (this._pointerDownCount === 1) {
+                        this.updatePreviewArrow(localPos);
+                    }
                 }
             }
         );
     }
 
-    private updatePreviewArrow(currentPos: ReadonlyVec2) {
-        if (!this._currentInsertArrow) return;
-
-        // Update the preview arrow to follow mouse with dynamic end point
-        // This would need to be implemented based on your arrow component structure
-    }
-
-    private _addEventsToArrowNode(node: SNode) {
-        CanvasEventSystem.instance.addEventListener(
-            node,
-            SNodeEvents.DB_CLICK,
-            () => {
-                const hasText = !!node.children[0];
-                if (hasText) {
-                    eventBus.enterEditMode(node.children[0]!);
-                    return;
-                }
-                this._insertTextToArrowNode(node);
-            }
+    private _createPresetArrow(): void {
+        const arrowConfig = (
+            <iarrow
+                name="iarrow"
+                width={200}
+                height={20}
+                style={{
+                    stroke: DEFAULT_SHADOW_STROKE,
+                    alpha: DEFAULT_SHADOW_ALPHA,
+                }}
+                points={[
+                    [0, 0],
+                    [500, -200],
+                ]}
+            />
         );
+
+        this._presetIArrowNode = createNodeFromConfig(arrowConfig);
     }
 
-    private _insertTextToArrowNode(arrowNode: SNode) {
-        const hasText = !!arrowNode.children[0];
-        if (hasText) {
+    private onEditorModeChange = (
+        _: any,
+        state: ReturnType<typeof useEditorModeStore>['$state']
+    ) => {
+        if (this._presetIArrowNode && this._presetIArrowNode.parent) {
+            this._presetIArrowNode.removeFromParent();
+        }
+        if (state.currentMode !== EditorMode.ARROW_INSERT) {
             return;
         }
+        const canvasNode = this._editor.scene.getCanvasNode();
+        canvasNode.addChild(this._presetIArrowNode!);
+    };
 
-        // Calculate text position at arrow center
-        const textConfig = {
-            type: SNodeConfig.NodeType.PARAGRAPH,
-            name: 'text',
-            text: 'Text',
-            fontSize: 16,
-            transform: {
-                anchor: { x: 0.5, y: 0.5 },
-                position: { x: 0, y: -20 },
-            },
-            width: 100,
-            color: [0, 0, 0, 1],
-            layoutMode: EnumParaLayoutMode.DEPEND_PARENT,
-            resizeMode: EnumParaResizeMode.ONLY_NODE,
-        };
-        const textNode = createNodeFromConfig(textConfig);
-        arrowNode.addChild(textNode);
-
-        const textComp = textNode.getComponent(SParagraph);
-        if (textComp) {
-            textComp.setBelongToNode(arrowNode);
+    private updatePreviewArrow(currentPos: ReadonlyVec2) {
+        if (!this._presetIArrowNode) {
+            return;
         }
-
-        setTimeout(() => {
-            eventBus.enterEditMode(textNode);
-        }, 100);
+        const iArrow = this._presetIArrowNode.getComponent(SIArrow);
+        if (!iArrow) {
+            return;
+        }
+        iArrow.setPoints([this._startPos, currentPos]);
     }
 
-    public getShadowArrow(): SNode | undefined {
-        return this._currentInsertArrow;
-    }
-
-    private insertArrow(localPos: ReadonlyVec2) {
+    private insertArrow(startPos: ReadonlyVec2, endPos: ReadonlyVec2) {
         // Create arrow with start point at click position
-        const arrowConfig: SNodeConfig.IArrowConfig = {
-            type: SNodeConfig.NodeType.IARROW,
-            name: 'arrow',
-            points: [
-                [localPos[0], localPos[1]],
-                [localPos[0] + 100, localPos[1]] // Default length of 100px
-            ],
-            style: {
-                stroke: [0, 0, 0, 1],
-                strokeWidth: 2,
-            },
-        };
+        const arrowConfig = (
+            <iarrow
+                name="iarrow"
+                width={0}
+                height={0}
+                style={{
+                    stroke: DEFAULT_SHADOW_STROKE,
+                    alpha: 1,
+                }}
+                points={[startPos, endPos]}
+            />
+        );
 
         const newArrow = createNodeFromConfig(arrowConfig);
         this._canvasNode.addChild(newArrow);
 
-        const geoComp = newArrow.getComponent(SGeo);
-        if (geoComp) {
-            geoComp.setAlpha(1);
-        }
-
-        this._addEventsToArrowNode(newArrow);
         this._exitArrowInsertMode();
         eventBus.reDraw();
     }
 
     private _exitArrowInsertMode() {
         this.editorModeStore.setMode(EditorMode.DEFAULT);
-        if (this._currentInsertArrow) {
-            this._currentInsertArrow.removeFromParent();
-            this._currentInsertArrow = undefined;
-        }
-    }
-
-    private removeCurrentInsertArrow() {
-        if (this._currentInsertArrow) {
-            this._currentInsertArrow.removeFromParent();
+        if (this._presetIArrowNode && this._presetIArrowNode.parent) {
+            this._presetIArrowNode.removeFromParent();
         }
     }
 
