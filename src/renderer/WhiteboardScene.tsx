@@ -73,8 +73,12 @@ export class WhiteboardScene extends EventEmitter {
         this._zoomStore.$subscribe((mutation, state) => {
             // console.log('editorModeStore', editorModeStore.currentCursorStyle, editorModeStore.resizeDirection);
             const realScale = state.canvasScale * state.zoomScale;
+            const scaleVec = new Vec2(realScale, realScale);
             this.canvasContainer.setTransform({
                 scale: new Vec2(realScale, realScale),
+            });
+            this.topLayer.setTransform({
+                scale: scaleVec,
             });
         });
     }
@@ -113,7 +117,6 @@ export class WhiteboardScene extends EventEmitter {
         console.log('resizeCanvasSize', this.availableSize);
 
         const virtualCanvasScale = this.getVirtualCanvasScale();
-        const canvasContainer = this.canvasContainerRef.value!;
 
         this.rootNode.setTransform({
             position: new Vec2(canvasSize.width / 2, canvasSize.height / 2),
