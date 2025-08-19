@@ -134,9 +134,11 @@ export class DragEventsHandler extends EventEmitter {
 
     private _onDragPointerUp = (event: SNodeEvents.IPointerEvent): void => {
         event.stopPropagation();
+        if (!this._isDragging) {
+            return;
+        }
         this._prevFixedWorldPosition = null;
         eventBus.cancelSnapGuide();
-
         this._editorModeStore.setMode(EditorMode.DEFAULT);
         if (this._isDragging) {
             this._isDragging = false;

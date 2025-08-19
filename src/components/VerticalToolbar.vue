@@ -68,6 +68,15 @@
             </svg>
         </div>
 
+        <div class="toolbar-item" :class="{ active: editorModeStore.isToolActive(EditorMode.ARROW_INSERT) }"
+            @click="setActiveTool(EditorMode.ARROW_INSERT)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <text x="6" y="16" font-family="sans-serif" font-size="14" font-weight="normal">
+                    A
+                </text>
+            </svg>
+        </div>
     </div>
 </template>
 
@@ -153,6 +162,8 @@ function setActiveTool(currentEditorMode: EditorMode) {
         editorModeStore.setShapeInsertMode(true);
     } else if (currentEditorMode === EditorMode.TEXT_INSERT) {
         editorModeStore.setTextInsertMode(true);
+    } else if (currentEditorMode === EditorMode.ARROW_INSERT) {
+        editorModeStore.setMode(EditorMode.ARROW_INSERT);
     }
 }
 

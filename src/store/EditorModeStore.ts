@@ -15,6 +15,7 @@ export enum EditorMode {
     HAND_TOOL = 0b1000000000,
     PRE_MOVE_ARROW = 0b10000000000 | EditorMode.DEFAULT,
     PRE_RESIZE_ARROW = 0b100000000000 | EditorMode.DEFAULT,
+    ARROW_INSERT = 0b1000000000000,
     // Add more modes as needed
 }
 
@@ -44,7 +45,8 @@ export const useEditorModeStore = defineStore('editorMode', {
         currentCursorStyle(): CursorStyle {
             if (
                 this.currentMode === EditorMode.TEXT_INSERT ||
-                this.currentMode === EditorMode.SHAPE_INSERT
+                this.currentMode === EditorMode.SHAPE_INSERT ||
+                this.currentMode === EditorMode.ARROW_INSERT
             ) {
                 return CursorStyle.INSERT;
             } else if (this.currentMode === EditorMode.TEXT_EDIT) {
