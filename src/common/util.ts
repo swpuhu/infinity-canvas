@@ -327,6 +327,43 @@ export function getDistance(point1: ReadonlyVec2, point2: ReadonlyVec2) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
+/**
+ * 计算点p到直线p1p2的投影点
+ * @param p 需要投影的点
+ * @param p1 直线起点
+ * @param p2 直线终点
+ * @returns 投影点的坐标
+ */
+export function getProjPointInLine(
+    p: ReadonlyVec2,
+    p1: ReadonlyVec2,
+    p2: ReadonlyVec2
+): vec2 {
+    const v1 = vec2.create();
+    const v2 = vec2.create();
+
+    // 创建向量 p1->p 和 p1->p2
+    vec2.sub(v1, p, p1);
+    vec2.sub(v2, p2, p1);
+
+    // 计算投影长度比例 t
+    const dotProduct = vec2.dot(v1, v2);
+    const lenSquared = vec2.squaredLength(v2);
+
+    if (lenSquared === 0) {
+        // 如果p1和p2是同一点，返回p1
+        return vec2.clone(p1);
+    }
+
+    const t = dotProduct / lenSquared;
+
+    // 计算投影点坐标
+    const projPoint = vec2.create();
+    vec2.scaleAndAdd(projPoint, p1, v2, t);
+
+    return projPoint;
+}
+
 export function zoomToScale(zoomValue: number) {
     return Math.exp(zoomValue);
 }

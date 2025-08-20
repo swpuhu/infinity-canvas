@@ -9,7 +9,12 @@ import eventBus from '@/common/eventBus';
 import { CanvasEventSystem } from '@/renderer/SEventManager';
 import { SGeo } from '@/renderer/Geometry/SGeo';
 import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
-import { visitNodeRecursive } from '@/common/util';
+import {
+    getDistance,
+    getDistanceFromPointToLine,
+    getProjPointInLine,
+    visitNodeRecursive,
+} from '@/common/util';
 
 const VERTICAL = 1;
 const HORIZONTAL = 0;
@@ -716,7 +721,7 @@ export class IArrowResizer {
         const points = this._currentArrow!.getPoints().map(
             (p) => [p[0], p[1]] as [number, number]
         );
-        const nextPos = vec2.create();
+        let nextPos = vec2.create();
 
         vec2.add(nextPos, this._endPointPos, delta);
         const last = points.length - 1;
@@ -738,9 +743,21 @@ export class IArrowResizer {
             const p2 = points[last - 2];
 
             const line2 = vec2.fromValues(p2[0] - p1[0], p2[1] - p1[1]);
+            const distanceToLine2 = getDistanceFromPointToLine(nextPos, p1, p2);
             const len2 = vec2.length(line2);
             if (len2 <= this._snapThreshold) {
                 nextPos[1] = p2[1];
+                if (this._lastSecondDir === HORIZONTAL) {
+                    points[last - 1][0] = nextPos[0];
+                } else {
+                    points[last - 1][1] = nextPos[1];
+                }
+            } else if (distanceToLine2 <= this._snapThreshold) {
+                const projPoint = getProjPointInLine(nextPos, p1, p2);
+                nextPos = projPoint as vec2;
+
+                points[last] = nextPos as [number, number];
+                console.log('projPoint: ', projPoint);
                 if (this._lastSecondDir === HORIZONTAL) {
                     points[last - 1][0] = nextPos[0];
                 } else {
@@ -751,94 +768,6 @@ export class IArrowResizer {
 
         this._endPoint?.position.set(nextPos[0], nextPos[1]);
         this._currentArrow?.setPoints(points);
-    }
-
-    // 计算点到线段的距离和投影点
-    private _pointToSegmentDistance(
-        point: [number, number],
-        segStart: [number, number],
-        segEnd: [number, number]
-    ): {
-        distance: number;
-        projection: [number, number];
-        isOnSegment: boolean;
-    } {
-        const dx = segEnd[0] - segStart[0];
-        const dy = segEnd[1] - segStart[1];
-        const segmentLengthSq = dx * dx + dy * dy;
-
-        if (segmentLengthSq === 0) {
-            // 线段退化为点
-            const dist = Math.hypot(
-                point[0] - segStart[0],
-                point[1] - segStart[1]
-            );
-            return {
-                distance: dist,
-                projection: [segStart[0], segStart[1]],
-                isOnSegment: true,
-            };
-        }
-
-        // 计算投影参数 t
-        const t = Math.max(
-            0,
-            Math.min(
-                1,
-                ((point[0] - segStart[0]) * dx +
-                    (point[1] - segStart[1]) * dy) /
-                    segmentLengthSq
-            )
-        );
-
-        // 投影点
-        const projection: [number, number] = [
-            segStart[0] + t * dx,
-            segStart[1] + t * dy,
-        ];
-
-        // 距离
-        const distance = Math.hypot(
-            point[0] - projection[0],
-            point[1] - projection[1]
-        );
-
-        return {
-            distance,
-            projection,
-            isOnSegment: t > 0 && t < 1,
-        };
-    }
-
-    // 在吸附状态下移动跟随控制点
-    private _moveFollowingControlPoint(
-        points: [number, number][],
-        endPointIndex: number,
-        snapInfo: { projectedPoint: [number, number]; isOnSegment: boolean }
-    ) {
-        if (endPointIndex === 0) {
-            // 起始点的情况：移动第二个控制点
-            if (points.length >= 2) {
-                const followingIndex = 1;
-                // 保持与起始点的相对方向关系
-                if (this._lastSecondDir === HORIZONTAL) {
-                    points[followingIndex][0] = points[0][0];
-                } else {
-                    points[followingIndex][1] = points[0][1];
-                }
-            }
-        } else {
-            // 终点的情况：移动倒数第二个控制点
-            const followingIndex = endPointIndex - 1;
-            if (followingIndex >= 0) {
-                // 保持与终点的相对方向关系
-                if (this._lastSecondDir === HORIZONTAL) {
-                    points[followingIndex][0] = points[endPointIndex][0];
-                } else {
-                    points[followingIndex][1] = points[endPointIndex][1];
-                }
-            }
-        }
     }
 
     private _onEndPointPointerUp = (event: SNodeEvents.IPointerEvent) => {
