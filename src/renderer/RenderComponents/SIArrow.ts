@@ -4,6 +4,7 @@ import { SRenderComponent } from './SRenderComponent';
 import { SNodeConfig } from '@/common/types';
 import { CanvasKitModule } from '@/lib/canvaskit';
 import { getDistanceFromPointToLine, safeColor } from '@/common/util';
+import SNode from '../SNode';
 
 export class SIArrow extends SRenderComponent {
     private _points: ReadonlyVec2[] = [];
@@ -16,9 +17,59 @@ export class SIArrow extends SRenderComponent {
 
     private _options: SNodeConfig.SGraphicsStyleConfig = {};
 
+    private _headNode: SNode | null = null;
+
+    private _tailNode: SNode | null = null;
+
+    private _headPositionInHeadNode: ReadonlyVec2 = [0, 0];
+
+    private _tailPositionInTailNode: ReadonlyVec2 = [0, 0];
+
     public isOrigin = true;
 
     protected onCreated(): void {}
+
+    public attachHeadNode(node: SNode, posInHeadNode: ReadonlyVec2): void {
+        this._headNode = node;
+        this._headPositionInHeadNode = posInHeadNode;
+        this._headNode.on(
+            'transform-changed',
+            this._onHeadNodeTransformChanged
+        );
+    }
+
+    public attachTailNode(node: SNode, posInTailNode: ReadonlyVec2): void {
+        this._tailNode = node;
+        this._tailPositionInTailNode = posInTailNode;
+        this._tailNode.on(
+            'transform-changed',
+            this._onTailNodeTransformChanged
+        );
+    }
+
+    private _onHeadNodeTransformChanged = (): void => {
+        if (!this._headNode || !this.node) {
+            return;
+        }
+        const points = this.getPoints();
+        const worldP = this._headNode.toGlobal(this._headPositionInHeadNode);
+        // 必须保证SIArrow的node节点是 canvasNode 的直接子节点！
+        const pInCanvasNode = this.node.parent!.toLocal(worldP);
+        points[0] = pInCanvasNode;
+        this.setPoints(points);
+    };
+
+    private _onTailNodeTransformChanged = (): void => {
+        if (!this._tailNode || !this.node) {
+            return;
+        }
+        const points = this.getPoints();
+        const worldP = this._tailNode.toGlobal(this._tailPositionInTailNode);
+        // 必须保证SIArrow的node节点是 canvasNode 的直接子节点！
+        const pInCanvasNode = this.node.parent!.toLocal(worldP);
+        points[points.length - 1] = pInCanvasNode;
+        this.setPoints(points);
+    };
 
     public applyStyle(options: SNodeConfig.SGraphicsStyleConfig = {}) {
         if (this._paint) {

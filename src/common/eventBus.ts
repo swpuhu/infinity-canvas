@@ -3,6 +3,20 @@ import EventEmitter from 'eventemitter3';
 import { SNodeConfig } from './types';
 
 const eventEmitter = new EventEmitter();
+
+// 创建一个通用的事件节流函数，确保每帧只触发一次事件
+function createOncePerFrameEmitter(eventName: string) {
+    let scheduled = false;
+    return () => {
+        if (scheduled) return;
+        scheduled = true;
+        requestAnimationFrame(() => {
+            scheduled = false;
+            eventEmitter.emit(eventName);
+        });
+    };
+}
+
 const eventBus = {
     reDraw() {
         eventEmitter.emit('reDraw');
@@ -32,19 +46,8 @@ const eventBus = {
         eventEmitter.on('exitEditMode', callback);
     },
 
-    // 每帧合并触发一次层级变更事件
-    hierarchyChangeOncePerFrame: (() => {
-        let scheduled = false;
-        return () => {
-            if (scheduled) return;
-            scheduled = true;
-            requestAnimationFrame(() => {
-                scheduled = false;
-                eventEmitter.emit('hierarchyChange');
-            });
-        };
-    })(),
-
+    // 使用通用函数创建层级变更事件的节流版本
+    hierarchyChangeOncePerFrame: createOncePerFrameEmitter('hierarchyChange'),
     onHierarchyChange(callback: () => void) {
         eventEmitter.on('hierarchyChange', callback);
     },

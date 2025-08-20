@@ -186,6 +186,7 @@ class SNode extends EventEmitter {
         for (const child of this._children) {
             child.updateWorldMatrix();
         }
+        this.emit('transform-changed');
     }
 
     public toGlobal(point: IPointData | ReadonlyVec2): ReadonlyVec2 {
