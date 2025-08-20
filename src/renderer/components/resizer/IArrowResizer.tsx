@@ -57,6 +57,11 @@ export class IArrowResizer {
     // 合并阈值（像素）：用于判断线段长度是否近似为0
     private _mergeThreshold: number = 1;
 
+    private _endPointEventStartPos: ReadonlyVec2 = [0, 0];
+
+    private _startPointPos: ReadonlyVec2 = [0, 0];
+    private _endPointPos: ReadonlyVec2 = [0, 0];
+
     private _setControlsVisible(visible: boolean) {
         // 仅隐藏/显示分段控制点，不影响起点与终点
         this._usedControls.forEach((control) => {
@@ -604,6 +609,11 @@ export class IArrowResizer {
         // 重置吸附状态
         this._endPointSnapped = false;
         this._snapToSegmentIndex = -1;
+        const worldPoint = event.getWorldPosition();
+        const localPos = this._startPoint!.parent!.toLocal(worldPoint);
+        this._endPointEventStartPos = localPos;
+        this._startPointPos = [this._startPoint!.x, this._startPoint!.y];
+        this._endPointPos = [this._endPoint!.x, this._endPoint!.y];
 
         this._editor.eventSystem.addEventListener(
             this._editor.scene.getCanvasNode(),
@@ -629,6 +639,7 @@ export class IArrowResizer {
                 Math.abs(points[last - 1][1] - points[last - 2][1]);
             this._lastSecondDir = isHorizontal ? HORIZONTAL : VERTICAL;
         }
+
         console.log('lastSecondDir', this._lastSecondDir);
     };
 
@@ -644,208 +655,102 @@ export class IArrowResizer {
         const arrowNode = this._currentArrow.node!;
         const worldPos = event.getWorldPosition();
         const localPos = arrowNode.toLocal(worldPos);
-
+        const diff = vec2.subtract(
+            vec2.create(),
+            localPos,
+            this._endPointEventStartPos
+        );
         if (this._draggingEndKind === 'start') {
-            this._handleStartPointMove(localPos, worldPos);
+            this._handleStartPointMove(worldPos, diff);
         } else if (this._draggingEndKind === 'end') {
-            this._handleEndPointMove(localPos, worldPos);
+            this._handleEndPointMove(worldPos, diff);
         }
 
         eventBus.reDraw();
     };
 
-    private _handleStartPointMove(
-        localPos: ReadonlyVec2,
-        worldPos: ReadonlyVec2
-    ) {
+    private _handleStartPointMove(worldPos: ReadonlyVec2, delta: ReadonlyVec2) {
         const points = this._currentArrow!.getPoints().map(
             (p) => [p[0], p[1]] as [number, number]
         );
-        const arrowNode = this._currentArrow!.node!;
+        const nextPos = vec2.create();
 
-        points[0] = [localPos[0], localPos[1]];
+        vec2.add(nextPos, this._startPointPos, delta);
 
-        // 检查对第二条线段的吸附（如果存在）
-        let snapInfo = null;
-        if (points.length >= 3) {
-            snapInfo = this._checkSnapToSegment(
-                points[0],
-                points[1],
-                points[2],
-                1
-            );
-        }
-
-        if (snapInfo) {
-            // 吸附到第二条线段
-            this._endPointSnapped = true;
-            this._snapToSegmentIndex = 1;
-
-            // 调整起始点到投影位置
-            points[0] = snapInfo.projectedPoint;
-
-            // 第二个控制点跟随移动
-            this._moveFollowingControlPoint(points, 0, snapInfo);
-        } else {
-            // 检查是否脱离吸附
-            if (this._endPointSnapped && this._snapToSegmentIndex === 1) {
-                this._endPointSnapped = false;
-                this._snapToSegmentIndex = -1;
-            }
-
-            // 原有逻辑：根据方向调整第二个点
-            if (!this._currentArrow!.isOrigin) {
-                if (this._lastSecondDir === HORIZONTAL) {
-                    points[1][0] = points[0][0];
-                } else {
-                    points[1][1] = points[0][1];
-                }
-            }
-        }
-
-        // 更新箭头点和UI
-        if (this._currentArrow!.isOrigin) {
-            this._currentArrow!.setPoints([
-                points[0],
-                points[points.length - 1],
-            ]);
-        } else {
-            this._currentArrow!.setPoints(points);
-        }
-
-        // 让端点控制柄显示在实际吸附后的端点位置
-        const snappedWorld = arrowNode.toGlobal(
-            vec2.fromValues(points[0][0], points[0][1])
-        );
-        const lp = this._rootNode!.toLocal(snappedWorld);
-        this._startPoint && this._startPoint.position.set(lp[0], lp[1]);
-    }
-
-    private _handleEndPointMove(
-        localPos: ReadonlyVec2,
-        worldPos: ReadonlyVec2
-    ) {
-        const points = this._currentArrow!.getPoints().map(
-            (p) => [p[0], p[1]] as [number, number]
-        );
-        const arrowNode = this._currentArrow!.node!;
-
+        points[0] = nextPos as [number, number];
         const last = points.length - 1;
-        points[last] = [localPos[0], localPos[1]];
-
-        // 检查对倒数第二条线段的吸附（如果存在）
-        let snapInfo = null;
-        if (points.length >= 3) {
-            snapInfo = this._checkSnapToSegment(
-                points[last],
-                points[last - 1],
-                points[last - 2],
-                last - 1
-            );
+        if (this._currentArrow?.isOrigin) {
+            this._currentArrow.setPoints([points[0], points[last]]);
+            this._startPoint?.position.set(nextPos[0], nextPos[1]);
+            return;
         }
 
-        if (snapInfo) {
-            // 吸附到倒数第二条线段
-            this._endPointSnapped = true;
-            this._snapToSegmentIndex = last - 1;
-
-            // 调整终点到投影位置
-            points[last] = snapInfo.projectedPoint;
-
-            // 倒数第二个控制点跟随移动
-            this._moveFollowingControlPoint(points, last, snapInfo);
+        if (this._lastSecondDir === HORIZONTAL) {
+            points[1][0] = nextPos[0];
         } else {
-            // 检查是否脱离吸附
-            if (
-                this._endPointSnapped &&
-                this._snapToSegmentIndex === last - 1
-            ) {
-                this._endPointSnapped = false;
-                this._snapToSegmentIndex = -1;
-            }
+            points[1][1] = nextPos[1];
+        }
+        // 检查对第二条线段的吸附（如果存在）
+        if (points.length >= 3) {
+            const p0 = points[0];
+            const p1 = points[1];
+            const p2 = points[2];
 
-            // 原有逻辑：根据方向调整倒数第二个点
-            if (!this._currentArrow!.isOrigin) {
+            const line2 = vec2.fromValues(p2[0] - p1[0], p2[1] - p1[1]);
+            const len2 = vec2.length(line2);
+            if (len2 <= this._snapThreshold) {
+                nextPos[1] = p2[1];
                 if (this._lastSecondDir === HORIZONTAL) {
-                    points[last - 1][0] = points[last][0];
+                    points[1][0] = nextPos[0];
                 } else {
-                    points[last - 1][1] = points[last][1];
+                    points[1][1] = nextPos[1];
                 }
             }
         }
 
-        // 更新箭头点和UI
-        if (this._currentArrow!.isOrigin) {
-            this._currentArrow!.setPoints([
-                points[0],
-                points[points.length - 1],
-            ]);
-        } else {
-            this._currentArrow!.setPoints(points);
-        }
-
-        // 让端点控制柄显示在实际吸附后的端点位置
-        const snappedWorld = arrowNode.toGlobal(
-            vec2.fromValues(points[last][0], points[last][1])
-        );
-        const lp = this._rootNode!.toLocal(snappedWorld);
-        this._endPoint && this._endPoint.position.set(lp[0], lp[1]);
+        this._startPoint?.position.set(nextPos[0], nextPos[1]);
+        this._currentArrow?.setPoints(points);
     }
 
-    // 检查点是否应该吸附到指定线段
-    private _checkSnapToSegment(
-        endPoint: [number, number],
-        adjacentPoint: [number, number],
-        targetPoint: [number, number],
-        segmentIndex: number
-    ): { projectedPoint: [number, number]; isOnSegment: boolean } | null {
-        if (!this._currentArrow || !this._rootNode) return null;
-        const arrowNode = this._currentArrow.node!;
-
-        // 将点转换到屏幕（_rootNode）坐标系，使用像素级阈值
-        const endWorld = arrowNode.toGlobal(
-            vec2.fromValues(endPoint[0], endPoint[1])
+    private _handleEndPointMove(worldPos: ReadonlyVec2, delta: ReadonlyVec2) {
+        const points = this._currentArrow!.getPoints().map(
+            (p) => [p[0], p[1]] as [number, number]
         );
-        const segStartWorld = arrowNode.toGlobal(
-            vec2.fromValues(adjacentPoint[0], adjacentPoint[1])
-        );
-        const segEndWorld = arrowNode.toGlobal(
-            vec2.fromValues(targetPoint[0], targetPoint[1])
-        );
+        const nextPos = vec2.create();
 
-        const endScreen = this._rootNode.toLocal(endWorld);
-        const segStartScreen = this._rootNode.toLocal(segStartWorld);
-        const segEndScreen = this._rootNode.toLocal(segEndWorld);
-
-        const distance = this._pointToSegmentDistance(
-            [endScreen[0], endScreen[1]],
-            [segStartScreen[0], segStartScreen[1]],
-            [segEndScreen[0], segEndScreen[1]]
-        );
-
-        console.log('Snap check (screen):', {
-            endScreen: [endScreen[0], endScreen[1]],
-            segStartScreen: [segStartScreen[0], segStartScreen[1]],
-            segEndScreen: [segEndScreen[0], segEndScreen[1]],
-            distance: distance.distance,
-            threshold: this._snapThreshold,
-            shouldSnap: distance.distance <= this._snapThreshold,
-            segmentIndex,
-        });
-
-        if (distance.distance <= this._snapThreshold) {
-            // 将屏幕坐标下的投影点转换回箭头局部坐标
-            const projectionWorld = this._rootNode.toGlobal(
-                vec2.fromValues(distance.projection[0], distance.projection[1])
-            );
-            const projectedLocal = arrowNode.toLocal(projectionWorld);
-            return {
-                projectedPoint: [projectedLocal[0], projectedLocal[1]],
-                isOnSegment: distance.isOnSegment,
-            };
+        vec2.add(nextPos, this._endPointPos, delta);
+        const last = points.length - 1;
+        points[last] = nextPos as [number, number];
+        if (this._currentArrow?.isOrigin) {
+            this._currentArrow.setPoints([points[0], points[last]]);
+            this._endPoint?.position.set(nextPos[0], nextPos[1]);
+            return;
         }
 
-        return null;
+        if (this._lastSecondDir === HORIZONTAL) {
+            points[last - 1][0] = nextPos[0];
+        } else {
+            points[last - 1][1] = nextPos[1];
+        }
+        // 检查对第二条线段的吸附（如果存在）
+        if (points.length >= 3) {
+            const p1 = points[last - 1];
+            const p2 = points[last - 2];
+
+            const line2 = vec2.fromValues(p2[0] - p1[0], p2[1] - p1[1]);
+            const len2 = vec2.length(line2);
+            if (len2 <= this._snapThreshold) {
+                nextPos[1] = p2[1];
+                if (this._lastSecondDir === HORIZONTAL) {
+                    points[last - 1][0] = nextPos[0];
+                } else {
+                    points[last - 1][1] = nextPos[1];
+                }
+            }
+        }
+
+        this._endPoint?.position.set(nextPos[0], nextPos[1]);
+        this._currentArrow?.setPoints(points);
     }
 
     // 计算点到线段的距离和投影点
