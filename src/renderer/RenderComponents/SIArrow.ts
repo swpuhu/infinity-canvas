@@ -51,6 +51,10 @@ export class SIArrow extends SRenderComponent {
         // 如果是横平竖直就直接返回原始点
         const dx = end[0] - start[0];
         const dy = end[1] - start[1];
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 1) {
+            return points;
+        }
         const isHorizontal = Math.abs(dx) >= Math.abs(dy);
 
         if (isHorizontal && Math.abs(dy) < 1) {
@@ -102,15 +106,16 @@ export class SIArrow extends SRenderComponent {
         const ddx = end[0] - start[0];
         const ddy = end[1] - start[1];
         const distance = Math.sqrt(ddx * ddx + ddy * ddy);
+        if (this._path) {
+            this._path.delete();
+            this._path = null;
+        }
 
         // 如果距离小于阈值则返回
         if (distance < 5) {
             return;
         }
 
-        if (this._path) {
-            this._path.delete();
-        }
         this._path = new CanvasKitModule.CanvasKit.Path();
         this._path.moveTo(this._points[0][0], this._points[0][1]);
         for (let i = 1; i < this._points.length; i++) {
