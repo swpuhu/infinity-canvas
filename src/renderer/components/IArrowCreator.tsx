@@ -4,11 +4,12 @@ import { createElement } from '../createElement';
 import SNode from '../SNode';
 import { createNodeFromConfig } from '../util';
 import eventBus from '@/common/eventBus';
-import { ReadonlyVec2 } from 'gl-matrix';
+import { ReadonlyVec2, vec2 } from 'gl-matrix';
 import { SNodeEvents } from '@/common/types';
 import { SIArrow } from '../RenderComponents/SIArrow';
 import { DEFAULT_SHADOW_ALPHA, DEFAULT_SHADOW_STROKE } from '@/common/const';
 
+type TYPE_OPERATE_STATUS = 'idle' | 'pointer_down' | 'dragging';
 export class IArrowCreator {
     private editorModeStore: ReturnType<typeof useEditorModeStore>;
     private _presetIArrowNode: SNode | null = null;
@@ -18,6 +19,8 @@ export class IArrowCreator {
 
     private _startPos: ReadonlyVec2 = [0, 0];
     private _endPos: ReadonlyVec2 = [0, 0];
+
+    private _status: TYPE_OPERATE_STATUS = 'idle';
 
     constructor(private _editor: CanvasEditor) {
         const editorModeStore = useEditorModeStore();
@@ -34,19 +37,33 @@ export class IArrowCreator {
                 if (!editorModeStore.isToolActive(EditorMode.ARROW_INSERT)) {
                     return;
                 }
-
                 this._pointerDownCount++;
                 const worldPos = event.getWorldPosition();
                 const localPos = canvasNode.toLocal(worldPos);
                 if (this._pointerDownCount === 1) {
+                    this._status = 'pointer_down';
                     this._startPos = localPos;
                     return;
                 }
-                if (this._pointerDownCount === 2) {
+                if (this._pointerDownCount === 2 && this._status === 'idle') {
                     this._endPos = localPos;
                     this.insertArrow(this._startPos, this._endPos);
-                    this._pointerDownCount = 0;
                 }
+            }
+        );
+
+        _editor.eventSystem.addEventListener(
+            this._canvasNode,
+            SNodeEvents.POINTER_UP,
+            (_event: any) => {
+                if (!editorModeStore.isToolActive(EditorMode.ARROW_INSERT)) {
+                    return;
+                }
+                if (this._status === 'dragging') {
+                    this.insertArrow(this._startPos, this._endPos);
+                }
+
+                this._status = 'idle';
             }
         );
 
@@ -56,6 +73,17 @@ export class IArrowCreator {
                 if (editorModeStore.isToolActive(EditorMode.ARROW_INSERT)) {
                     const worldPos = event.getWorldPosition();
                     const localPos = canvasNode.toLocal(worldPos);
+
+                    const diffVec = vec2.subtract(
+                        vec2.create(),
+                        localPos,
+                        this._startPos
+                    );
+                    const diffLen = vec2.length(diffVec);
+                    if (diffLen > 10) {
+                        this._status = 'dragging';
+                        this._endPos = localPos;
+                    }
                     if (this._pointerDownCount === 1) {
                         this.updatePreviewArrow(localPos);
                     }
@@ -133,6 +161,7 @@ export class IArrowCreator {
 
     private _exitArrowInsertMode() {
         this.editorModeStore.setMode(EditorMode.DEFAULT);
+        this._pointerDownCount = 0;
         if (this._presetIArrowNode && this._presetIArrowNode.parent) {
             const arrow = this._presetIArrowNode.getComponent(SIArrow);
             arrow?.setPoints([
