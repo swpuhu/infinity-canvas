@@ -794,8 +794,12 @@ export class IArrowResizer {
             this._onEndPointPointerUp
         );
         // 拖拽结束后重建控制点并显示
+        this._simplifyLines();
+        // const points = this._currentArrow?.getPoints();
+        // console.log('simplified points: ', points);
         this._clearControls();
         this._updateControls();
+
         this._controlsHiddenInDrag = false;
     };
 
@@ -959,6 +963,35 @@ export class IArrowResizer {
         } else {
             this._editorModeStore.setMode(EditorMode.DEFAULT);
         }
+    }
+
+    private _simplifyLines(): void {
+        if (!this._currentArrow) {
+            return;
+        }
+
+        const points = this._currentArrow.getPoints();
+        const needRemoveIndices: number[] = [];
+        for (let i = 1; i < points.length; i++) {
+            const prevPoint = points[i - 1];
+            const currentP = points[i];
+            const v = vec2.fromValues(
+                currentP[0] - prevPoint[0],
+                currentP[1] - prevPoint[1]
+            );
+            const len = vec2.length(v);
+            if (len < 1) {
+                // 如果两点距离小于1，先把当前点的索引加入待删除的索引数组的中
+                // 但不立即删除，避免影响后续点的索引
+                needRemoveIndices.push(i);
+            }
+        }
+
+        const newPoints = points.filter((p, index) => {
+            // 只保留不在待删除索引中的点
+            return !needRemoveIndices.includes(index);
+        });
+        this._currentArrow.setPoints(newPoints);
     }
 
     private _enableResize(): void {

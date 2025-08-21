@@ -90,6 +90,9 @@ export class SIArrow extends SRenderComponent {
             this._points = this._lerpPoints(points);
             this.isOrigin = true;
         } else {
+            if (points.length <= 3) {
+                this.isOrigin = true;
+            }
             this._points = points;
             this.isOrigin = false;
         }
