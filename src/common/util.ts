@@ -1,6 +1,11 @@
 import type SNode from '@/renderer/SNode';
 import { mat3, ReadonlyVec2, vec2, vec3 } from 'gl-matrix';
-import { CursorStyle, EnumRenderComponentType, ResizeDirection } from './types';
+import {
+    CursorStyle,
+    EnumRenderComponentType,
+    ResizeDirection,
+    SNodeConfig,
+} from './types';
 import { SParagraph } from '@/renderer/RenderComponents/SParagraph';
 
 export function angleToRadians(angle: number) {
@@ -423,4 +428,19 @@ export function getDistanceFromPointToLine(
     // Perpendicular distance to the line segment
     const crossZ = vec2.cross(vec3.create(), vp1P, vP1P2)[2];
     return Math.abs(crossZ) / len;
+}
+
+export function collectAllNodes(
+    parentNode: SNode,
+    filter?: (node: SNode) => boolean
+): SNode[] {
+    const nodes: SNode[] = [];
+    visitNodeRecursive(parentNode, (node) => {
+        if (filter && !filter(node)) {
+            return;
+        }
+
+        nodes.unshift(node);
+    });
+    return nodes;
 }

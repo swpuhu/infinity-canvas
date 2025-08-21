@@ -331,6 +331,14 @@ class SNode extends EventEmitter {
         ];
     }
 
+    /**
+     * @description 获取节点在世界坐标系下的四个角点
+     * @remarks
+     * 该方法会考虑节点的缩放、旋转和锚点，返回的点是世界坐标系下的坐标。
+     * 计算方式为将节点的本地矩形四个角点转换到世界坐标系。
+     * 顺序依次是 wLB, wLT, wRB, wRT
+     * @returns
+     */
     public getWorldPoints(): ReadonlyVec2[] {
         const [l, b, r, t] = this.getLocalRect();
         const wLB = this.toGlobal([l, b]);

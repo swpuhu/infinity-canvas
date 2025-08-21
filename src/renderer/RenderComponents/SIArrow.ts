@@ -36,6 +36,20 @@ export class SIArrow extends SRenderComponent {
             'transform-changed',
             this._onHeadNodeTransformChanged
         );
+
+        console.log('SIArrow attachHeadNode', this._headNode);
+    }
+
+    public detachHeadNode(): void {
+        if (!this._headNode) {
+            return;
+        }
+        this._headNode.off(
+            'transform-changed',
+            this._onHeadNodeTransformChanged
+        );
+        this._headNode = null;
+        console.log('SIArrow detachHeadNode');
     }
 
     public attachTailNode(node: SNode, posInTailNode: ReadonlyVec2): void {
@@ -45,6 +59,19 @@ export class SIArrow extends SRenderComponent {
             'transform-changed',
             this._onTailNodeTransformChanged
         );
+        console.log('SIArrow attachTailNode', this._tailNode);
+    }
+
+    public detachTailNode(): void {
+        if (!this._tailNode) {
+            return;
+        }
+        this._tailNode.off(
+            'transform-changed',
+            this._onTailNodeTransformChanged
+        );
+        this._tailNode = null;
+        console.log('SIArrow detachTailNode');
     }
 
     private _onHeadNodeTransformChanged = (): void => {
@@ -52,10 +79,26 @@ export class SIArrow extends SRenderComponent {
             return;
         }
         const points = this.getPoints();
+        let firstPoint = points[0];
+        const lastPoint = points[points.length - 1];
         const worldP = this._headNode.toGlobal(this._headPositionInHeadNode);
         // 必须保证SIArrow的node节点是 canvasNode 的直接子节点！
         const pInCanvasNode = this.node.parent!.toLocal(worldP);
-        points[0] = pInCanvasNode;
+        const dir = vec2.subtract(vec2.create(), points[1], points[0]);
+        const isHorizontal = Math.abs(dir[0]) >= Math.abs(dir[1]);
+        firstPoint = pInCanvasNode;
+        if (this.isOrigin) {
+            this.setPoints([firstPoint, lastPoint]);
+            return;
+        }
+        points[0] = firstPoint;
+
+        if (isHorizontal) {
+            points[1] = [points[1][0], points[0][1]];
+        } else {
+            points[1] = [points[0][0], points[1][1]];
+        }
+
         this.setPoints(points);
     };
 
@@ -87,14 +130,10 @@ export class SIArrow extends SRenderComponent {
 
     public setPoints(points: ReadonlyVec2[]) {
         if (points.length === 2) {
-            this._points = this._lerpPoints(points);
             this.isOrigin = true;
+            this._points = this._lerpPoints(points);
         } else {
-            if (points.length <= 3) {
-                this.isOrigin = true;
-            }
             this._points = points;
-            this.isOrigin = false;
         }
         this._pathIsDirty = true;
     }

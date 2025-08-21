@@ -10,7 +10,6 @@ import { CanvasEventSystem } from '@/renderer/SEventManager';
 import { SGeo } from '@/renderer/Geometry/SGeo';
 import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 import {
-    getDistance,
     getDistanceFromPointToLine,
     getProjPointInLine,
     visitNodeRecursive,
@@ -66,6 +65,14 @@ export class IArrowResizer {
 
     private _startPointPos: ReadonlyVec2 = [0, 0];
     private _endPointPos: ReadonlyVec2 = [0, 0];
+
+    private _allNodes: SNode[] = [];
+
+    private _snapped = false;
+
+    private _tempSnappedNode: SNode | null = null;
+
+    private _tempRelativePosInNode: ReadonlyVec2 | null = null;
 
     private _setControlsVisible(visible: boolean) {
         // 仅隐藏/显示分段控制点，不影响起点与终点
@@ -265,6 +272,7 @@ export class IArrowResizer {
 
     private _onControlPointerDown = (event: SNodeEvents.IPointerEvent) => {
         if (!this._currentArrow || !this._rootNode) return;
+        this._currentArrow.isOrigin = false;
         const control = event.currentTarget!;
         const segmentIndex = control.metadata.segmentIndex as
             | number
@@ -631,6 +639,10 @@ export class IArrowResizer {
             this._onEndPointPointerUp
         );
 
+        this._allNodes = this._editor.scene
+            .getAllNodes()
+            .filter((item) => item.type !== SNodeConfig.NodeType.IARROW);
+
         const points = this._currentArrow.getPoints();
         if (this._draggingEndKind === 'start') {
             const isHorizontal =
@@ -682,6 +694,26 @@ export class IArrowResizer {
 
         vec2.add(nextPos, this._startPointPos, delta);
 
+        let snapped = false;
+        for (const node of this._allNodes) {
+            this._checkSnapToNodeEdge(
+                node,
+                this._startPoint!,
+                nextPos,
+                (snappedPos: ReadonlyVec2, relativePosInNode: ReadonlyVec2) => {
+                    nextPos[0] = snappedPos[0];
+                    nextPos[1] = snappedPos[1];
+                    snapped = true;
+                    this._snapped = snapped;
+                    this._tempRelativePosInNode = relativePosInNode;
+                }
+            );
+            if (snapped) {
+                this._tempSnappedNode = node;
+                break;
+            }
+        }
+
         points[0] = nextPos as [number, number];
         const last = points.length - 1;
         if (this._currentArrow?.isOrigin) {
@@ -695,8 +727,11 @@ export class IArrowResizer {
         } else {
             points[1][1] = nextPos[1];
         }
+
+        // 先对 this._allNodes 进行边缘吸附检测，如果nextPos靠近某个节点的边缘
+        // 则将 nextPos 吸附到该节点的边缘
         // 检查对第二条线段的吸附（如果存在）
-        if (points.length >= 3) {
+        if (points.length >= 3 && !snapped) {
             const p0 = points[0];
             const p1 = points[1];
             const p2 = points[2];
@@ -705,12 +740,12 @@ export class IArrowResizer {
             const len2 = vec2.length(line2);
             if (len2 <= this._snapThreshold) {
                 nextPos[1] = p2[1];
-                if (this._lastSecondDir === HORIZONTAL) {
-                    points[1][0] = nextPos[0];
-                } else {
-                    points[1][1] = nextPos[1];
-                }
             }
+        }
+        if (this._lastSecondDir === HORIZONTAL) {
+            points[1][0] = nextPos[0];
+        } else {
+            points[1][1] = nextPos[1];
         }
 
         this._startPoint?.position.set(nextPos[0], nextPos[1]);
@@ -771,17 +806,32 @@ export class IArrowResizer {
     }
 
     private _onEndPointPointerUp = (event: SNodeEvents.IPointerEvent) => {
-        if (!this._isDraggingEndPoint) {
+        if (!this._isDraggingEndPoint || !this._currentArrow) {
             return;
         }
+
+        event.stopPropagation();
+
+        if (this._snapped && this._tempSnappedNode) {
+            if (this._draggingEndKind === 'start') {
+                this._currentArrow.attachHeadNode(
+                    this._tempSnappedNode,
+                    this._tempRelativePosInNode!
+                );
+            } else {
+                this._currentArrow.attachTailNode(
+                    this._tempSnappedNode,
+                    this._tempRelativePosInNode!
+                );
+            }
+        }
+
         this._isDraggingEndPoint = false;
         this._draggingEndKind = null;
 
         // 重置吸附状态
         this._endPointSnapped = false;
         this._snapToSegmentIndex = -1;
-
-        event.stopPropagation();
 
         this._editor.eventSystem.removeEventListener(
             this._editor.scene.getCanvasNode(),
@@ -924,6 +974,16 @@ export class IArrowResizer {
                 this._onEndPointPointerDown
             );
         });
+
+        this._editorModeStore.$subscribe((mutation, state) => {
+            if (
+                state.currentMode !== EditorMode.PRE_RESIZE_ARROW &&
+                state.currentMode !== EditorMode.PRE_MOVE_ARROW &&
+                state.currentMode !== EditorMode.DEFAULT
+            ) {
+                this.unMount();
+            }
+        });
     }
 
     private _onPurePointerMove = (event: SNodeEvents.IPointerEvent) => {
@@ -1005,6 +1065,41 @@ export class IArrowResizer {
             SNodeEvents.POINTER_DOWN,
             this._onCanvasPointerDown
         );
+    }
+
+    private _checkSnapToNodeEdge(
+        node: SNode,
+        endPoint: SNode,
+        nextLocalPos: ReadonlyVec2,
+        onSnap: (
+            snappedPos: ReadonlyVec2,
+            relativePosInNode: ReadonlyVec2
+        ) => void
+    ): void {
+        const nextWorldP = endPoint.parent!.toGlobal(nextLocalPos);
+        const [wLB, wLT, wRB, wRT] = node.getWorldPoints();
+        const bounds = [wLB, wLT, wRT, wRB];
+        for (let i = 0; i < bounds.length; i++) {
+            const startP = bounds[i];
+            const endP = bounds[(i + 1) % bounds.length];
+            const distance = getDistanceFromPointToLine(
+                nextWorldP,
+                startP,
+                endP
+            );
+            if (distance < this._snapThreshold) {
+                console.log('吸附到了节点边缘', node.name);
+                // 计算投影点
+                const projWorldPoint = getProjPointInLine(
+                    nextWorldP,
+                    startP,
+                    endP
+                );
+                const projLocalPos = endPoint.parent!.toLocal(projWorldPoint);
+                const projInNodeLocalPos = node.toLocal(projWorldPoint);
+                onSnap(projLocalPos, projInNodeLocalPos);
+            }
+        }
     }
 
     destroy(): void {
