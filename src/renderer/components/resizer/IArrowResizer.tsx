@@ -877,7 +877,9 @@ export class IArrowResizer {
         // 点击在箭头线段上才开始整体拖拽
         if (!this._currentArrow || !this._currentArrow.hitTest(worldPos))
             return;
-
+        if (this._currentArrow.isFixed) {
+            return;
+        }
         this._isDraggingArrow = true;
         this._dragArrowStartWorld = [worldPos[0], worldPos[1]];
         const arrowNode = this._currentArrow.node!;

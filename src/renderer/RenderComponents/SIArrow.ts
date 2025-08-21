@@ -25,7 +25,13 @@ export class SIArrow extends SRenderComponent {
 
     private _tailPositionInTailNode: ReadonlyVec2 = [0, 0];
 
+    private _isFixed = false;
+
     public isOrigin = true;
+
+    public get isFixed(): boolean {
+        return this._isFixed;
+    }
 
     protected onCreated(): void {}
 
@@ -36,6 +42,7 @@ export class SIArrow extends SRenderComponent {
             'transform-changed',
             this._onHeadNodeTransformChanged
         );
+        this._isFixed = true;
 
         console.log('SIArrow attachHeadNode', this._headNode);
     }
@@ -49,6 +56,9 @@ export class SIArrow extends SRenderComponent {
             this._onHeadNodeTransformChanged
         );
         this._headNode = null;
+        if (!this._tailNode) {
+            this._isFixed = false;
+        }
         console.log('SIArrow detachHeadNode');
     }
 
@@ -59,6 +69,7 @@ export class SIArrow extends SRenderComponent {
             'transform-changed',
             this._onTailNodeTransformChanged
         );
+        this._isFixed = true;
         console.log('SIArrow attachTailNode', this._tailNode);
     }
 
@@ -71,6 +82,9 @@ export class SIArrow extends SRenderComponent {
             this._onTailNodeTransformChanged
         );
         this._tailNode = null;
+        if (!this._headNode) {
+            this._isFixed = false;
+        }
         console.log('SIArrow detachTailNode');
     }
 
