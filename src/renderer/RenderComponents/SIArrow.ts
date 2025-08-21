@@ -107,10 +107,36 @@ export class SIArrow extends SRenderComponent {
             return;
         }
         const points = this.getPoints();
+        const firstPoint = points[0];
+        let lastPoint = points[points.length - 1];
         const worldP = this._tailNode.toGlobal(this._tailPositionInTailNode);
         // 必须保证SIArrow的node节点是 canvasNode 的直接子节点！
         const pInCanvasNode = this.node.parent!.toLocal(worldP);
-        points[points.length - 1] = pInCanvasNode;
+        const dir = vec2.subtract(
+            vec2.create(),
+            points[points.length - 1],
+            points[points.length - 2]
+        );
+        const isHorizontal = Math.abs(dir[0]) >= Math.abs(dir[1]);
+        lastPoint = pInCanvasNode;
+        if (this.isOrigin) {
+            this.setPoints([firstPoint, lastPoint]);
+            return;
+        }
+        points[points.length - 1] = lastPoint;
+
+        if (isHorizontal) {
+            points[points.length - 2] = [
+                points[points.length - 2][0],
+                lastPoint[1],
+            ];
+        } else {
+            points[points.length - 2] = [
+                lastPoint[0],
+                points[points.length - 2][1],
+            ];
+        }
+
         this.setPoints(points);
     };
 

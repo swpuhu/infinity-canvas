@@ -756,9 +756,30 @@ export class IArrowResizer {
         const points = this._currentArrow!.getPoints().map(
             (p) => [p[0], p[1]] as [number, number]
         );
-        let nextPos = vec2.create();
+        const nextPos = vec2.create();
 
         vec2.add(nextPos, this._endPointPos, delta);
+
+        let snapped = false;
+        for (const node of this._allNodes) {
+            this._checkSnapToNodeEdge(
+                node,
+                this._endPoint!,
+                nextPos,
+                (snappedPos: ReadonlyVec2, relativePosInNode: ReadonlyVec2) => {
+                    nextPos[0] = snappedPos[0];
+                    nextPos[1] = snappedPos[1];
+                    snapped = true;
+                    this._snapped = snapped;
+                    this._tempRelativePosInNode = relativePosInNode;
+                }
+            );
+            if (snapped) {
+                this._tempSnappedNode = node;
+                break;
+            }
+        }
+
         const last = points.length - 1;
         points[last] = nextPos as [number, number];
         if (this._currentArrow?.isOrigin) {
@@ -772,33 +793,22 @@ export class IArrowResizer {
         } else {
             points[last - 1][1] = nextPos[1];
         }
+
         // 检查对第二条线段的吸附（如果存在）
-        if (points.length >= 3) {
+        if (points.length >= 3 && !snapped) {
             const p1 = points[last - 1];
             const p2 = points[last - 2];
 
             const line2 = vec2.fromValues(p2[0] - p1[0], p2[1] - p1[1]);
-            const distanceToLine2 = getDistanceFromPointToLine(nextPos, p1, p2);
             const len2 = vec2.length(line2);
             if (len2 <= this._snapThreshold) {
                 nextPos[1] = p2[1];
-                if (this._lastSecondDir === HORIZONTAL) {
-                    points[last - 1][0] = nextPos[0];
-                } else {
-                    points[last - 1][1] = nextPos[1];
-                }
-            } else if (distanceToLine2 <= this._snapThreshold) {
-                const projPoint = getProjPointInLine(nextPos, p1, p2);
-                nextPos = projPoint as vec2;
-
-                points[last] = nextPos as [number, number];
-                console.log('projPoint: ', projPoint);
-                if (this._lastSecondDir === HORIZONTAL) {
-                    points[last - 1][0] = nextPos[0];
-                } else {
-                    points[last - 1][1] = nextPos[1];
-                }
             }
+        }
+        if (this._lastSecondDir === HORIZONTAL) {
+            points[last - 1][0] = nextPos[0];
+        } else {
+            points[last - 1][1] = nextPos[1];
         }
 
         this._endPoint?.position.set(nextPos[0], nextPos[1]);
