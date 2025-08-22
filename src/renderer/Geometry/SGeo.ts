@@ -101,7 +101,7 @@ export class SGeo extends SRenderComponent {
     }
 
     public applyStyle(options: SNodeConfig.SGraphicsPropsAndStyle): void {
-        this.options = options;
+        this.options = { ...options };
         let alpha = undefined;
         if (options.style?.alpha) {
             alpha = options.style.alpha;
@@ -132,6 +132,12 @@ export class SGeo extends SRenderComponent {
             )
         );
         shadowPaint.setColor(safeColor(options.color || 0x000000));
+    }
+
+    public clone(): this {
+        const newGeo = new (this.constructor as new () => this)();
+        newGeo.applyStyle(this.options);
+        return newGeo;
     }
 
     public destroy(): void {

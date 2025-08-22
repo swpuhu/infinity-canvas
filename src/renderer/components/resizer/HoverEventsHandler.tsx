@@ -4,9 +4,13 @@ import { EventNames, SNodeConfig } from '@/common/types';
 import SNode from '@/renderer/SNode';
 import { createElement } from '@/renderer/createElement';
 import { createNodeFromConfig } from '@/renderer/util';
-import { DEFAULT_SHADOW_SHAPE_STYLE } from '@/common/const';
+import {
+    DEFAULT_SHADOW_ALPHA,
+    DEFAULT_SHADOW_SHAPE_STYLE,
+} from '@/common/const';
 import { vec2 } from 'gl-matrix';
 import { getMidPoint } from '@/common/util';
+import { SGeo } from '@/renderer/Geometry/SGeo';
 
 export class HoverEventsHandler {
     private _tempArrowAndNode: SNode | null = null;
@@ -53,6 +57,7 @@ export class HoverEventsHandler {
         vec2.add(nodeNextPosition, nodeNextPosition, dirVec);
         const arrowPoints = [midPoint, nodeNextPosition];
         // 箭头 points: 从(0,0)到(width,0)，与 anchor x:0, y:0.5 配合
+        const shadowShape = srcNode.clone();
         const config = (
             <container>
                 <iarrow
@@ -61,25 +66,15 @@ export class HoverEventsHandler {
                         fill: 0x777777,
                     }}
                 />
-                <rect
-                    width={srcNode.width}
-                    height={srcNode.height}
-                    transform={{
-                        position: {
-                            x: nodeNextPosition[0],
-                            y: nodeNextPosition[1],
-                        },
-                        anchor: {
-                            x: srcNode.anchor.x,
-                            y: srcNode.anchor.y,
-                        },
-                    }}
-                    style={DEFAULT_SHADOW_SHAPE_STYLE}
-                />
             </container>
         );
 
-        return createNodeFromConfig(config);
+        const node = createNodeFromConfig(config);
+        const geo = shadowShape.getComponent(SGeo);
+        geo?.setAlpha(DEFAULT_SHADOW_ALPHA);
+        shadowShape.position.set(nodeNextPosition[0], nodeNextPosition[1]);
+        node.addChild(shadowShape);
+        return node;
     }
 
     private _bindEvents(): void {

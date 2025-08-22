@@ -411,9 +411,15 @@ class SNode extends EventEmitter {
     }
 
     public addComponent<T extends SRenderComponent, Args extends any[]>(
-        CompCtr: new (...args: Args) => T,
+        CompCtr: (new (...args: Args) => T) | T,
         ...args: Args
     ): T {
+        if (typeof CompCtr !== 'function') {
+            CompCtr.init();
+            this._renderComps.push(CompCtr);
+            CompCtr.node = this;
+            return CompCtr;
+        }
         const instance = new CompCtr(...args);
         instance.node = this;
         instance.init();
@@ -593,6 +599,26 @@ class SNode extends EventEmitter {
             }
         }
         return null;
+    }
+
+    public clone(): SNode {
+        const node = new SNode();
+        node.name = this.name + '_copy';
+        node.type = this.type;
+        node.renderType = this.renderType;
+        node.aspectKeepMode = this.aspectKeepMode;
+        node.setSize(this.width, this.height);
+        node._anchor = this.anchor.clone();
+        node._rotation = this.rotation;
+        node._scale = this.scale.clone();
+        node._position = this.position.clone();
+        node.metadata = { ...this.metadata };
+        this.getRenderComps().forEach((comp) => {
+            const copiedComp = comp.clone();
+            node.addComponent(copiedComp);
+        });
+
+        return node;
     }
 }
 

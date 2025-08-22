@@ -26,4 +26,8 @@ export abstract class SRenderComponent {
     public get isEnabled(): boolean {
         return this._isEnabled;
     }
+
+    public clone(): this {
+        return this;
+    }
 }
