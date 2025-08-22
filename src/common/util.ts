@@ -444,3 +444,7 @@ export function collectAllNodes(
     });
     return nodes;
 }
+
+export function getMidPoint(p1: ReadonlyVec2, p2: ReadonlyVec2): vec2 {
+    return vec2.fromValues((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2);
+}

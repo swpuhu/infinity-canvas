@@ -7,7 +7,7 @@ import {
     SNodeConfig,
     SNodeEvents,
 } from '@/common/types';
-import { decomposeMatrix } from '@/common/util';
+import { angleToRadians, decomposeMatrix } from '@/common/util';
 import { createElement } from '@/renderer/createElement';
 import SNode from '@/renderer/SNode';
 import { refSNode } from '@/renderer/util';
@@ -15,6 +15,8 @@ import { WhiteboardScene } from '@/renderer/WhiteboardScene';
 import { CanvasEventSystem } from '@/renderer/SEventManager';
 import { EditorMode, useEditorModeStore } from '@/store/EditorModeStore';
 import EventEmitter from 'eventemitter3';
+import { ReadonlyVec2, vec2 } from 'gl-matrix';
+import { ConstVectors } from '@/common/const';
 
 const RESIZE_GIZMO_SIZE = 10;
 const ADD_SHAPE_GIZMO_SIZE = 10;
@@ -28,12 +30,6 @@ const SHAPE_GIZMO_OFFSET = 20;
 const GIZMO_LINE_WIDTH = 2;
 const GIZMO_LINE_HOVER_WIDTH = 10;
 const GIZMO_LINE_COLOR = 0x3670f4;
-export enum GIZMO_DIRECTIONS {
-    LEFT = 'left',
-    RIGHT = 'right',
-    TOP = 'top',
-    BOTTOM = 'bottom',
-}
 
 // 通用样式配置
 const blockStyle = {
@@ -374,14 +370,67 @@ export class ResizerUI {
             : 'se';
     }
 
-    private _getAddShapeNodeDirection(nodeIndex: number): GIZMO_DIRECTIONS {
-        return nodeIndex === 0
-            ? GIZMO_DIRECTIONS.LEFT
-            : nodeIndex === 1
-            ? GIZMO_DIRECTIONS.RIGHT
-            : nodeIndex === 2
-            ? GIZMO_DIRECTIONS.TOP
-            : GIZMO_DIRECTIONS.BOTTOM;
+    private _getAddShapeNodeDirection(
+        nodeIndex: number,
+        node: SNode
+    ): SNodeConfig.ShapeHoverDir {
+        let v: vec2 = vec2.create();
+        let originDir: SNodeConfig.GIZMO_DIRECTIONS =
+            SNodeConfig.GIZMO_DIRECTIONS.LEFT;
+        switch (nodeIndex) {
+            case 0:
+                v = vec2.fromValues(-1, 0); // left
+                originDir = SNodeConfig.GIZMO_DIRECTIONS.LEFT;
+                break;
+            case 1:
+                v = vec2.fromValues(1, 0); // right
+                originDir = SNodeConfig.GIZMO_DIRECTIONS.RIGHT;
+                break;
+            case 2:
+                v = vec2.fromValues(0, 1); // top
+                originDir = SNodeConfig.GIZMO_DIRECTIONS.TOP;
+                break;
+            case 3:
+                v = vec2.fromValues(0, -1); // bottom
+                originDir = SNodeConfig.GIZMO_DIRECTIONS.BOTTOM;
+                break;
+            default:
+                break;
+        }
+
+        vec2.rotate(v, v, ConstVectors.ZERO_VEC, angleToRadians(node.rotation));
+
+        const directions: Partial<SNodeConfig.ShapeHoverDir>[] = [
+            {
+                vec: ConstVectors.LEFT_VEC,
+                dir: SNodeConfig.GIZMO_DIRECTIONS.LEFT,
+            },
+            {
+                vec: ConstVectors.RIGHT_VEC,
+                dir: SNodeConfig.GIZMO_DIRECTIONS.RIGHT,
+            },
+            { vec: ConstVectors.UP_VEC, dir: SNodeConfig.GIZMO_DIRECTIONS.TOP },
+            {
+                vec: ConstVectors.DOWN_VEC,
+                dir: SNodeConfig.GIZMO_DIRECTIONS.BOTTOM,
+            },
+        ];
+        let maxDot = -999999999;
+        let dir: SNodeConfig.ShapeHoverDir = {
+            vec: ConstVectors.LEFT_VEC,
+            dir: SNodeConfig.GIZMO_DIRECTIONS.LEFT,
+            originDir,
+        };
+        for (let i = 0; i < directions.length; i++) {
+            const dot = vec2.dot(v, directions[i].vec!);
+            if (dot > maxDot) {
+                maxDot = dot;
+                dir.vec = directions[i].vec!;
+                dir.dir = directions[i].dir!;
+            }
+        }
+
+        return dir;
     }
 
     get node() {
@@ -741,10 +790,9 @@ export class ResizerUI {
         // 修改节点尺寸
         node.width = currentSize;
         node.height = currentSize;
-
-        const index = this._addShapeNodes.indexOf(node);
-        const direction = this._getAddShapeNodeDirection(index);
         const targetNode = this._currentTargetNodes[0];
+        const index = this._addShapeNodes.indexOf(node);
+        const direction = this._getAddShapeNodeDirection(index, targetNode);
         this._emit(
             isHover
                 ? EventNames.ADD_SHAPE_HOVERED
@@ -761,7 +809,7 @@ export class ResizerUI {
             return;
         }
         const index = this._addShapeNodes.indexOf(node);
-        const direction = this._getAddShapeNodeDirection(index);
+        const direction = this._getAddShapeNodeDirection(index, node);
         const targetNode = this._currentTargetNodes[0];
         this._emit(EventNames.ADD_SHAPE_CLICKED, targetNode, direction);
     };

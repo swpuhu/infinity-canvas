@@ -1,4 +1,4 @@
-import { ReadonlyVec2 } from 'gl-matrix';
+import { ReadonlyVec2, vec2 } from 'gl-matrix';
 
 export const HORIZONTAL_VEC: ReadonlyVec2 = [1, 0];
 export const VERTICAL_VEC: ReadonlyVec2 = [0, 1];
@@ -45,3 +45,11 @@ export const DEFAULT_SHAPE_STYLE = {
     strokeWidth: DEFAULT_SHADOW_STROKE_WIDTH,
     alpha: 1,
 } as const;
+
+export namespace ConstVectors {
+    export const ZERO_VEC: ReadonlyVec2 = vec2.fromValues(0, 0);
+    export const LEFT_VEC: ReadonlyVec2 = vec2.fromValues(-1, 0);
+    export const RIGHT_VEC: ReadonlyVec2 = vec2.fromValues(1, 0);
+    export const UP_VEC: ReadonlyVec2 = vec2.fromValues(0, 1);
+    export const DOWN_VEC: ReadonlyVec2 = vec2.fromValues(0, -1);
+}

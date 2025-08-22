@@ -92,6 +92,19 @@ export namespace SNodeConfig {
         value: SNode | undefined;
     }
 
+    export interface ShapeHoverDir {
+        vec: ReadonlyVec2;
+        dir: GIZMO_DIRECTIONS;
+        originDir: GIZMO_DIRECTIONS;
+    }
+
+    export enum GIZMO_DIRECTIONS {
+        LEFT = 'left',
+        RIGHT = 'right',
+        TOP = 'top',
+        BOTTOM = 'bottom',
+    }
+
     export enum NodeType {
         RECT = 'rect',
         CONTAINER = 'container',

@@ -1,104 +1,62 @@
 import { CanvasEditor } from '@/renderer/Editor';
-import { GIZMO_DIRECTIONS, ResizerUI } from './ResizerUI';
-import { EventNames } from '@/common/types';
-import { Path } from 'canvaskit-wasm';
-import { CanvasKitModule } from '@/lib/canvaskit';
+import { ResizerUI } from './ResizerUI';
+import { EventNames, SNodeConfig } from '@/common/types';
 import SNode from '@/renderer/SNode';
 import { createElement } from '@/renderer/createElement';
 import { createNodeFromConfig } from '@/renderer/util';
 import { DEFAULT_SHADOW_SHAPE_STYLE } from '@/common/const';
+import { vec2 } from 'gl-matrix';
+import { getMidPoint } from '@/common/util';
 
 export class HoverEventsHandler {
     private _tempArrowAndNode: SNode | null = null;
+
+    private _canvasNode: SNode | null = null;
     constructor(private _editor: CanvasEditor, private _resizerUI: ResizerUI) {
         this._bindEvents();
+        this._canvasNode = this._editor.scene.getCanvasNode();
     }
 
     private _createArrowPath(
         srcNode: SNode,
-        direction: GIZMO_DIRECTIONS
+        direction: SNodeConfig.ShapeHoverDir
     ): SNode {
         console.log(srcNode.width, srcNode.height);
         const OFFSET = 200;
         const ARROW_HEIGHT = 20;
-        let arrowWidth = OFFSET;
-        let arrowHeight = ARROW_HEIGHT;
-        let arrowRotation = 0;
 
         // 计算源节点的边界点
-        const srcNodeBounds = {
-            left: srcNode.position.x - srcNode.width * srcNode.anchor.x,
-            right: srcNode.position.x + srcNode.width * (1 - srcNode.anchor.x),
-            top: srcNode.position.y + srcNode.height * srcNode.anchor.y,
-            bottom:
-                srcNode.position.y - srcNode.height * (1 - srcNode.anchor.y),
-        };
-
-        const nodeNextPosition = srcNode.position.clone();
-        let arrowNextPosition = srcNode.position.clone();
-
-        switch (direction) {
-            case GIZMO_DIRECTIONS.LEFT:
-                // 新节点在左侧
-                nodeNextPosition.x =
-                    srcNodeBounds.left -
-                    OFFSET -
-                    srcNode.width * srcNode.anchor.x;
-                // 箭头从源节点左边缘开始，指向左侧
-                arrowNextPosition.x = srcNodeBounds.left;
-                arrowNextPosition.y = srcNode.position.y;
-                arrowRotation = 180; // 箭头向左
+        const [wLB, wLT, wRB, wRT] = srcNode.getWorldPoints();
+        let midWorldPoint: vec2 = vec2.create();
+        switch (direction.originDir) {
+            case SNodeConfig.GIZMO_DIRECTIONS.LEFT:
+                midWorldPoint = getMidPoint(wLB, wLT);
                 break;
-
-            case GIZMO_DIRECTIONS.RIGHT:
-                // 新节点在右侧
-                nodeNextPosition.x =
-                    srcNodeBounds.right +
-                    OFFSET +
-                    srcNode.width * (1 - srcNode.anchor.x);
-                // 箭头从源节点右边缘开始，指向右侧
-                arrowNextPosition.x = srcNodeBounds.right;
-                arrowNextPosition.y = srcNode.position.y;
-                arrowRotation = 0; // 箭头向右
+            case SNodeConfig.GIZMO_DIRECTIONS.RIGHT:
+                midWorldPoint = getMidPoint(wRB, wRT);
                 break;
-
-            case GIZMO_DIRECTIONS.TOP:
-                // 新节点在上方（y坐标更小）
-                nodeNextPosition.y =
-                    srcNodeBounds.top +
-                    OFFSET +
-                    srcNode.height * srcNode.anchor.y;
-                // 箭头从源节点上边缘开始，指向上方
-                arrowNextPosition.x = srcNode.position.x;
-                arrowNextPosition.y = srcNodeBounds.top;
-                arrowRotation = 90; // 箭头向上（在y轴向下的坐标系中）
+            case SNodeConfig.GIZMO_DIRECTIONS.TOP:
+                midWorldPoint = getMidPoint(wLT, wRT);
                 break;
-
-            case GIZMO_DIRECTIONS.BOTTOM:
-                // 新节点在下方（y坐标更大）
-                nodeNextPosition.y =
-                    srcNodeBounds.bottom -
-                    OFFSET -
-                    srcNode.height * (1 - srcNode.anchor.y);
-                // 箭头从源节点下边缘开始，指向下方
-                arrowNextPosition.x = srcNode.position.x;
-                arrowNextPosition.y = srcNodeBounds.bottom;
-                arrowRotation = 270; // 箭头向下（在y轴向下的坐标系中）
+            case SNodeConfig.GIZMO_DIRECTIONS.BOTTOM:
+                midWorldPoint = getMidPoint(wLB, wRB);
+                break;
+            default:
                 break;
         }
+
+        const midPoint = this._canvasNode!.toLocal(midWorldPoint);
+
+        const nodeNextPosition = vec2.clone(midPoint);
+
+        const dirVec = vec2.scale(vec2.create(), direction.vec, OFFSET);
+        vec2.add(nodeNextPosition, nodeNextPosition, dirVec);
+        const arrowPoints = [midPoint, nodeNextPosition];
+        // 箭头 points: 从(0,0)到(width,0)，与 anchor x:0, y:0.5 配合
         const config = (
             <container>
-                <arrow
-                    width={arrowWidth}
-                    height={arrowHeight}
-                    transform={{
-                        anchor: {
-                            x: 0,
-                            y: 0.5,
-                        },
-                        position: arrowNextPosition,
-                        rotation: arrowRotation,
-                    }}
+                <iarrow
+                    points={arrowPoints}
                     style={{
                         fill: 0x777777,
                     }}
@@ -107,7 +65,10 @@ export class HoverEventsHandler {
                     width={srcNode.width}
                     height={srcNode.height}
                     transform={{
-                        position: nodeNextPosition,
+                        position: {
+                            x: nodeNextPosition[0],
+                            y: nodeNextPosition[1],
+                        },
                         anchor: {
                             x: srcNode.anchor.x,
                             y: srcNode.anchor.y,
@@ -138,7 +99,10 @@ export class HoverEventsHandler {
         );
     }
 
-    private _onAddShapeHovered = (node: SNode, direction: GIZMO_DIRECTIONS) => {
+    private _onAddShapeHovered = (
+        node: SNode,
+        direction: SNodeConfig.ShapeHoverDir
+    ) => {
         const arrow = this._createArrowPath(node, direction);
 
         const canvasNode = this._editor.scene.getCanvasNode();
@@ -154,7 +118,10 @@ export class HoverEventsHandler {
         }
     };
 
-    private _onAddShapeClicked = (node: SNode, direction: GIZMO_DIRECTIONS) => {
+    private _onAddShapeClicked = (
+        node: SNode,
+        direction: SNodeConfig.GIZMO_DIRECTIONS
+    ) => {
         console.log('onAddShapeClicked', node, direction);
     };
 }
